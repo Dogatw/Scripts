@@ -1,5 +1,5 @@
 var popsend = 1000;
-var minPop = 500;
+var minPop = 1000;
 var alertWhenDone = 1;
 var nextVillageWhenDone = 1;
 var include = {
