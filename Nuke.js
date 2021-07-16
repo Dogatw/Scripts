@@ -22,7 +22,7 @@ var minTroops={
     "sword": '0',
     "axe": '0',
     "archer": '0',
-    "spy": '9',
+    "spy": '100',
     "light": '0',
     "marcher": '0',
     "heavy": '0',
