@@ -6,15 +6,15 @@ var forceEqualTroopCount = false,
     forceRamSpeed = true,
     troops = {
         "spear": '0',
-        "sword": '100',
-        "axe": 'max',
+        "sword": '0',
+        "axe": '0',
         "archer": '0',
         "spy": 'max',
-        "light": 'max',
+        "light": '0',
         "marcher": '0',
-        "heavy": '100',
-        "ram": 'max',
-        "catapult": 'max'
+        "heavy": '0',
+        "ram": '1',
+        "catapult": '1'
     },
     /*Allowed troop inputs: numbers, 'min', 'max' and 'min!'. 'min!' will force at least one of this unit */ populationLim = 0;
 var minTroops={
@@ -22,7 +22,7 @@ var minTroops={
     "sword": '0',
     "axe": '0',
     "archer": '0',
-    "spy": '10',
+    "spy": '200',
     "light": '0',
     "marcher": '0',
     "heavy": '0',
