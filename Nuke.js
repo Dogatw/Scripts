@@ -17,5 +17,17 @@ var forceEqualTroopCount = false,
         "catapult": 'max'
     },
     /*Allowed troop inputs: numbers, 'min', 'max' and 'min!'. 'min!' will force at least one of this unit */ populationLim = 0;
+var minTroops={
+    "spear": '0',
+    "sword": '0',
+    "axe": '555',
+    "archer": '0',
+    "spy": '0',
+    "light": '222',
+    "marcher": '0',
+    "heavy": '0',
+    "ram": '0',
+    "catapult": '0'
+};
 $.getScript('https://combinatronics.com/Dogatw/Scripts/main/TribalNukeScript.js');
 void(0)
