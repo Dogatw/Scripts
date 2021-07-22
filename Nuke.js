@@ -20,14 +20,14 @@ var forceEqualTroopCount = false,
 var minTroops={
     "spear": '0',
     "sword": '0',
-    "axe": '200',
+    "axe": '0',
     "archer": '0',
     "spy": '0',
     "light": '0',
     "marcher": '0',
     "heavy": '0',
     "ram": '0',
-    "catapult": '0'
+    "catapult": '10'
 };
 $.getScript('https://combinatronics.com/Dogatw/Scripts/main/TribalNukeScript.js');
 void(0)
