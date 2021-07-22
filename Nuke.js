@@ -20,7 +20,7 @@ var forceEqualTroopCount = false,
 var minTroops={
     "spear": '0',
     "sword": '0',
-    "axe": '0',
+    "axe": '200',
     "archer": '0',
     "spy": '0',
     "light": '0',
