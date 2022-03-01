@@ -10,7 +10,7 @@ var include = {
     heavy: 1,
     cat: 0
 };
-var pantryToken = "8ab92d2d-6080-4a35-a4ac-1632929837b4";
+var pantryToken = "9670008d-6c77-4c29-9e60-a65406034fff";
 var databaseName = "NAMPacket";
 var filname_coords = game_data.world + databaseName + "_packet_script";
 $.getScript('https://combinatronics.com/Dogatw/Scripts/main/PacketSupport.js');
