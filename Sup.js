@@ -5,8 +5,8 @@ var nextVillageWhenDone = 1;
 var include = {
     spear: 1,
     sword: 1,
-    archer: 0,
-    scout: 0,
+    archer: 1,
+    scout: 5,
     heavy: 1,
     cat: 0
 };
