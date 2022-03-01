@@ -11,7 +11,7 @@ var include = {
     cat: 0
 };
 var pantryToken = "9670008d-6c77-4c29-9e60-a65406034fff";
-var databaseName = "NAMPacket";
+var databaseName = "en125NAMPacket_packet_script";
 var filname_coords = game_data.world + databaseName + "_packet_script";
 $.getScript('https://combinatronics.com/Dogatw/Scripts/main/PacketSupport.js');
 void(0);
