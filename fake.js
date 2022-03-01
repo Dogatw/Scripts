@@ -1,7 +1,7 @@
 /*Approved link for script below
 https://forum.tribalwars.net/index.php?threads/fake-script.287519/
 */
-var Tsalkapone_coords = '595|525 599|526 592|528 590|532 594|530 589|533 592|532 594|527 586|523 595|526 586|533 588|534 597|525 589|532 590|533 594|525 591|531 600|527 599|525 601|527 600|533';
+var Tsalkapone_coords = '595|520 594|516 593|519 592|519 598|522 597|523 599|522 594|517 592|513 592|511 592|512 590|513 597|517 595|516 596|516 598|513';
 var Tsalkapone_scouts = 1;
 var Tsalkapone_units_order = {
     ram: 1,
