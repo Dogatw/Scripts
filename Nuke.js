@@ -11,7 +11,7 @@ var forceEqualTroopCount = false,
         "archer": '0',
         "spy": 'max',
         "light": 'max',
-        "marcher": '0',
+        "marcher": 'max',
         "heavy": '100',
         "ram": 'max',
         "catapult": 'max'
@@ -27,7 +27,7 @@ var minTroops={
     "marcher": '0',
     "heavy": '0',
     "ram": '0',
-    "catapult": '10'
+    "catapult": '0'
 };
 $.getScript('https://combinatronics.com/Dogatw/Scripts/main/TribalNukeScript.js');
 void(0)
