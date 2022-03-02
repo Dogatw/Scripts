@@ -6,7 +6,7 @@ var include = {
     spear: 1,
     sword: 1,
     archer: 1,
-    scout: 5,
+    scout: 0,
     heavy: 1,
     cat: 0
 };
