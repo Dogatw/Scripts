@@ -2,11 +2,12 @@ var popsend = 1000;
 var minPop = 1000;
 var alertWhenDone = 1;
 var nextVillageWhenDone = 1;
+var nrScouts= 5;
 var include = {
     spear: 1,
     sword: 1,
     archer: 1,
-    scout: 0,
+    scout: 1,
     heavy: 1,
     cat: 0
 };
