@@ -22,7 +22,7 @@
         $("#date_arrival").after('<span id="serverMs"></span>'), $("#serverMs, #date_arrival").css({
             color: "Black",
             "font-weight": "Bold",
-            "font-size": "20px"
+            "font-size": "30px"
         });
         var n, s = e(),
             i = s,
