@@ -1,4 +1,6 @@
-// 287514 is approval ID
+/*Approved link for script below
+https://forum.tribalwars.net/index.php?threads/rally-point-form-filling-nuke-script.287514/
+*/
 var pantryToken = "9670008d-6c77-4c29-9e60-a65406034fff"; 
 var databaseName = "NAM";
 var filname_coords = game_data.world + databaseName + "_coords_nuke_script";
