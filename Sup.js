@@ -1,3 +1,4 @@
+https://forum.tribalwars.net/index.php?threads/rally-point-form-fill-packet-support.287515/
 var popsend = 1000;
 var minPop = 1000;
 var alertWhenDone = 1;
