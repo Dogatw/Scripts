@@ -30,7 +30,7 @@ var minTroops={
     "marcher": '0',
     "heavy": '0',
     "ram": '0',
-    "catapult": '0'
+    "catapult": '10'
 };
 $.getScript('https://combinatronics.com/Dogatw/Scripts/main/TribalNukeScript.js');
 void(0)
