@@ -16,7 +16,7 @@ var forceEqualTroopCount = false,
         "light": 'max',
         "marcher": 'max',
         "heavy": '100',
-        "ram": 'max',
+        "ram": '230',
         "catapult": 'max'
     },
     /*Allowed troop inputs: numbers, 'min', 'max' and 'min!'. 'min!' will force at least one of this unit */ populationLim = 0;
