@@ -34,7 +34,7 @@ async function main() {
 
         var ratio = parseInt( popsend / pop);
         ratio = ratio > 1 ? 1 : ratio;
-        doc.forms[0].spear.value = SP * ratio;
+        doc.forms[0].spear.value = parseInt(SP * ratio);
         if (doc.forms[0].archer)
             doc.forms[0].archer.value = ARCH * ratio;
         doc.forms[0].heavy.value = HC * ratio;
