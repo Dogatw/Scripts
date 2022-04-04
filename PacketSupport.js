@@ -1,1 +1,147 @@
-var _0x301e=["\x23\x63\x6F\x6D\x6D\x61\x6E\x64\x2D\x64\x61\x74\x61\x2D\x66\x6F\x72\x6D\x20\x3E\x20\x74\x61\x62\x6C\x65","\x3C\x70\x20\x69\x64\x3D\x22\x70\x6C\x61\x79\x65\x72\x2D\x66\x61\x72\x6D\x2D\x77\x61\x72\x6E\x69\x6E\x67\x22\x3E","\x73\x70\x65\x61\x72","\x68\x65\x61\x76\x79","\x63\x61\x74","\x63\x61\x74\x61\x70\x75\x6C\x74","\x61\x72\x63\x68\x65\x72","\x73\x63\x6F\x75\x74","\x73\x70\x79","\x73\x77\x6F\x72\x64","\x75\x6E\x69\x74\x73","\x6D\x61\x74\x63\x68","\x69\x6E\x6E\x65\x72\x48\x54\x4D\x4C","\x61","\x67\x65\x74\x45\x6C\x65\x6D\x65\x6E\x74\x73\x42\x79\x54\x61\x67\x4E\x61\x6D\x65","\x70\x61\x72\x65\x6E\x74\x4E\x6F\x64\x65","\x6C\x65\x6E\x67\x74\x68","","\x30","\x66\x69\x6C\x74\x65\x72","\x76\x61\x6C\x75\x65","\x6D\x61\x70","\x75\x6E\x69\x74\x73\x49\x6E\x70\x75\x74","\x67\x65\x74\x45\x6C\x65\x6D\x65\x6E\x74\x73\x42\x79\x43\x6C\x61\x73\x73\x4E\x61\x6D\x65","\x66\x72\x6F\x6D","\x79\x6F\x75\x20\x63\x61\x6E\x27\x74\x20\x72\x75\x6E\x20\x74\x68\x65\x20\x73\x63\x72\x69\x70\x74\x20\x61\x67\x61\x69\x6E\x20\x69\x66\x20\x79\x6F\x75\x20\x68\x61\x76\x65\x6E\x27\x74\x20\x73\x65\x6E\x74\x20\x74\x68\x65\x20\x63\x75\x72\x72\x65\x6E\x74\x20\x70\x61\x63\x6B\x65\x74","\x64\x61\x74\x61\x62\x61\x73\x65\x20\x69\x73\x20\x6E\x6F\x74\x20\x69\x6E\x69\x74\x69\x61\x6C\x69\x7A\x65\x64\x21","\x69\x6E\x69\x74\x69\x61\x6C\x69\x7A\x65\x64","\x63\x61\x74\x63\x68","\x63\x6F\x6F\x72\x64\x73","\x6E\x6F\x20\x6D\x6F\x72\x65\x20\x63\x6F\x6F\x72\x64\x73","\x72\x65\x6C\x6F\x61\x64","\x6C\x6F\x63\x61\x74\x69\x6F\x6E","\x66\x6F\x72\x6D\x73","\x2D","\x73\x70\x6C\x69\x74","\x7C","\x78","\x79","\x68\x33","\x3C\x66\x6F\x6E\x74\x20\x63\x6F\x6C\x6F\x72\x3D\x62\x6C\x75\x65\x3E\x20\x63\x6F\x6F\x72\x64\x3A","\x20\x2D\x2D\x3E\x20\x70\x61\x63\x6B\x65\x74\x73\x20\x6E\x65\x65\x64\x65\x64\x3A\x28\x20","\x20\x20\x29\x3C\x2F\x66\x6F\x6E\x74\x3E","\x73\x70\x6C\x69\x63\x65","\x6C\x6F\x67","\x73\x74\x72\x69\x6E\x67\x69\x66\x79","\x63\x6F\x6F\x72\x64\x20\x6C\x65\x66\x74\x3A\x20","\x2C\x20\x70\x61\x63\x6B\x65\x74\x73\x20\x6C\x65\x66\x74\x3A\x20","\x53\x61\x6D\x20\x73\x61\x79\x73\x20\x6D\x61\x6B\x65\x20\x6D\x6F\x72\x65\x20\x64\x65\x66\x65\x6E\x73\x69\x76\x65\x20\x74\x72\x6F\x6F\x70\x73\x20\x79\x6F\x75\x20\x6E\x6F\x6F\x62","\x61\x6C\x65\x72\x74","\x55\x52\x4C","\x26","\x67\x61\x6D\x65\x2E\x70\x68\x70\x3F\x76\x69\x6C\x6C\x61\x67\x65\x3D\x6E","\x69\x64","\x76\x69\x6C\x6C\x61\x67\x65","\x67\x61\x6D\x65\x5F\x64\x61\x74\x61","\x26\x73\x63\x72\x65\x65\x6E\x3D\x70\x6C\x61\x63\x65","\x66\x6C\x6F\x6F\x72","\x61\x70\x70\x6C\x79","\x70\x75\x73\x68","\x68\x74\x74\x70\x73\x3A\x2F\x2F\x67\x65\x74\x70\x61\x6E\x74\x72\x79\x2E\x63\x6C\x6F\x75\x64\x2F\x61\x70\x69\x76\x31\x2F\x70\x61\x6E\x74\x72\x79\x2F","\x2F\x62\x61\x73\x6B\x65\x74\x2F","\x47\x45\x54","\x61\x70\x70\x6C\x69\x63\x61\x74\x69\x6F\x6E\x2F\x6A\x73\x6F\x6E","\x61\x6A\x61\x78","\x50\x4F\x53\x54","\x75\x70\x6C\x6F\x61\x64\x20\x63\x6F\x6F\x72\x64\x73"];var doc=document;let $warningSibling=$(_0x301e[0]);let $targetElement=$(_0x301e[1]);var SP=include[_0x301e[2]]?getTroop(_0x301e[2]):0;var HC=include[_0x301e[3]]?getTroop(_0x301e[3]):0;var CAT=include[_0x301e[4]]?getTroop(_0x301e[5]):0;var ARCH=include[_0x301e[6]]?getTroop(_0x301e[6]):0;var SPY=include[_0x301e[7]]?getTroop(_0x301e[8]):0;var SW=include[_0x301e[9]]?getTroop(_0x301e[9]):0;var pop=SP+ SW+ ARCH+ 8* CAT+ 4* HC;function getTroop(_0xa158xc){if(doc[_0x301e[10]][_0xa158xc]){return parseInt(doc[_0x301e[10]][_0xa158xc][_0x301e[15]][_0x301e[14]](_0x301e[13])[1][_0x301e[12]][_0x301e[11]](/\d+/),10)}}async function main(){let _0xa158xe=Array[_0x301e[24]](document[_0x301e[23]](_0x301e[22]))[_0x301e[21]]((_0xa158xf)=>{return _0xa158xf[_0x301e[20]]})[_0x301e[19]]((_0xa158xf)=>{return _0xa158xf!= _0x301e[17]&& _0xa158xf!= _0x301e[18]})[_0x301e[16]];if(_0xa158xe> 0){UI.ErrorMessage(_0x301e[25],2000);throw  new Error(_0x301e[25])};if(pop> minPop){let _0xa158x10= await readFile(filname_coords,pantryToken)[_0x301e[28]]((_0xa158x11)=>{alert(_0x301e[26]);throw  new Error(_0x301e[27])});let _0xa158x12=_0xa158x10[_0x301e[29]];if(_0xa158x12[_0x301e[16]]== 0){alert(_0x301e[30]);window[_0x301e[32]][_0x301e[31]]()}else {if(_0xa158x12[0]== _0x301e[17]){alert(_0x301e[30]);window[_0x301e[32]][_0x301e[31]]()}};var _0xa158x13=popsend/ pop;_0xa158x13= _0xa158x13> 1?1:_0xa158x13;doc[_0x301e[33]][0][_0x301e[2]][_0x301e[20]]= parseInt(SP* _0xa158x13);if(doc[_0x301e[33]][0][_0x301e[6]]){doc[_0x301e[33]][0][_0x301e[6]][_0x301e[20]]= parseInt(ARCH* _0xa158x13)};doc[_0x301e[33]][0][_0x301e[3]][_0x301e[20]]= parseInt(HC* _0xa158x13);doc[_0x301e[33]][0][_0x301e[9]][_0x301e[20]]= parseInt(SW* _0xa158x13);doc[_0x301e[33]][0][_0x301e[5]][_0x301e[20]]= parseInt(CAT* _0xa158x13);if(SPY>= nrScouts){doc[_0x301e[33]][0][_0x301e[8]][_0x301e[20]]= nrScouts};let _0xa158x14=0;for(let _0xa158x15=0;_0xa158x15< _0xa158x12[_0x301e[16]];_0xa158x15++){_0xa158x14+= parseInt(_0xa158x12[_0xa158x15][_0x301e[35]](_0x301e[34])[1])};var _0xa158x16=_0xa158x12[0][_0x301e[11]](/[0-9]{3}\|[0-9]{3}/)[0][_0x301e[35]](_0x301e[36]);doc[_0x301e[33]][0][_0x301e[37]][_0x301e[20]]= _0xa158x16[0];doc[_0x301e[33]][0][_0x301e[38]][_0x301e[20]]= _0xa158x16[1];let _0xa158x17=parseInt(_0xa158x12[0][_0x301e[35]](_0x301e[34])[1]);let _0xa158x18=_0xa158x12[0][_0x301e[35]](_0x301e[34])[0];doc[_0x301e[14]](_0x301e[39])[0][_0x301e[12]]= `${_0x301e[40]}${_0xa158x18}${_0x301e[41]}${_0xa158x17}${_0x301e[42]}`;if(_0xa158x17== 1){_0xa158x12[_0x301e[43]](0,1)}else {_0xa158x12[0]= _0xa158x18+ _0x301e[34]+ (_0xa158x17- 1)};_0xa158x12= arrayRotate(_0xa158x12,1);console[_0x301e[44]](_0xa158x12);let _0xa158x19={};_0xa158x19[_0x301e[29]]= _0xa158x12;uploadFile(JSON[_0x301e[45]](_0xa158x19),filname_coords,pantryToken);UI.SuccessMessage(_0x301e[46]+ _0xa158x12[_0x301e[16]]+ _0x301e[47]+ _0xa158x14)}else {if(alertWhenDone= 1){window[_0x301e[49]](_0x301e[48])};if(nextVillageWhenDone){var _0xa158x1a=doc[_0x301e[50]][_0x301e[11]](/t=\d+/);_0xa158x1a= _0xa158x1a?_0x301e[51]+ _0xa158x1a:_0x301e[17];window[_0x301e[32]]= _0x301e[52]+ window[_0x301e[55]][_0x301e[54]][_0x301e[53]]+ _0x301e[56]+ _0xa158x1a}}}main();function arrayRotate(_0xa158x1c,_0xa158x1d){_0xa158x1d-= _0xa158x1c[_0x301e[16]]* Math[_0x301e[57]](_0xa158x1d/ _0xa158x1c[_0x301e[16]]);_0xa158x1c[_0x301e[59]][_0x301e[58]](_0xa158x1c,_0xa158x1c[_0x301e[43]](0,_0xa158x1d));return _0xa158x1c}function readFile(_0xa158x1f,_0xa158x20){return  new Promise((_0xa158x21,_0xa158x22)=>{$[_0x301e[64]]({url:`${_0x301e[60]}${_0xa158x20}${_0x301e[61]}${_0xa158x1f}${_0x301e[17]}`,type:_0x301e[62],headers:{"\x43\x6F\x6E\x74\x65\x6E\x74\x2D\x54\x79\x70\x65":_0x301e[63]},async:false,success:(_0xa158x10)=>{console[_0x301e[44]](_0xa158x10);_0xa158x21(_0xa158x10)},error:(_0xa158x23)=>{console[_0x301e[44]](_0xa158x23);UI.ErrorMessage(_0xa158x23);_0xa158x22(_0xa158x23)}})})}function uploadFile(_0xa158x10,_0xa158x1f,_0xa158x20){return  new Promise((_0xa158x21,_0xa158x22)=>{$[_0x301e[64]]({url:`${_0x301e[60]}${_0xa158x20}${_0x301e[61]}${_0xa158x1f}${_0x301e[17]}`,type:_0x301e[65],data:_0xa158x10,async:false,headers:{"\x43\x6F\x6E\x74\x65\x6E\x74\x2D\x54\x79\x70\x65":_0x301e[63]},success:(_0xa158x25)=>{console[_0x301e[44]](_0xa158x25);UI.SuccessMessage(_0x301e[66],1000);_0xa158x21(_0xa158x25)},error:(_0xa158x23)=>{console[_0x301e[44]](_0xa158x23);UI.ErrorMessage(_0xa158x23);_0xa158x22(_0xa158x23)}})})}
+var doc = document;
+var $warningSibling = $('#command-data-form > table')
+var $targetElement = $('<p id="player-farm-warning">');
+var SP = include.spear?getTroop("spear"):0;
+var HC = include.heavy?getTroop("heavy"):0;
+var CAT=include.cat?getTroop("catapult"):0;
+var ARCH = include.archer?getTroop("archer"):0;
+var SPY=include.scout?getTroop("spy"):0;
+var SW =include.sword?getTroop("sword"):0;
+var pop=SP+SW+ARCH+8*CAT+4*HC;
+
+
+/*var doc = (window.frames.length > 0) ? window.main.document: document;*/
+
+function getTroop(a){
+	if(doc.units[a])
+		return parseInt (doc.units[a].parentNode.getElementsByTagName("a")[1].innerHTML.match(/\d+/), 10);
+}
+
+async function main(){
+    let availableTroop = Array.from(document.getElementsByClassName("unitsInput")).map(e=> e.value).filter(e=> e != '' && e !='0').length
+    if (availableTroop > 0){
+        UI.ErrorMessage("you can't run the script again if you haven't sent the current packet",2000)
+        throw new Error("you can't run the script again if you haven't sent the current packet")
+    }
+
+	if(pop>minPop)
+	{
+		let data=await readFile(filname_coords,pantryToken).catch(error=>{
+            alert("database is not initialized!")
+            throw new Error("initialized")})
+        let targets=data.coords
+		if(targets.length==0){
+			alert("no more coords")
+			window.location.reload()
+		}else if(targets[0]==""){
+			alert("no more coords")
+			window.location.reload()
+		}
+
+		var ratio=popsend/pop;
+		ratio=ratio>1?1:ratio;
+		doc.forms[0].spear.value=parseInt(SP*ratio);
+		if(doc.forms[0].archer)
+			doc.forms[0].archer.value=parseInt(ARCH*ratio);
+		doc.forms[0].heavy.value=parseInt(HC*ratio);
+		doc.forms[0].sword.value=parseInt(SW*ratio);
+		doc.forms[0].catapult.value=parseInt(CAT*ratio);
+        if(SPY >= nrScouts)
+		    doc.forms[0].spy.value=nrScouts;
+		
+		let total_packets=0;
+		for(let i=0;i<targets.length;i++){
+			total_packets+=parseInt(targets[i].split("-")[1])
+		}
+
+
+		var coord = targets[0].match(/[0-9]{3}\|[0-9]{3}/)[0].split("|");
+		doc.forms[0].x.value = coord[0];
+		doc.forms[0].y.value = coord[1];
+		let packetsNeeded=parseInt(targets[0].split("-")[1])
+		let coord2=targets[0].split("-")[0]
+
+		doc.getElementsByTagName("h3")[0].innerHTML = `<font color=blue> coord:${coord2} --> packets needed:( ${packetsNeeded}  )</font>`;
+		
+		if(packetsNeeded == 1)
+			targets.splice(0,1)//remove from list
+		else{
+			targets[0]= coord2 +"-"+ (packetsNeeded-1)
+		}
+		targets=arrayRotate(targets,1)
+		console.log(targets)
+		let dataUpload={}
+        dataUpload.coords=targets
+        uploadFile(JSON.stringify(dataUpload),filname_coords,pantryToken)
+		UI.SuccessMessage("coord left: "+ targets.length +", packets left: "+total_packets)
+		
+	}
+
+	else
+	{
+		if(alertWhenDone = 1)
+			window.alert('Sam says make more defensive troops you noob');
+		if(nextVillageWhenDone)
+		{
+			var sitter = doc.URL.match(/t=\d+/);
+			sitter=sitter ? "&" + sitter : "";
+			window.location="game.php?village=n" + window.game_data.village.id + "&screen=place" + sitter
+		}
+
+	}
+
+}
+main()
+
+
+function arrayRotate(arr, count) {
+	count -= arr.length * Math.floor(count / arr.length);
+	arr.push.apply(arr, arr.splice(0, count));
+	return arr;
+  }
+
+
+function readFile(filename,pantryToken){
+    return new Promise((resolve,reject)=>{
+        $.ajax({
+            url : `https://getpantry.cloud/apiv1/pantry/${pantryToken}/basket/${filename}`,
+            type: "GET",
+            headers:{"Content-Type": "application/json"},
+            async: false,
+            success: (data)=>{
+                console.log(data)
+                // UI.SuccessMessage("get coords")
+                resolve(data)
+
+            },
+            error: (err)=>{
+                console.log(err)
+                UI.ErrorMessage(err)
+                reject(err)
+
+            }
+        });
+    })
+}
+
+function uploadFile(data,filename,pantryToken){
+    return new Promise((resolve,reject)=>{
+        $.ajax({
+            url : `https://getpantry.cloud/apiv1/pantry/${pantryToken}/basket/${filename}`,
+            type: "POST",
+            data : data,
+            async: false,
+            headers:{"Content-Type": "application/json"},
+            success: (response)=>{
+                console.log(response)
+                UI.SuccessMessage("upload coords",1000)
+                resolve(response)
+            },
+            error: (err)=>{
+                console.log(err)
+                UI.ErrorMessage(err)
+                reject(err)
+            }
+        });
+    })
+}
