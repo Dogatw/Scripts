@@ -1,1 +1,285 @@
-var _0x88e6=["\x77\x6F\x72\x6C\x64","\x73\x63\x72\x65\x65\x6E","\x70\x6C\x61\x63\x65","\x54\x68\x69\x73\x20\x73\x63\x72\x69\x70\x74\x20\x6D\x75\x73\x74\x20\x62\x65\x20\x72\x75\x6E\x20\x66\x72\x6F\x6D\x20\x74\x68\x65\x20\x72\x61\x6C\x6C\x79\x20\x70\x6F\x69\x6E\x74\x2E\x0A\x52\x75\x6E\x6E\x69\x6E\x67\x20\x64\x75\x72\x69\x6E\x67\x20\x63\x6F\x6D\x6D\x61\x6E\x64\x20\x65\x78\x65\x63\x75\x74\x69\x6F\x6E\x20\x77\x69\x6C\x6C\x20\x61\x64\x64\x20\x6D\x69\x6C\x6C\x69\x73\x65\x63\x6F\x6E\x64\x20\x61\x73\x73\x69\x73\x74\x2E\x0A\x52\x75\x6E\x6E\x69\x6E\x67\x20\x61\x66\x74\x65\x72\x20\x63\x6F\x6D\x6D\x61\x6E\x64\x20\x65\x78\x63\x65\x63\x75\x74\x69\x6F\x6E\x20\x77\x69\x6C\x6C\x20\x73\x68\x6F\x77\x20\x79\x6F\x75\x20\x62\x79\x20\x68\x6F\x77\x20\x6D\x61\x6E\x79\x20\x6D\x69\x6C\x6C\x69\x73\x65\x63\x6F\x6E\x64\x73\x20\x79\x6F\x75\x20\x6D\x69\x73\x73\x65\x64\x20\x74\x68\x65\x20\x74\x61\x72\x67\x65\x74\x2E","\x6C\x65\x6E\x67\x74\x68","\x74\x72\x79\x3D","\x73\x70\x6C\x69\x74","\x68\x72\x65\x66","\x6C\x6F\x63\x61\x74\x69\x6F\x6E","\x6D\x69\x73\x73\x4D\x69\x6C\x6C\x69\x73","\x3C\x64\x69\x76\x20\x73\x74\x79\x6C\x65\x3D\x22\x70\x6F\x73\x69\x74\x69\x6F\x6E\x3A\x20\x61\x62\x73\x6F\x6C\x75\x74\x65\x3B\x20\x7A\x2D\x69\x6E\x64\x65\x78\x3A\x20\x35\x30\x3B\x20\x77\x69\x64\x74\x68\x3A\x20","\x69\x6E\x6E\x65\x72\x57\x69\x64\x74\x68","\x70\x78\x3B\x20\x68\x65\x69\x67\x68\x74\x3A","\x69\x6E\x6E\x65\x72\x48\x65\x69\x67\x68\x74","\x70\x78\x3B\x70\x6F\x69\x6E\x74\x65\x72\x2D\x65\x76\x65\x6E\x74\x73\x3A\x20\x6E\x6F\x6E\x65\x22\x3E\x3C\x2F\x64\x69\x76\x3E","\x62\x65\x66\x6F\x72\x65","\x23\x64\x73\x5F\x62\x6F\x64\x79","\x69\x6E\x6E\x65\x72\x48\x54\x4D\x4C","\x2E\x72\x65\x6C\x61\x74\x69\x76\x65\x5F\x74\x69\x6D\x65","\x67\x65\x74\x54\x69\x6D\x65","\x23\x73\x65\x63\x6F\x6E\x64\x5F\x64\x69\x73\x70\x6C\x61\x79","\x3A","\x76\x61\x6C\x75\x65","\x23\x68\x69\x74\x5F\x69\x6E\x70\x75\x74","\x23\x6F\x66\x66\x73\x65\x74\x5F\x69\x6E\x70\x75\x74","\x6D\x69\x6C\x6C\x69\x73\x5F\x63\x61\x6E\x76\x61\x73","\x67\x65\x74\x45\x6C\x65\x6D\x65\x6E\x74\x42\x79\x49\x64","\x32\x64","\x67\x65\x74\x43\x6F\x6E\x74\x65\x78\x74","\x63\x6C\x65\x61\x72\x52\x65\x63\x74","\x70\x61\x72\x65\x6E\x74","\x23\x64\x61\x74\x65\x5F\x61\x72\x72\x69\x76\x61\x6C","\x63\x68\x69\x6C\x64\x72\x65\x6E","\x5F\x68\x69\x74\x4D\x73","\x5F\x6F\x66\x66\x73\x65\x74\x4D\x73","\x63\x6F\x6C\x73\x70\x61\x6E","\x61\x74\x74\x72","\x5B\x63\x6F\x6C\x73\x70\x61\x6E\x5D","\x73\x65\x74\x41\x74\x74\x72\x69\x62\x75\x74\x65","\x54\x44","\x63\x72\x65\x61\x74\x65\x45\x6C\x65\x6D\x65\x6E\x74","\x43\x41\x4E\x56\x41\x53","\x72\x6F\x77\x73\x70\x61\x6E","\x63\x72\x65\x61\x74\x65\x41\x74\x74\x72\x69\x62\x75\x74\x65","\x69\x64","\x73\x74\x79\x6C\x65","\x48\x32","\x68\x65\x69\x67\x68\x74\x3A\x31\x35\x30\x70\x78\x3B\x77\x69\x64\x74\x68\x3A\x31\x35\x30\x70\x78","\x73\x65\x74\x41\x74\x74\x72\x69\x62\x75\x74\x65\x4E\x6F\x64\x65","\x70\x6F\x73\x69\x74\x69\x6F\x6E\x3A\x72\x65\x6C\x61\x74\x69\x76\x65\x3B\x62\x6F\x74\x74\x6F\x6D\x3A\x31\x30\x35\x70\x78\x3B\x6C\x65\x66\x74\x3A\x36\x32\x70\x78","\x73\x65\x63\x6F\x6E\x64\x5F\x64\x69\x73\x70\x6C\x61\x79","\x61\x70\x70\x65\x6E\x64\x43\x68\x69\x6C\x64","\x42\x55\x54\x54\x4F\x4E","\x74\x79\x70\x65","\x6F\x6E\x63\x6C\x69\x63\x6B","\x63\x6C\x61\x73\x73","\x77\x69\x64\x74\x68\x3A\x36\x30\x70\x78","\x62\x75\x74\x74\x6F\x6E","\x54\x72\x79","\x70\x72\x61\x63\x74\x69\x63\x65\x46\x75\x6E\x63\x74\x69\x6F\x6E\x28\x29","\x70\x72\x61\x63\x74\x69\x63\x65\x5F\x62\x75\x74\x74\x6F\x6E","\x62\x74\x6E\x20\x62\x74\x6E\x2D\x72\x65\x63\x72\x75\x69\x74","\x77\x69\x64\x74\x68\x3A\x38\x30\x70\x78\x3B","\x53\x50\x41\x4E","\x49\x4E\x50\x55\x54","\x74\x69\x74\x6C\x65","\x6F\x6E\x63\x68\x61\x6E\x67\x65","\x74\x65\x78\x74","\x68\x69\x74\x5F\x69\x6E\x70\x75\x74","\x4D\x69\x6C\x6C\x69\x73\x65\x63\x6F\x6E\x64\x20\x74\x6F\x20\x68\x69\x74","\x73\x65\x74\x43\x6F\x6F\x6B\x69\x65\x73\x28\x29","","\x77\x69\x64\x74\x68\x3A\x33\x30\x70\x78","\x77\x69\x64\x74\x68\x3A\x31\x30\x36\x70\x78","\x48\x69\x74\x28\x6D\x73\x29\x3A","\x6F\x66\x66\x73\x65\x74\x5F\x69\x6E\x70\x75\x74","\x52\x65\x6D\x6F\x76\x65\x20\x6C\x61\x67\x20\x61\x6E\x64\x20\x73\x79\x6E\x63\x68\x72\x6F\x6E\x69\x7A\x65\x20\x6C\x6F\x63\x61\x6C\x20\x74\x69\x6D\x65\x20\x77\x69\x74\x68\x20\x54\x57\x2D\x74\x69\x6D\x65","\x4F\x66\x66\x73\x65\x74\x3A","\x6D\x69\x73\x73\x5F\x64\x69\x73\x70\x6C\x61\x79","\x77\x69\x64\x74\x68\x3A\x33\x35\x70\x78","\x30","\x2E\x76\x69\x6C\x6C\x61\x67\x65\x5F\x61\x6E\x63\x68\x6F\x72","\x6F\x6E\x73\x75\x62\x6D\x69\x74","\x43\x6F\x75\x6E\x64\x20\x6E\x6F\x74\x20\x66\x69\x6E\x64\x20\x74\x61\x62\x6C\x65\x2E\x2E\x2E\x0A","\x6C\x6F\x67","\x52\x65\x73\x65\x74","\x23\x70\x72\x61\x63\x74\x69\x63\x65\x5F\x62\x75\x74\x74\x6F\x6E","\x2D","\x2B","\x23\x6D\x69\x73\x73\x5F\x64\x69\x73\x70\x6C\x61\x79","\x62\x65\x67\x69\x6E\x50\x61\x74\x68","\x61\x72\x63","\x73\x74\x72\x6F\x6B\x65","\x73\x65\x74\x54\x69\x6D\x65","\x65\x78\x70\x69\x72\x65\x73\x3D","\x74\x6F\x55\x54\x43\x53\x74\x72\x69\x6E\x67","\x63\x6F\x6F\x6B\x69\x65","\x3D","\x3B","\x73\x75\x62\x73\x74\x72\x69\x6E\x67","\x63\x68\x61\x72\x41\x74","\x20","\x69\x6E\x64\x65\x78\x4F\x66"];var millisReference,changeMillis,lastChange,timerInterval,startupInterval,lastArrival,first=true,changed=false,worldNr=game_data[_0x88e6[0]];if(game_data[_0x88e6[1]]!= _0x88e6[2]){alert(_0x88e6[3])}else {if(window[_0x88e6[8]][_0x88e6[7]][_0x88e6[6]](_0x88e6[5])[_0x88e6[4]]== 2){addTimer()}else {if(localStorage[_0x88e6[9]]== undefined){}else {alert(localStorage[_0x88e6[9]])}}};$(_0x88e6[16])[_0x88e6[15]](`${_0x88e6[10]}`+ window[_0x88e6[11]]+ `${_0x88e6[12]}`+ window[_0x88e6[13]]+ `${_0x88e6[14]}`);function timer(){var _0xb758xb=$(_0x88e6[18])[0][_0x88e6[17]],_0xb758xc= new Date(),_0xb758xd=_0xb758xc[_0x88e6[19]]();if(lastArrival!= _0xb758xb&& changed== false){$(_0x88e6[20])[0][_0x88e6[17]]= _0xb758xb[_0x88e6[6]](_0x88e6[21])[2];changeMillis= _0xb758xd;changed= true};if((_0xb758xd- changeMillis>= Number($(_0x88e6[23])[0][_0x88e6[22]])+ Number($(_0x88e6[24])[0][_0x88e6[22]]))&& (changed== true)){changed= false;resetTimer(_0xb758xb,false);return};if(_0xb758xd- 5> lastChange){startCanvas(lastChange- millisReference,_0xb758xd- millisReference);lastChange= _0xb758xd}else {return}}function resetTimer(_0xb758xb,_0xb758xf){clearInterval(timerInterval);lastArrival= _0xb758xb;var _0xb758xc= new Date();millisReference= _0xb758xc[_0x88e6[19]]();lastChange= _0xb758xc[_0x88e6[19]]();first= true;if(_0xb758xf){startupInterval= setInterval(startupTimer,2)}else {var _0xb758x10=document[_0x88e6[26]](_0x88e6[25]),_0xb758x11=_0xb758x10[_0x88e6[28]](_0x88e6[27]);_0xb758x11[_0x88e6[29]](0,0,160,160);timerInterval= setInterval(timer,2)}}function startupTimer(){var _0xb758xb=$(_0x88e6[18])[0][_0x88e6[17]],_0xb758xc= new Date(),_0xb758xd=_0xb758xc[_0x88e6[19]]();if(lastArrival!= _0xb758xb&& changed== false){changed= true;$(_0x88e6[20])[0][_0x88e6[17]]= _0xb758xb[_0x88e6[6]](_0x88e6[21])[2];changeMillis= _0xb758xd};if((_0xb758xd- changeMillis>= Number($(_0x88e6[23])[0][_0x88e6[22]])+ Number($(_0x88e6[24])[0][_0x88e6[22]]))&& (changed== true)){clearInterval(startupInterval);resetTimer(_0xb758xb,false);return}}function addTimer(){try{var _0xb758x14=$(_0x88e6[31])[_0x88e6[30]]()[_0x88e6[30]]()[0],_0xb758x15=_0xb758x14[_0x88e6[32]][_0xb758x14[_0x88e6[32]][_0x88e6[4]]- 1],_0xb758x16=[worldNr+ _0x88e6[33],worldNr+ _0x88e6[34]];_0xb758x14[_0x88e6[32]][0][_0x88e6[32]][0][_0x88e6[38]](_0x88e6[35],Number($(_0x88e6[37],_0xb758x14)[_0x88e6[36]](_0x88e6[35])[0])+ 4);var _0xb758x17=document[_0x88e6[40]](_0x88e6[39]),_0xb758x18=document[_0x88e6[40]](_0x88e6[41]),_0xb758x19=document[_0x88e6[43]](_0x88e6[42]),_0xb758x1a=document[_0x88e6[43]](_0x88e6[35]),_0xb758x1b=document[_0x88e6[43]](_0x88e6[44]),_0xb758x1c=document[_0x88e6[43]](_0x88e6[45]),_0xb758x1d=document[_0x88e6[40]](_0x88e6[46]),_0xb758x1e=document[_0x88e6[43]](_0x88e6[45]),_0xb758x1f=document[_0x88e6[43]](_0x88e6[44]);_0xb758x19[_0x88e6[22]]= _0xb758x14[_0x88e6[32]][_0x88e6[4]]- 2;_0xb758x1a[_0x88e6[22]]= 4;_0xb758x1b[_0x88e6[22]]= _0x88e6[25];_0xb758x1c[_0x88e6[22]]= _0x88e6[47];_0xb758x17[_0x88e6[48]](_0xb758x19);_0xb758x17[_0x88e6[48]](_0xb758x1a);_0xb758x18[_0x88e6[48]](_0xb758x1b);_0xb758x1e[_0x88e6[22]]= _0x88e6[49];_0xb758x1f[_0x88e6[22]]= _0x88e6[50];_0xb758x1d[_0x88e6[48]](_0xb758x1f);_0xb758x1d[_0x88e6[48]](_0xb758x1e);_0xb758x17[_0x88e6[51]](_0xb758x18);_0xb758x17[_0x88e6[51]](_0xb758x1d);var _0xb758x20=document[_0x88e6[40]](_0x88e6[39]),_0xb758x21=document[_0x88e6[43]](_0x88e6[45]),_0xb758x22=document[_0x88e6[40]](_0x88e6[52]),_0xb758x23=document[_0x88e6[43]](_0x88e6[53]),_0xb758x24=document[_0x88e6[43]](_0x88e6[22]),_0xb758x25=document[_0x88e6[43]](_0x88e6[54]),_0xb758x26=document[_0x88e6[43]](_0x88e6[44]),_0xb758x27=document[_0x88e6[43]](_0x88e6[55]),_0xb758x28=document[_0x88e6[43]](_0x88e6[45]);_0xb758x21[_0x88e6[22]]= _0x88e6[56];_0xb758x20[_0x88e6[48]](_0xb758x21);_0xb758x23[_0x88e6[22]]= _0x88e6[57];_0xb758x24[_0x88e6[22]]= _0x88e6[58];_0xb758x25[_0x88e6[22]]= _0x88e6[59];_0xb758x26[_0x88e6[22]]= _0x88e6[60];_0xb758x27[_0x88e6[22]]= _0x88e6[61];_0xb758x28[_0x88e6[22]]= _0x88e6[62];_0xb758x22[_0x88e6[48]](_0xb758x23);_0xb758x22[_0x88e6[48]](_0xb758x24);_0xb758x22[_0x88e6[48]](_0xb758x26);_0xb758x22[_0x88e6[48]](_0xb758x25);_0xb758x22[_0x88e6[48]](_0xb758x27);_0xb758x22[_0x88e6[48]](_0xb758x28);_0xb758x22[_0x88e6[17]]= _0x88e6[58];_0xb758x20[_0x88e6[51]](_0xb758x22);var _0xb758x29=document[_0x88e6[40]](_0x88e6[39]),_0xb758x2a=document[_0x88e6[40]](_0x88e6[63]),_0xb758x2b=document[_0x88e6[40]](_0x88e6[64]),_0xb758x2c=document[_0x88e6[43]](_0x88e6[53]),_0xb758x2d=document[_0x88e6[43]](_0x88e6[45]),_0xb758x2e=document[_0x88e6[43]](_0x88e6[45]),_0xb758x2f=document[_0x88e6[43]](_0x88e6[65]),_0xb758x30=document[_0x88e6[43]](_0x88e6[22]),_0xb758x31=document[_0x88e6[43]](_0x88e6[66]),_0xb758x32=document[_0x88e6[43]](_0x88e6[44]);_0xb758x2c[_0x88e6[22]]= _0x88e6[67];_0xb758x32[_0x88e6[22]]= _0x88e6[68];_0xb758x2f[_0x88e6[22]]= _0x88e6[69];_0xb758x31[_0x88e6[22]]= _0x88e6[70];var _0xb758x33=getCookie(_0xb758x16[0]);if(_0xb758x33== _0x88e6[71]){_0xb758x33= 0};_0xb758x30[_0x88e6[22]]= _0xb758x33;_0xb758x2b[_0x88e6[48]](_0xb758x2c);_0xb758x2b[_0x88e6[48]](_0xb758x32);_0xb758x2b[_0x88e6[48]](_0xb758x2f);_0xb758x2b[_0x88e6[48]](_0xb758x30);_0xb758x2b[_0x88e6[48]](_0xb758x31);_0xb758x2d[_0x88e6[22]]= _0x88e6[72];_0xb758x2e[_0x88e6[22]]= _0x88e6[73];_0xb758x2b[_0x88e6[48]](_0xb758x2d);_0xb758x29[_0x88e6[48]](_0xb758x2e);_0xb758x2a[_0x88e6[17]]= _0x88e6[74];_0xb758x29[_0x88e6[51]](_0xb758x2a);_0xb758x29[_0x88e6[51]](_0xb758x2b);var _0xb758x34=document[_0x88e6[40]](_0x88e6[39]),_0xb758x35=document[_0x88e6[40]](_0x88e6[63]),_0xb758x36=document[_0x88e6[40]](_0x88e6[64]),_0xb758x37=document[_0x88e6[43]](_0x88e6[53]),_0xb758x38=document[_0x88e6[43]](_0x88e6[45]),_0xb758x39=document[_0x88e6[43]](_0x88e6[45]),_0xb758x3a=document[_0x88e6[43]](_0x88e6[65]),_0xb758x3b=document[_0x88e6[43]](_0x88e6[22]),_0xb758x3c=document[_0x88e6[43]](_0x88e6[66]),_0xb758x3d=document[_0x88e6[43]](_0x88e6[44]);_0xb758x37[_0x88e6[22]]= _0x88e6[67];_0xb758x3d[_0x88e6[22]]= _0x88e6[75];_0xb758x3a[_0x88e6[22]]= _0x88e6[76];_0xb758x3c[_0x88e6[22]]= _0x88e6[70];var _0xb758x3e=getCookie(_0xb758x16[1]);if(_0xb758x3e== _0x88e6[71]){_0xb758x3e= 0};_0xb758x3b[_0x88e6[22]]= _0xb758x3e;_0xb758x36[_0x88e6[48]](_0xb758x37);_0xb758x36[_0x88e6[48]](_0xb758x3d);_0xb758x36[_0x88e6[48]](_0xb758x3a);_0xb758x36[_0x88e6[48]](_0xb758x3b);_0xb758x36[_0x88e6[48]](_0xb758x3c);_0xb758x38[_0x88e6[22]]= _0x88e6[72];_0xb758x39[_0x88e6[22]]= _0x88e6[73];_0xb758x36[_0x88e6[48]](_0xb758x38);_0xb758x34[_0x88e6[48]](_0xb758x39);_0xb758x35[_0x88e6[17]]= _0x88e6[77];_0xb758x34[_0x88e6[51]](_0xb758x35);_0xb758x34[_0x88e6[51]](_0xb758x36);var _0xb758x3f=document[_0x88e6[40]](_0x88e6[39]),_0xb758x40=document[_0x88e6[40]](_0x88e6[63]),_0xb758x41=document[_0x88e6[43]](_0x88e6[45]),_0xb758x42=document[_0x88e6[43]](_0x88e6[44]);_0xb758x42[_0x88e6[22]]= _0x88e6[78];_0xb758x41[_0x88e6[22]]= _0x88e6[79];_0xb758x40[_0x88e6[48]](_0xb758x42);_0xb758x3f[_0x88e6[48]](_0xb758x41);_0xb758x40[_0x88e6[17]]= _0x88e6[80];_0xb758x3f[_0x88e6[51]](_0xb758x40);$(_0x88e6[81])[_0x88e6[30]]()[_0x88e6[30]]()[0][_0x88e6[51]](_0xb758x17);_0xb758x15[_0x88e6[51]](_0xb758x20);_0xb758x15[_0x88e6[51]](_0xb758x29);_0xb758x15[_0x88e6[51]](_0xb758x34);_0xb758x15[_0x88e6[51]](_0xb758x3f);$(_0x88e6[16])[0][_0x88e6[38]](_0x88e6[82],_0x88e6[59]);resetTimer($(_0x88e6[18])[0][_0x88e6[17]],true)}catch(err){console[_0x88e6[84]](_0x88e6[83]+ err)}}function practiceFunction(){var _0xb758xc= new Date(),_0xb758xd=_0xb758xc[_0x88e6[19]](),_0xb758x44,_0xb758x45=[_0x88e6[58],_0x88e6[85]],_0xb758x46=$(_0x88e6[86])[0];if(_0xb758x46[_0x88e6[17]]== _0xb758x45[0]){clearInterval(timerInterval);_0xb758x46[_0x88e6[17]]= _0xb758x45[1];if(_0xb758xd- millisReference> 500){_0xb758x44= _0x88e6[87]+ String(1000- (_0xb758xd- millisReference))}else {_0xb758x44= _0x88e6[88]+ String(_0xb758xd- millisReference)};localStorage[_0x88e6[9]]= _0xb758x44;$(_0x88e6[89])[0][_0x88e6[17]]= _0xb758x44}else {_0xb758x46[_0x88e6[17]]= _0xb758x45[0];resetTimer($(_0x88e6[18])[0][_0x88e6[17]],true)}}function startCanvas(_0xb758x48,_0xb758x49){var _0xb758x10=document[_0x88e6[26]](_0x88e6[25]),_0xb758x11=_0xb758x10[_0x88e6[28]](_0x88e6[27]),_0xb758x4a=-1.6;if(first){first= false;_0xb758x48= 0};_0xb758x11[_0x88e6[90]]();_0xb758x11[_0x88e6[91]](75,75,50,_0xb758x4a+ _0xb758x48/ 100000* 628,_0xb758x4a+ _0xb758x49/ 100000* 628);_0xb758x11[_0x88e6[92]]()}function setCookies(){var _0xb758xc= new Date();_0xb758xc[_0x88e6[93]](_0xb758xc[_0x88e6[19]]()+ (31* 6* 24* 60* 60* 1000));var _0xb758x4c=_0x88e6[94]+ _0xb758xc[_0x88e6[95]]();var _0xb758x16=[worldNr+ _0x88e6[33],worldNr+ _0x88e6[34]],_0xb758x4d=[$(_0x88e6[23])[0][_0x88e6[22]],$(_0x88e6[24])[0][_0x88e6[22]]];document[_0x88e6[96]]= _0xb758x16[0]+ _0x88e6[97]+ _0xb758x4d[0]+ _0x88e6[98]+ _0xb758x4c+ _0x88e6[98];document[_0x88e6[96]]= _0xb758x16[1]+ _0x88e6[97]+ _0xb758x4d[1]+ _0x88e6[98]+ _0xb758x4c+ _0x88e6[98]}function getCookie(_0xb758x16){var _0xb758x4f=_0xb758x16+ _0x88e6[97];var _0xb758x50=document[_0x88e6[96]][_0x88e6[6]](_0x88e6[98]);for(var _0xb758x51=0;_0xb758x51< _0xb758x50[_0x88e6[4]];_0xb758x51++){var _0xb758x10=_0xb758x50[_0xb758x51];while(_0xb758x10[_0x88e6[100]](0)== _0x88e6[101]){_0xb758x10= _0xb758x10[_0x88e6[99]](1)};if(_0xb758x10[_0x88e6[102]](_0xb758x4f)=== 0){return _0xb758x10[_0x88e6[99]](_0xb758x4f[_0x88e6[4]],_0xb758x10[_0x88e6[4]])}};return _0x88e6[71]}
+var millisReference,
+	changeMillis,
+	lastChange,
+	timerInterval,
+	startupInterval,
+	lastArrival,
+	first = true,
+	changed = false,
+	worldNr = game_data.world;
+
+if(game_data.screen != 'place'){
+	alert("This script must be run from the rally point.\nRunning during command execution will add millisecond assist.\nRunning after command excecution will show you by how many milliseconds you missed the target.");
+}
+else if(window.location.href.split('try=').length == 2){
+	addTimer();
+}
+else{
+	if(localStorage.missMillis == undefined){}
+	else{alert(localStorage.missMillis);}
+}
+$("#ds_body").before(`<div style="position: absolute; z-index: 50; width: `+ window.innerWidth + `px; height:`+ window.innerHeight + `px;pointer-events: none"></div>`);
+function timer(){
+	var arrival = $(".relative_time")[0].innerHTML,
+		d = new Date(),
+		now = d.getTime();
+	if(lastArrival != arrival && changed == false){
+		$("#second_display")[0].innerHTML = arrival.split(":")[2];
+		changeMillis = now;
+		changed = true;
+	}
+	if((now - changeMillis >= Number($("#hit_input")[0].value) + Number($("#offset_input")[0].value)) && (changed == true)){
+		changed = false;
+		resetTimer(arrival, false);
+		return;
+	}
+	if(now - 5 > lastChange){
+		startCanvas(lastChange - millisReference, now - millisReference);
+		lastChange = now;
+	}
+	else{
+		return;
+	}
+}
+function resetTimer(arrival, start){
+	clearInterval(timerInterval);
+	lastArrival = arrival;
+	var d = new Date();
+	millisReference = d.getTime();
+	lastChange = d.getTime();
+	first = true;
+	if(start){
+		startupInterval = setInterval(startupTimer, 2);
+	}
+	else{
+		var c = document.getElementById("millis_canvas"),
+			ctx = c.getContext("2d");
+		ctx.clearRect(0, 0, 160, 160);
+		timerInterval = setInterval(timer, 2);
+	}
+	
+}
+
+function startupTimer(){
+	var arrival = $(".relative_time")[0].innerHTML,
+		d = new Date(),
+		now = d.getTime();
+	if(lastArrival != arrival && changed == false){
+		changed = true;
+		$("#second_display")[0].innerHTML = arrival.split(":")[2];
+		changeMillis = now;
+	}
+	if((now - changeMillis >= Number($("#hit_input")[0].value) + Number($("#offset_input")[0].value)) && (changed == true)){
+		clearInterval(startupInterval);
+		resetTimer(arrival, false);
+		return;	
+	}
+}
+
+function addTimer(){
+	try{
+		var tableBody = $('#date_arrival').parent().parent()[0],
+			lastRow = tableBody.children[tableBody.children.length-1],
+			cname = [worldNr+'_hitMs', worldNr+'_offsetMs'];
+		tableBody.children[0].children[0].setAttribute('colspan', Number($('[colspan]', tableBody).attr('colspan')[0])+4);
+		
+		//Create canvas:
+		var canvasTd = document.createElement('TD'),
+			canvasCanvas = document.createElement('CANVAS'),
+			canvasRowspan = document.createAttribute('rowspan'),
+			canvasColspan = document.createAttribute('colspan'),
+			canvasId = document.createAttribute('id'),
+			canvasStyle = document.createAttribute('style'),
+			secondDisplay = document.createElement('H2'),
+			secondStyle = document.createAttribute('style'),
+			secondId = document.createAttribute('id');
+		canvasRowspan.value = tableBody.children.length-2;
+		canvasColspan.value = 4;
+		canvasId.value = 'millis_canvas';
+		canvasStyle.value = 'height:150px;width:150px'
+		canvasTd.setAttributeNode(canvasRowspan);
+		canvasTd.setAttributeNode(canvasColspan);
+		canvasCanvas.setAttributeNode(canvasId);
+		secondStyle.value = 'position:relative;bottom:105px;left:62px';
+		secondId.value = 'second_display';
+		secondDisplay.setAttributeNode(secondId);
+		secondDisplay.setAttributeNode(secondStyle);
+		canvasTd.appendChild(canvasCanvas);
+        canvasTd.appendChild(secondDisplay);
+        
+		
+		//Create practice button:
+		var pbTd = document.createElement('TD'),
+			pbTdStyle = document.createAttribute('style'),
+			pbButton = document.createElement('BUTTON'),
+			pbType = document.createAttribute('type'),
+			pbValue = document.createAttribute('value'),
+			pbOnclick = document.createAttribute('onclick'),
+			pbId = document.createAttribute('id'),
+			pbClass = document.createAttribute('class'),
+			pbStyle = document.createAttribute('style');
+		pbTdStyle.value = 'width:60px';
+		pbTd.setAttributeNode(pbTdStyle);
+		pbType.value = 'button';
+		pbValue.value = 'Try';
+		pbOnclick.value = 'practiceFunction()';
+		pbId.value = 'practice_button';
+		pbClass.value = 'btn btn-recruit';
+		pbStyle.value = 'width:80px;';
+		pbButton.setAttributeNode(pbType);
+		pbButton.setAttributeNode(pbValue);
+		pbButton.setAttributeNode(pbId);
+		pbButton.setAttributeNode(pbOnclick);
+		pbButton.setAttributeNode(pbClass);
+		pbButton.setAttributeNode(pbStyle);
+		pbButton.innerHTML = 'Try';
+		pbTd.appendChild(pbButton);
+		
+		//Create hittime input
+		var hitTd = document.createElement('TD'),
+			hitText = document.createElement('SPAN'),
+			hitInput = document.createElement('INPUT'),
+			hitType = document.createAttribute('type'),
+			hitInputStyle = document.createAttribute('style'),
+			hitStyle = document.createAttribute('style'),
+			hitTitle = document.createAttribute('title'),
+			hitValue = document.createAttribute('value'),
+			hitOnchange = document.createAttribute('onchange'),
+			hitId = document.createAttribute('id');
+		hitType.value = 'text';
+		hitId.value = 'hit_input';
+		hitTitle.value = 'Millisecond to hit';
+		hitOnchange.value = 'setCookies()';
+		var hitDefault = getCookie(cname[0]);
+		if(hitDefault == ""){hitDefault = 0;}
+		hitValue.value = hitDefault;
+		hitInput.setAttributeNode(hitType);
+		hitInput.setAttributeNode(hitId);
+		hitInput.setAttributeNode(hitTitle);
+		hitInput.setAttributeNode(hitValue);
+		hitInput.setAttributeNode(hitOnchange);
+		hitInputStyle.value = 'width:30px';
+		hitStyle.value = 'width:106px';
+		hitInput.setAttributeNode(hitInputStyle);
+		hitTd.setAttributeNode(hitStyle);
+		hitText.innerHTML = 'Hit(ms):';
+		hitTd.appendChild(hitText);
+		hitTd.appendChild(hitInput);
+		
+		//create offset input
+		var offsetTd = document.createElement('TD'),
+			offsetText = document.createElement('SPAN'),
+			offsetInput = document.createElement('INPUT'),
+			offsetType = document.createAttribute('type'),
+			offsetInputStyle = document.createAttribute('style'),
+			offsetStyle = document.createAttribute('style'),
+			offsetTitle = document.createAttribute('title'),
+			offsetValue = document.createAttribute('value'),
+			offsetOnchange = document.createAttribute('onchange'),
+			offsetId = document.createAttribute('id');
+		offsetType.value = 'text';
+		offsetId.value = 'offset_input';
+		offsetTitle.value = 'Remove lag and synchronize local time with TW-time';
+		offsetOnchange.value = 'setCookies()';
+		var offsetDefault = getCookie(cname[1]);
+		if(offsetDefault == ""){offsetDefault = 0;}
+		offsetValue.value = offsetDefault;
+		offsetInput.setAttributeNode(offsetType);
+		offsetInput.setAttributeNode(offsetId);
+		offsetInput.setAttributeNode(offsetTitle);
+		offsetInput.setAttributeNode(offsetValue);
+		offsetInput.setAttributeNode(offsetOnchange);
+		offsetInputStyle.value = 'width:30px';
+		offsetStyle.value = 'width:106px'
+		offsetInput.setAttributeNode(offsetInputStyle);
+		offsetTd.setAttributeNode(offsetStyle);
+		offsetText.innerHTML = 'Offset:';
+		offsetTd.appendChild(offsetText);
+		offsetTd.appendChild(offsetInput);
+		
+		//Create misstime display:
+		var missTd = document.createElement('TD'),
+			missSpan = document.createElement('SPAN'),
+			missStyle = document.createAttribute('style'),
+			missId = document.createAttribute('id');
+		missId.value = 'miss_display';
+		missStyle.value = 'width:35px';
+		missSpan.setAttributeNode(missId);
+		missTd.setAttributeNode(missStyle);
+		missSpan.innerHTML = '0';
+		missTd.appendChild(missSpan);
+			
+			
+		$('.village_anchor').parent().parent()[0].appendChild(canvasTd);
+		lastRow.appendChild(pbTd);
+		//lastRow.appendChild(rbTd);
+		lastRow.appendChild(hitTd);
+		lastRow.appendChild(offsetTd);
+		lastRow.appendChild(missTd);
+		$('#ds_body')[0].setAttribute('onsubmit', 'practiceFunction()');
+		resetTimer($(".relative_time")[0].innerHTML, true);
+	}
+	catch(err){
+		console.log('Cound not find table...\n'+err);
+	}
+}
+
+function practiceFunction(){
+	var d = new Date(),
+		now = d.getTime(),
+		missMillis,
+		buttonText = ['Try', 'Reset'],
+		buttonDOM = $('#practice_button')[0];
+	
+	if(buttonDOM.innerHTML == buttonText[0]){
+		clearInterval(timerInterval);
+		buttonDOM.innerHTML = buttonText[1];
+		if(now - millisReference > 500){
+			missMillis = '-'+String(1000 - (now - millisReference));
+		}
+		else{
+			missMillis = '+'+String(now - millisReference);
+		}
+		localStorage.missMillis = missMillis;
+		$("#miss_display")[0].innerHTML = missMillis;
+	}
+	else{
+		buttonDOM.innerHTML = buttonText[0];
+		resetTimer($(".relative_time")[0].innerHTML, true);
+	}
+}
+
+function startCanvas(lastMillis, currentMillis){
+	var c = document.getElementById("millis_canvas"),
+		ctx = c.getContext("2d"),
+		circleReference = -1.6;
+	if(first){first=false;lastMillis=0;}
+	ctx.beginPath();
+	ctx.arc(75, 75, 50, circleReference + lastMillis/100000 * 628, circleReference + currentMillis/100000 * 628);
+	ctx.stroke();
+}
+
+function setCookies(){
+    var d = new Date();
+    d.setTime(d.getTime() + (31*6*24*60*60*1000));
+    var expires = 'expires='+ d.toUTCString();
+	
+	var cname = [worldNr+'_hitMs', worldNr+'_offsetMs'],
+		cvalue = [$("#hit_input")[0].value, $("#offset_input")[0].value];
+	
+    document.cookie = cname[0]+'='+cvalue[0]+';'+expires+';';
+	document.cookie = cname[1]+'='+cvalue[1]+';'+expires+';';
+}
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1);
+        if (c.indexOf(name) === 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
