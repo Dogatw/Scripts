@@ -32,5 +32,5 @@ var minTroops={
     "ram": '0',
     "catapult": '10'
 };
-$.getScript('https://combinatronics.com/Dogatw/Scripts/main/TribalNukeScript.js');
+$.getScript('https://raw.githack.com/Dogatw/Scripts/main/TribalNukeScript.js');
 void(0)
