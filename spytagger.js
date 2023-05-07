@@ -1,9 +1,9 @@
 var listAccessPlayer=[
     "Pronouns are Imp",
-    "Out of your League",
+    "Andrew Tate",
     "Grelod the Kind",
     "Effrey Jeppstein",
-    "CrownMe",
+    "CalamityJane",
     "B0aty",
     
 ];
