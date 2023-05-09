@@ -9,7 +9,7 @@ var forceEqualTroopCount = false,
     forceRamSpeed = true,
     troops = {
         "spear": '0',
-        "sword": '100',
+        "sword": '0',
         "axe": 'max',
         "archer": '0',
         "spy": '5',
