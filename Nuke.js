@@ -15,7 +15,7 @@ var forceEqualTroopCount = false,
         "spy": '5',
         "light": 'max',
         "marcher": '0',
-        "heavy": '100',
+        "heavy": '0',
         "ram": '230',
         "catapult": 'max'
     },
