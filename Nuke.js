@@ -12,7 +12,7 @@ var forceEqualTroopCount = false,
         "sword": '100',
         "axe": 'max',
         "archer": '0',
-        "spy": 'max',
+        "spy": '5',
         "light": 'max',
         "marcher": '0',
         "heavy": '100',
@@ -23,14 +23,14 @@ var forceEqualTroopCount = false,
 var minTroops={
     "spear": '0',
     "sword": '0',
-    "axe": '0',
+    "axe": '3000',
     "archer": '0',
     "spy": '0',
-    "light": '0',
+    "light": '1000',
     "marcher": '0',
     "heavy": '0',
-    "ram": '0',
-    "catapult": '10'
+    "ram": '100',
+    "catapult": '0'
 };
 $.getScript('https://raw.githack.com/Dogatw/Scripts/main/TribalNukeScript.js');
 void(0)
