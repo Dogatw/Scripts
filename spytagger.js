@@ -4,6 +4,7 @@ var listAccessPlayer=[
     "Grelod the Kind",
     "Effrey Jeppstein",
     "CalamityJane",
+    "BarbKiller100",
     "B0aty",
     "CrownMe", 
      ];
