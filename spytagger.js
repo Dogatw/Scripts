@@ -3,6 +3,7 @@ var listAccessPlayer=[
     "Andrew Tate",
     "Grelod the Kind",
     "Effrey Jeppstein",
+    "Out of your League",
     "CalamityJane",
     "BarbKiller100",
     "B0aty",
