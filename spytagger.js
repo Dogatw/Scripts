@@ -5,7 +5,7 @@ var listAccessPlayer=[
     "Effrey Jeppstein",
     "Out of your League",
     "CalamityJane",
-    "BarbKiller100",
+    "W3Kapatan derya.",
     "B0aty",
     "CrownMe", 
      ];
