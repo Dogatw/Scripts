@@ -1,7 +1,7 @@
 /*Approved link for script below
 https://forum.tribalwars.net/index.php?threads/rally-point-form-filling-nuke-script.287514/
 */
-var pantryToken = "c91de6f7-f678-444a-97a9-85386b318de8"; 
+var pantryToken = "e66867a2-cbfb-42c5-9e58-91def796d00a"; 
 var databaseName = "NAM";
 var filname_coords = game_data.world + databaseName + "_coords_nuke_script";
 var forceEqualTroopCount = false,
