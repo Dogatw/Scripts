@@ -1,7 +1,7 @@
 var listAccessPlayer=[
     ".-Horizon-.",
-    "Andrew Tate",
-    "Grelod the Kind",
+    "testyourmight",
+    "Nova Noir",
     "Effrey Jeppstein",
     "Out of your League",
     "CalamityJane",
