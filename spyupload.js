@@ -1,5 +1,5 @@
 var listAccessPlayer=[
-    "Pronouns are Imp",
+    ".-Horizon-.",
     "Andrew Tate",
     "Grelod the Kind",
     "Effrey Jeppstein",
