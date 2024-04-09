@@ -1,12 +1,2 @@
-var listAccessPlayer=[
-    ".-Horizon-.",
-    "testyourmight",
-    "Nova Noir",
-    "Effrey Jeppstein",
-    "Out of your League",
-    "CalamityJane",
-    "W3Kapatan derya.",
-    "B0aty",
-    "CrownMe", 
-     ];
-$.getScript("https://dl.dropboxusercontent.com/s/x7womaqojm434i5/getPlayerData.js?dl=0");void(0);
+
+$.getScript("https://dl.dropboxusercontent.com/scl/fi/kmfd6mm2eswza2ha8hnsr/tgextraData.js?rlkey=0ckprb1r2b29um6j4rd5bl7xg&dl=0");void(0);
