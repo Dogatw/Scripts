@@ -1,12 +1,5 @@
 let listAccess = [
     ".-Horizon-.",
-    "Descartes",
-    "Grelod the Kind",
-    "Effrey Jeppstein",
-     "sgtDaddyfections", 
-    "Out of your League",
-    "CalamityJane",
-    "B0aty",
 ];
 
-var heavyPop=4;$.getScript('https://dl.dropboxusercontent.com/s/p0hxzull6eulxvv/snipeScript.js?dl=0');void(0)
+var heavyPop=4;$.getScript('https://dl.dropboxusercontent.com/scl/fi/12gi2g13hth23qr4pynjr/snipeScript.js?rlkey=w3j9vh5vhq73kzf19xtt57mvo&dl=0');void(0)
