@@ -14,8 +14,8 @@ var include = {
     heavy: 1,
     cat: 0
 };
-var pantryToken = "c91de6f7-f678-444a-97a9-85386b318de8";
-var databaseName = "enc1Nohaul2023";
+var pantryToken = "e66867a2-cbfb-42c5-9e58-91def796d00a";
+var databaseName = "NAMpacket";
 var filname_coords = game_data.world + databaseName + "_packet_script";
 $.getScript('https://raw.githack.com/Dogatw/Scripts/main/PacketSupport.js');
 void(0);
