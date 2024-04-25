@@ -1,6 +1,6 @@
 var listAccessPlayer=[
     ".-Horizon-.",
-    "testyourmight",
+    "Hate",
     "Nova Noir",
     "Dirty Martini",
     "Out of your League",
