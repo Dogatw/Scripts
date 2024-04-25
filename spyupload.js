@@ -2,7 +2,7 @@ var listAccessPlayer=[
     ".-Horizon-.",
     "testyourmight",
     "Nova Noir",
-    "Effrey Jeppstein",
+    "Dirty Martini",
     "Out of your League",
     "CalamityJane",
     "W3Kapatan derya.",
