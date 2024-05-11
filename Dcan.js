@@ -1,12 +1,13 @@
-let time;
+let time,inputMn,delay;
 
 
 function clickcancel() {
     var can = $("a.command-cancel");
     can.click();
-    console.log(time);
+    console.log(delay);
 }
 
-setTimeout(clickcancel, time);
+setTimeout(clickcancel, delay);
 
-prompt("Please enter desired arrival time", time);
+inputMn = parseInt(prompt("Please enter approximate minutes", "00"));
+delay = parseInt(inputMn)*1000;
