@@ -9,6 +9,6 @@ function clickcancel() {
     console.log(delay);
 }
 
-setTimeout(clickcancel, delay);
+setTimeout(clickcancel, 10000);
 
 
