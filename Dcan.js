@@ -1,4 +1,4 @@
-var inputMn = parseInt(prompt("Please enter approximate minutes", "00"));
+var inputMn = prompt("Please enter approximate minutes", "00");
 
 
 
