@@ -1,4 +1,4 @@
-var inputMn = prompt("Please enter approximate minutes", "0");
+var inputMn = prompt("Please enter approximate minutes", "4");
 var delay = inputMn*1000*60
 
 
