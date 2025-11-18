@@ -10631,7 +10631,7 @@ function convertBuildTime(milliseconds){
 
 function convertDate(date){
     let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    let monthIndex = date.split("/")[0]-1
+    let monthIndex = date.split("/")[0]
     let dayIndex = date.split("/")[1]
     let time = date.split(" ")[1]
     console.log(date)  
@@ -11011,4 +11011,5 @@ async function uploadOwnTroops(){
     })
 
 }
+
 
