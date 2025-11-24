@@ -1,5 +1,5 @@
-var delayInclosetab = timeBetween(2,10);
-var delayInclick = timeBetween(15,100);
+var delayInclosetab = timeBetween(1,3);
+var delayInclick = timeBetween(15,70);
 
 var coord = document.getElementsByClassName('village-item');
 
@@ -40,4 +40,5 @@ function timeBetween(inferior, superior) {
     var numPossibilities = (superior * 1000) - (inferior * 1000);
     var aleat = Math.random() * numPossibilities;
     return Math.round(parseInt(inferior * 1000) + aleat);
+
 }
