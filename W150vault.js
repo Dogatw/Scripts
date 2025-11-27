@@ -1,6 +1,8 @@
 //new codex
 //var encryptedData='U2FsdGVkX1+bTmtD6k2I310BRz2MFFm86HcDgNEYuwXcPjFA6mrh6EQGZwp9sKf5JAMCD5vDexmUMqhm5EQ6dSweLvT6GL1deQ8ydPB8MCRP7IedKwNiOAQt4sD00hhixoGcOjtcO4Y86us1RKI4BYBwGo3kIQQhqYRq3DqybiqvZomxR9wNrZw/5/dwjaK6eikhiqqL1PfwmkV8VBqNUT9/EvCiArrZre/dZK8rsajnhgiM7RAmWoRB0QYHDMshbT0G2bUSS18B1DJEAu8ldO25ZIckZjjjG0KvL22VkrE=';
-
+var listAccessPlayer=[
+    "Cousin",
+     ];
 //old dj codex
 var encryptedData = 'U2FsdGVkX196OMk8CYMYfe3wfjgROQZZV09Sgh/fsJwctmxto+enFnDgYrF9GTywZxM9SEHyhHpplFFssOwFo8Y+5LX8n+x037XRxBt96ri1Dax0GUqnnd5IpFgqsq/QISRTe+O3ppb1TJiPF8z9RqYZMlseta4ccxGtLW30GcUqnMaxK3Za9FqK+csUldZgr5YcFhcG6dzCWkeS9YOi6gMv0+5Dq9vgSU2u0C7wt/8RlcMJmFCKtX9rP1COZCuTDQ5yaPUesIiwUyZsiFBuLaVtz3Ju67keJJh570kIs7o4BXdxDTKVk7Pp2NqvkYaU'; 
 //fetch 
