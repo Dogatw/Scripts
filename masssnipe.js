@@ -5,9 +5,6 @@ let listAccess = [
      ];
 
 //$.getScript('https://dl.dropboxusercontent.com/scl/fi/12gi2g13hth23qr4pynjr/snipeScript.js?rlkey=w3j9vh5vhq73kzf19xtt57mvo&dl=0');void(0)
-let listAccess = ["Plopmaster", "Cousin", "99jr12", ];
-
-//$.getScript('https://dl.dropboxusercontent.com/scl/fi/12gi2g13hth23qr4pynjr/snipeScript.js?rlkey=w3j9vh5vhq73kzf19xtt57mvo&dl=0');void(0)
 const _0x490575 = _0x41a8;
 (function(_0x14f538, _0x3ff94c) {
     const _0x52f453 = _0x41a8
