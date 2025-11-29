@@ -1,4 +1,4 @@
- ! function() {
+javascript: ! function() {
         "use strict";
 
         function a() {
