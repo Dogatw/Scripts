@@ -35,7 +35,7 @@ var dropboxToken = '',
         throw new Error(_0x5bcfaf(0x1f2));
     }
     console[_0x5bcfaf(0x533)](_0x5bcfaf(0x398), worldNumber);
-    if (game_data[_0x5bcfaf(0x429)][_0x5bcfaf(0x538)](/\d+/)[0x0] != worldNumber) throw new Error(_0x5bcfaf(0x50e));
+    if (game_data[_0x5bcfaf(0x429)][_0x5bcfaf(0x538)](/\d+/)[0x0] != worldNumber) //throw new Error(_0x5bcfaf(0x50e));
     getInterface(), hitCountApi(), filename_reports = databaseName + _0x5bcfaf(0x64e), filename_incomings = databaseName + '/Incomings.gz', filename_users = databaseName + _0x5bcfaf(0x240), filename_support = databaseName + _0x5bcfaf(0x45c), filename_commands_attack = databaseName + _0x5bcfaf(0x1db), filename_troops_home = databaseName + _0x5bcfaf(0x357), filename_status_upload = databaseName + _0x5bcfaf(0x54f), filename_history_upload = databaseName + '/history_upload.gz', filename_commands = databaseName + _0x5bcfaf(0x24e), listCommandsAttacks = [], commandsAttacksPromises = [], listSupport = [], supportPromises = [], nrFiles = 0x2;
     for (let _0x4c97e1 = 0x0; _0x4c97e1 < nrFiles; _0x4c97e1++) {
         let _0x3c3ca5 = databaseName + _0x5bcfaf(0x53a) + _0x4c97e1 + _0x5bcfaf(0x415);
