@@ -3676,7 +3676,554 @@ async function getCommandsSharing() {
     });
 }
 async function uploadSupports() 
+{
+    document.getElementById("progress_support").innerText="Getting data...";
 
+    var mapCommandsSharing = await getCommandsSharing()
+    var [mapVillages, data_support,data_attack,mapStatus]=await Promise.all([
+        getInfoVillages(), 
+        readFileDropbox(filename_support),
+        readFileDropbox(filename_commands_attack),
+        readFileDropbox(filename_status_upload),
+    ]).catch(err=>{alert(err)})
+
+    let data_attack_batch = await Promise.all(commandsAttacksPromises).catch(err=>{alert(err)})
+    let data_support_batch = await Promise.all(supportPromises).catch(err=>{alert(err)})
+
+    var result_commands=await getCommandsGoing().catch(err=>{alert(err);throw err})
+    // console.log("result_commands",result_commands)
+    var map_going=result_commands[0]
+    var map_going_attacks=result_commands[1]
+
+    let map_support_dropbox,map_troops_home_dropbox
+    try {
+        let decompressedData = await decompress(await data_support.arrayBuffer() , 'gzip');  
+        map_support_dropbox=new Map(JSON.parse(decompressedData)[0])
+        map_troops_home_dropbox =new Map(JSON.parse(decompressedData)[1])   
+    } catch (error) {
+        console.log("erorrrrrrrrrrrrrrrr map report from dropbox")
+        map_support_dropbox=new Map()
+        map_troops_home_dropbox=new Map()
+    }
+
+    //merge batch commands attacks (EXTRA files) 
+    for(let i=0;i<data_support_batch.length;i++){
+        let decompressedData = await decompress(await data_support_batch[i].arrayBuffer() , 'gzip');  
+
+        if(decompressedData != "[]"){
+            let map_support_batch = new Map(JSON.parse(decompressedData)[0])
+            let map_troops_home_batch = new Map(JSON.parse(decompressedData)[1])
+
+            map_support_dropbox = new Map([...map_support_dropbox, ...map_support_batch])
+            map_troops_home_dropbox = new Map([...map_troops_home_dropbox, ...map_troops_home_batch])
+        }      
+
+        let fileName = `${databaseName}/Support${i}.txt`
+        if(await localBase.getItem(fileName) != undefined){
+            try {
+                let decompressedDataBase64 = base64ToBlob(await localBase.getItem(fileName))
+                let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+                let map_localBase=new Map( JSON.parse(decompressedData));
+    
+                // console.log("map_localBase_support",map_localBase)
+                map_support_dropbox=new Map([...map_localBase, ...map_support_dropbox])
+            } catch (error) {
+                
+            }
+        }
+        fileName = `${databaseName}/Support${i}.txtHome`
+        if(await localBase.getItem(fileName) != undefined){
+            try {
+                let decompressedDataBase64 = base64ToBlob(await localBase.getItem(fileName))
+                let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+                let map_localBase=new Map( JSON.parse(decompressedData));
+    
+                // console.log("map_localBase_troops home",map_localBase)
+                map_troops_home_dropbox=new Map([...map_localBase, ...map_troops_home_dropbox])
+            } catch (error) {
+                
+            }
+        }
+    }
+
+    // console.log("first: map_support_dropbox", map_support_dropbox)
+
+
+    //if  database is stored locally
+    if(await localBase.getItem(game_data.world+"map_support_dropbox")!=undefined){
+        try{
+            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "map_support_dropbox"))
+            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+    
+            let map_localBase=new Map( JSON.parse(decompressedData));
+            // console.log("map_support_dropbox history upload",map_localBase)
+            map_support_dropbox=new Map([...map_localBase, ...map_support_dropbox])
+        } catch (error) {
+            let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "map_support_dropbox"))));
+            map_support_dropbox=new Map([...map_localBase, ...map_support_dropbox])
+        }
+
+    }
+    if(await localBase.getItem(game_data.world+"map_troops_home_dropbox")!=undefined){
+        try{
+            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "map_troops_home_dropbox"))
+            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+    
+            let map_localBase=new Map( JSON.parse(decompressedData));
+            // console.log("map_troops_home_dropbox history upload",map_localBase)
+            map_troops_home_dropbox=new Map([...map_localBase, ...map_troops_home_dropbox])
+        } catch (error) {
+            let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "map_troops_home_dropbox"))));
+            map_troops_home_dropbox=new Map([...map_localBase, ...map_troops_home_dropbox])
+        }
+    }
+
+    try {
+        let decompressedData = await decompress(await mapStatus.arrayBuffer() , 'gzip');  
+        mapStatus=new Map( JSON.parse(decompressedData));
+    } catch (error) {
+        console.log("erorrr map report from dropbox")
+        mapStatus=new Map()
+    }
+
+    let map_support_uploaded=new Map()
+    Array.from(map_support_dropbox.keys()).forEach(key=>{
+        let list_coming=map_support_dropbox.get(key)
+        for(let i=0;i<list_coming.length;i++){
+            if(list_coming[i].type_attack.includes("support")){
+                map_support_uploaded.set(list_coming[i].commandId,list_coming[i].troops)
+            }
+        }
+    })
+    // console.log("map_support_uploaded", map_support_uploaded)
+
+    // console.log("getSupportAndAttacks")
+    var resultSupport = await getSupportsAndAttacks().catch(err=>{alert(err);throw err})
+    // console.log(" finish getSupportAndAttacks")
+    // console.log("map_going: " + map_going)
+    // console.log("resultSupport", resultSupport)
+
+    // console.log("second: map_support_dropbox", map_support_dropbox)
+
+
+    var map_coming = resultSupport.map_outgoing_support
+    var map_troops_home=new Map()
+    // console.log("map_coming",map_coming)
+    // console.log("map_support_dropbox",map_support_dropbox)
+
+    //for each support coming get all troops
+    var keys=Array.from(map_coming.keys())
+    let start_get_troops=new Date().getTime()
+
+    // console.log(keys)
+    // console.log("mapCommandsSharing", mapCommandsSharing)
+    const run = async () => {
+        console.log("Starting...");
+        for (let i = 0; i < keys.length; i++) {
+            let list_support=map_coming.get(keys[i])
+            console.log(list_support)
+            for(let j=0;j<list_support.length;j++){
+                console.log(list_support[j].player_origin_name.trim())
+
+                //get troops coming
+                if(list_support[j].type_attack.includes("support") &&  
+                    !map_support_uploaded.has(list_support[j].commandId) &&
+                    !map_going.has(list_support[j].commandId) &&
+                    (mapCommandsSharing.has(list_support[j].player_origin_name.trim()))
+                 ){
+                    let troops = await ajaxTroopsComing(list_support[j].commandId)
+                    console.log("troops comming")
+                    console.log(troops)
+                    list_support[j].troops = troops
+                    UI.SuccessMessage("info coord: "+(keys.length-i)+" , get troops coming "+(list_support.length-j))
+                }
+                else if(list_support[j].type_attack.includes("support") &&
+                        map_support_uploaded.has(list_support[j].commandId)
+                ){//update support comming if already exists in dropbox
+                    console.log("update troops coming")
+                    let objTroops = map_support_uploaded.get(list_support[j].commandId)
+                    list_support[j].troops = objTroops
+
+                }
+                else if (list_support[j].type_attack.includes("attack")) {//type_attack=="attack"
+                    try {//in case a barb is taken and tw database is not yet updated will throw an error
+                        let villageId=mapVillages.get(list_support[j].coord_destination).villageId
+                        if(!map_troops_home.has(list_support[j].coord_destination)){
+                            let obj = await ajaxTroopsStationed(villageId)
+                            console.log("troops home")
+                            console.log(obj)
+        
+                            let serverTime=document.getElementById("serverTime").innerText
+                            let serverDate=document.getElementById("serverDate").innerText.split("/")
+                            serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
+                            let date_current=new Date(serverDate+" "+serverTime)
+                            date_current.setDate(date_current.getDate()+7)
+        
+                            obj.uploadTime=date_current.getTime()
+                            map_troops_home.set(list_support[j].coord_destination,obj)
+                            UI.SuccessMessage("info coord: "+(keys.length-i)+" , get troops home "+(list_support.length-j))
+        
+                        }   
+                    } catch (error) {
+                        console.log(error)
+                    }
+
+                }
+            }
+            map_coming.set(keys[i],list_support)
+            
+        }
+        console.log("Done!");
+    };
+    await run();
+    var stop_get_troops=new Date().getTime()
+    console.log("time get troops "+(stop_get_troops-start_get_troops))
+
+    console.log("support outgoing")
+    console.log(map_going)
+    console.log("support coming")
+    console.log(map_coming)
+    console.log("troops home")
+    console.log(map_troops_home)
+
+    //merge map_going and map_coming
+    if(map_going !=undefined){// no commands going
+        Array.from(map_going.keys()).forEach(key=>{
+            let obj_going=map_going.get(key)
+            if(map_coming.has(obj_going.coord_destination)){
+                // console.log("map coming update coord")
+                let list_coming=map_coming.get(obj_going.coord_destination)
+                for(let i=0;i<list_coming.length;i++){
+                    if(key==list_coming[i].commandId){
+                        list_coming[i].troops = obj_going.troops
+                        map_coming.set(obj_going.coord_destination, list_coming)
+                        break;
+                    }
+                }
+            }else{
+                map_coming.set(obj_going.coord_destination,[obj_going])
+                // console.log("map coming add coord")
+    
+            }
+            
+        })
+        console.log("support coming after merge")
+        // console.log(map_coming)
+
+    }
+
+
+
+    let map_attack_dropbox = new Map()
+    /////////////////////////////////////////////////////////////////////////get and prelucrate  map commands attacks//////////////
+    try {
+        let decompressedData = await decompress(await data_attack.arrayBuffer() , 'gzip');  
+        map_attack_dropbox=new Map(JSON.parse(decompressedData))
+
+    } catch (error) {
+        console.log("erorrrrr map attack from dropbox")
+        map_attack_dropbox=new Map()
+    }
+
+    //if  database is stored locally
+    if(await localBase.getItem(game_data.world+"map_attack_dropbox")!=undefined){
+        try{
+            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "map_attack_dropbox"))
+            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+    
+            let map_localBase=new Map( JSON.parse(decompressedData));
+            // console.log("map_attack_dropbox upload",map_localBase)
+            map_attack_dropbox=new Map([...map_localBase, ...map_attack_dropbox])
+        } catch (error) {
+            let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "map_attack_dropbox"))));
+            map_attack_dropbox=new Map([...map_localBase, ...map_attack_dropbox])
+        }
+    }
+    console.log("map_attack_dropbox", map_attack_dropbox)
+
+
+    // console.log(data_attack_batch.length)
+    //merge batch commands attacks
+    for(let i=0;i<data_attack_batch.length;i++){
+        let decompressedData = await decompress(await data_attack_batch[i].arrayBuffer() , 'gzip');  
+
+        if(data_attack_batch[i] != "[]"){
+            let map_attacks_batch = new Map(JSON.parse(decompressedData))
+            map_attack_dropbox = new Map([...map_attack_dropbox, ...map_attacks_batch])
+        }   
+
+        let fileName = `${databaseName}/Commands_attack${i}.txt`
+        if(await localBase.getItem(fileName) != undefined){
+            try {
+                let decompressedDataBase64 = base64ToBlob(await localBase.getItem(fileName))
+                let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+                let map_localBase=new Map( JSON.parse(decompressedData));
+                // console.log("map_localBase_attacks",map_localBase)
+                map_attack_dropbox=new Map([...map_localBase, ...map_attack_dropbox])
+            } catch (error) {
+            }
+        }
+    }
+    // console.log("map_attack_dropbox", map_attack_dropbox)
+
+
+
+    console.log("map_going_attacks",map_going_attacks)
+
+    if(map_going_attacks !=undefined){// no commands going
+        Array.from(map_going_attacks.keys()).forEach(key=>{
+            try {
+                let obj=map_going_attacks.get(key)
+                obj.coord_destination_id=mapVillages.get(obj.coord_destination).villageId
+                obj.player_destination_name=mapVillages.get(obj.coord_destination).playerName
+                obj.player_destination_id=mapVillages.get(obj.coord_destination).playerId
+                map_attack_dropbox.set(key,obj)
+            } catch (error) {
+                console.log("command attack to barb")
+                console.log(error)
+            }
+        })
+    }
+    
+
+
+
+
+   
+
+
+    return new Promise(async(resolve,reject)=>{
+
+        // console.log("map_dropbox_coming")
+        // console.log(map_support_dropbox)
+        // console.log("map_dropbox_home")
+        // console.log(map_troops_home_dropbox)
+
+        
+        let serverTime=document.getElementById("serverTime").innerText
+        let serverDate=document.getElementById("serverDate").innerText.split("/")
+        serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
+        let date_current=new Date(serverDate+" "+serverTime).getTime()
+        let date_current_commands=serverDate+" "+serverTime
+
+
+
+        map_troops_home_dropbox=new Map([...map_troops_home_dropbox, ...map_troops_home])
+        // console.log("map_troops_home_dropbox merge")
+        // console.log(map_troops_home_dropbox)
+        //delete from map troops home if it's older than a week
+        Array.from(map_troops_home_dropbox.keys()).forEach(key=>{
+            if(date_current>map_troops_home_dropbox.get(key).uploadTime){
+                map_troops_home_dropbox.delete(key)
+            }
+        })
+
+
+        // update map from dropbox with the new data
+        Array.from(map_coming.keys()).forEach(key=>{
+            let list_coming=map_coming.get(key)
+            if(map_support_dropbox.has(key)){
+                let list_dropbox=map_support_dropbox.get(key)
+                list_dropbox=list_dropbox.concat(list_coming)
+                console.log(list_dropbox)
+                var list_concat =[...new Map(list_dropbox.map(item => [item["commandId"], item])).values()]
+                // console.log("list concat")
+                list_concat.sort((o1,o2)=>{
+                    return (new Date(o1.landing_time).getTime()>new Date(o2.landing_time).getTime())?1:
+                    (new Date(o1.landing_time).getTime()<new Date(o2.landing_time).getTime())?-1:0
+                })
+                // console.log(list_concat)
+                if(list_concat.length==0){
+                    map_support_dropbox.delete(key)
+                    console.log("list is empty, removed")
+                }  
+                else
+                    map_support_dropbox.set(key,list_concat)
+            }
+            else{
+                console.log("list coming")
+                list_coming.sort((o1,o2)=>{
+                    return (new Date(o1.landing_time).getTime()>new Date(o2.landing_time).getTime())?1:
+                    (new Date(o1.landing_time).getTime()<new Date(o2.landing_time).getTime())?-1:0
+                })
+                // console.log(list_coming)
+                map_support_dropbox.set(key,list_coming)
+            }
+        })
+        // console.log("map_support_dropbox", map_support_dropbox)
+
+        //if a command arrived  delete from map
+        Array.from(map_support_dropbox.keys()).forEach(key=>{
+            let list_support=map_support_dropbox.get(key)
+            // console.log(list_support)
+            if(list_support.length==0){
+                console.log(map_support_dropbox.has(key))
+                map_support_dropbox.delete(key)
+                // console.log(map_support_dropbox.has(key))
+
+                console.log(key)
+                console.log("delete coord from map support dropbox")
+            }
+            else{
+                for(let i=0;i<list_support.length;i++){
+                    let date_land=new Date(list_support[i].landing_time).getTime()
+                    if(date_current>date_land || list_support[i].landing_time == ""){
+                        list_support.splice(i,1)
+                        i--;
+                    }
+                 
+                }
+                map_support_dropbox.set(key,list_support)
+            }
+
+        })
+        // console.log(map_support_dropbox)
+        //delete  map commands attacks if it's older than 1 week
+        Array.from(map_attack_dropbox.keys()).forEach(key=>{
+            let obj=map_attack_dropbox.get(key)
+            let date_upload=new Date(obj.uploadTime).getTime()
+
+            if(date_current > date_upload)
+                map_attack_dropbox.delete(key)
+        })
+
+        //update status map
+        let obj_status={
+            name:game_data.player.name,
+            command_date:date_current_commands,
+        }
+        
+
+        if(mapStatus.has(game_data.player.id.toString())){
+            let obj_update=mapStatus.get(game_data.player.id.toString())
+            mapStatus.set(game_data.player.id.toString(), {...obj_update, ...obj_status} )
+        }
+        else{
+            mapStatus.set(game_data.player.id.toString(),obj_status)
+        }
+
+
+        UI.SuccessMessage("compressing database, wait few seconds",2000)
+        
+        let timeStartUpload = new Date().getTime()
+        let data_status=JSON.stringify(Array.from(mapStatus.entries()))
+
+        let commandsAttacks = Array.from(map_attack_dropbox.entries())
+        let commandsSupport = Array.from(map_support_dropbox.entries())
+        let troopsHome = Array.from(map_troops_home_dropbox.entries())
+
+        let sizeCommandsAttacksDB = formatBytes(new TextEncoder().encode(JSON.stringify(commandsAttacks)).length)
+        let sizeCommandsSupportDB = formatBytes(new TextEncoder().encode(JSON.stringify(commandsSupport)).length)
+        let sizeTroopsHomeDB = formatBytes(new TextEncoder().encode(JSON.stringify(troopsHome)).length)
+
+
+        console.log("----------------------------------------------------")
+        // console.log(commandsSupport)
+        let splitByAttacks = Math.ceil(commandsAttacks.length /nrFiles)
+        let splitBySupport = Math.ceil(commandsSupport.length /nrFiles)
+        let splitByTroopsHome = Math.ceil(troopsHome.length /nrFiles)
+
+
+        const run = async () => {
+            console.log("Starting...");
+            for (let i = 0; i < nrFiles; i++) {
+                //save command attacks
+                let subList = commandsAttacks.slice(i * splitByAttacks, (i+1) * splitByAttacks)
+
+                let compressedData = await compress(JSON.stringify(subList), 'gzip')
+                let base64CompressedData = await blobToBase64(compressedData)
+
+                let fileName = `${databaseName}/Commands_attack${i}.gz`
+                let fileNameLocal = `${databaseName}/Commands_attack${i}.txt`
+
+                await Promise.all([
+                    uploadFile(compressedData,fileName,dropboxToken).catch(err=>alert(err)),
+                    localBase.setItem(fileNameLocal, base64CompressedData)
+                ])
+
+                //save support
+                let subListSupport = commandsSupport.slice(i * splitBySupport, (i+1) *splitBySupport)
+                let subListTroopsHome = troopsHome.slice(i * splitByTroopsHome, (i+1) *splitByTroopsHome)
+
+                let data_list=[subListSupport,subListTroopsHome]
+
+                compressedData =  await compress(JSON.stringify(data_list), 'gzip')
+                base64CompressedData = await blobToBase64(compressedData)
+                fileName = `${databaseName}/Support${i}.gz`
+                fileNameLocal = `${databaseName}/Support${i}.txt`
+
+                let base64CompressedDataSupport = await blobToBase64(await compress(JSON.stringify(subListSupport), 'gzip'))
+                let base64CompressedDataSupportHome = await blobToBase64(await compress(JSON.stringify(subListTroopsHome), 'gzip'))
+                await Promise.all([
+                    uploadFile(compressedData,fileName,dropboxToken).catch(err=>alert(err)),
+                    localBase.setItem(fileNameLocal, base64CompressedDataSupport),
+                    localBase.setItem(fileNameLocal+"Home", base64CompressedDataSupportHome),
+
+                ])
+            }  
+        }
+        await run();
+
+
+
+        let compressedData = await compress(data_status, 'gzip')
+        let result_Status=await uploadFile(compressedData, filename_status_upload,dropboxToken).catch(err=>alert(err))
+
+        if(result_Status=="succes"){
+            console.log("here save status")
+            document.getElementById("progress_support").innerText=map_coming.size+" coords"
+            document.getElementById("progress_all").innerText="done";
+            var data=JSON.stringify(Array.from(resultSupport.map_exist_support.entries()))
+            localStorage.setItem(game_data.world+"map_exist_support",data)
+
+            let timeStopUpload = new Date().getTime();
+            let totalTimeUpload =  Math.round(((timeStopUpload - timeStartUpload) / 1000) * 100) / 100
+            UI.SuccessMessage(`<b>Upload commands done </b> <br> <br> 
+                                Upload time: ${totalTimeUpload} sec <br>
+
+                                <center>
+                                    <table style ="border: 1px solid black;border-collapse: collapse">
+                                        <tr>
+                                            <td colspan="3" style = "text-align: center;border: 1px solid black;border-collapse: collaps;font-weight: bold;padding:10px">
+                                                Database details
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Type</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Total Number</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Size DB</td>
+                                        </tr>
+                                        <tr>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Commands attack</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${commandsAttacks.length}</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collaps;padding:5px">${sizeCommandsAttacksDB}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Commands support</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${commandsSupport.length}</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${sizeCommandsSupportDB}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Troops Home</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${troopsHome.length}</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${sizeTroopsHomeDB}</td>
+                                        </tr>
+                                </table>
+                              </center>
+
+                                `,10000)
+
+            resolve({
+                totalTimeUpload:totalTimeUpload,
+                status: "success"
+            })
+        }
+        else{
+            reject("error upload commands")
+        }
+    })
+
+}
 /*{
     const _0x5da8a8 = _0x555ef8;
     document['getElementById']('progress_support')[_0x5da8a8(0x5ad)] = _0x5da8a8(0x1d3);
@@ -3960,7 +4507,7 @@ async function uploadSupports()
             });
         } else _0x52904e(_0x123b78(0x395));
     });
-}*/
+}
 
 function ajaxTroopsComing(_0x47cc79) {
     return new Promise((_0x2d1d66, _0xc67409) => {
@@ -3991,7 +4538,7 @@ function ajaxTroopsComing(_0x47cc79) {
             }
         });
     });
-}
+}*/
 
 function ajaxTroopsStationed(_0x3c10c0) {
     return new Promise((_0x546faf, _0x2389dc) => {
