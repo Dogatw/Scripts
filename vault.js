@@ -230,10 +230,7 @@ function getInterface(){
                     <td  style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">Reports</font></center></h2>
                     </td>
-                    <td style="text-align:center; background-color:${headerColor}">
-                        <center style="margin:10px"><input class="btn" type="button" id="upload_reports" onclick="uploadReports()" value="Upload"></center>
-    
-                    </td>
+                   
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}" id="progress_reports">None</font></center></p>
                     </td>                       
@@ -11012,6 +11009,7 @@ async function uploadOwnTroops(){
     })
 
 }
+
 
 
 
