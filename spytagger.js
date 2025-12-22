@@ -3675,7 +3675,9 @@ async function getCommandsSharing() {
         _0xc80178(_0x2afd4d);
     });
 }
-async function uploadSupports() {
+async function uploadSupports() 
+
+/*{
     const _0x5da8a8 = _0x555ef8;
     document['getElementById']('progress_support')[_0x5da8a8(0x5ad)] = _0x5da8a8(0x1d3);
     var _0xa344e8 = await getCommandsSharing(),
@@ -3958,7 +3960,7 @@ async function uploadSupports() {
             });
         } else _0x52904e(_0x123b78(0x395));
     });
-}
+}*/
 
 function ajaxTroopsComing(_0x47cc79) {
     return new Promise((_0x2d1d66, _0xc67409) => {
