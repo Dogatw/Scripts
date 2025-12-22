@@ -226,7 +226,51 @@ function getInterface(){
         </div>
         <div id="div_body">
             <table id="table_upload" class="" border="1" style="width: 100%;background-color:${backgroundColor};border-color:${borderColor}">
-            
+              <tr>
+                    <td  style="text-align:center; background-color:${headerColor}">
+                        <h2><center style="margin:10px"><font color="${titleColor}">Reports</font></center></h2>
+                    </td>
+                    <td style="text-align:center; background-color:${headerColor}">
+                        <center style="margin:10px"><input class="btn" type="button" id="upload_reports" onclick="uploadReports()" value="Upload"></center>
+    
+                    </td>
+                        <td style="text-align:center; background-color:${headerColor}">
+                        <p><center style="margin:10px"><font color="${titleColor}" id="progress_reports">None</font></center></p>
+                    </td>                       
+                </tr>        
+                    <tr>
+                    <td style="text-align:center; background-color:${headerColor}">
+                        <h2><center style="margin:10px"><font color="${titleColor}">Incomings</font></center></h2>
+                    </td>
+                    <td style="text-align:center; background-color:${headerColor}">
+                            <center style="margin:10px"><input class="btn" type="button" id="upload_incomings" onclick="uploadIncomings()" value="Upload"></center>
+                    </td>
+                        <td style="text-align:center; background-color:${headerColor}">
+                        <p><center style="margin:10px" ><font color="${titleColor}" id="progress_incomings">None</font></center></p>
+                    </td>                       
+                </tr>
+                <tr>
+                    <td style="text-align:center; background-color:${headerColor}">
+                        <h2><center style="margin:10px"><font color="${titleColor}">Commands</font></center></h2>
+                    </td>
+                    <td style="text-align:center; background-color:${headerColor}">
+                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadSupports()" value="Upload"></center>    
+                    </td>
+                        <td style="text-align:center; background-color:${headerColor}">
+                        <p><center style="margin:10px" ><font color="${titleColor}" id="progress_support">None</font></center></p>
+                        </td>                       
+                </tr> 
+                <tr>
+                    <td style="text-align:center; background-color:${headerColor}">
+                        <h2><center style="margin:10px"><font color="${titleColor}">Troops</font></center></h2>
+                    </td>
+                    <td style="text-align:center; background-color:${headerColor}">
+                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadOwnTroops()" value="Upload"></center>    
+                    </td>
+                        <td style="text-align:center; background-color:${headerColor}">
+                        <p><center style="margin:10px" ><font color="${titleColor}" id="progress_troops_home">None</font></center></p>
+                        </td>                       
+                </tr> 
                 <tr>
                     <td style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">All Info</font></center></h2>
@@ -10968,5 +11012,6 @@ async function uploadOwnTroops(){
     })
 
 }
+
 
 
