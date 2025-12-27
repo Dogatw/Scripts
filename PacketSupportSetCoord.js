@@ -3,3 +3,4 @@ var databaseName="NAMpacket";
 var filname_coords=game_data.world+databaseName+"_packet_script";
 $.getScript('https://raw.githack.com/Dogatw/Scripts/main/PacketSupport.js');void(0);
 
+
