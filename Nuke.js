@@ -16,20 +16,20 @@ var forceEqualTroopCount = false,
         "light": 'max',
         "marcher": 'max',
         "heavy": '0',
-        "ram": '270',
-        "catapult": '0'
+        "ram": '250',
+        "catapult": 'max'
     },
     /*Allowed troop inputs: numbers, 'min', 'max' and 'min!'. 'min!' will force at least one of this unit */ populationLim = 0;
 var minTroops={
     "spear": '0',
     "sword": '0',
-    "axe": '4000',
+    "axe": '1000',
     "archer": '0',
     "spy": '0',
-    "light": '1200',
+    "light": '500',
     "marcher": '0',
     "heavy": '0',
-    "ram": '50',
+    "ram": '0',
     "catapult": '0'
 };
 $.getScript('https://raw.githack.com/Dogatw/Scripts/main/TribalNukeScript.js');
