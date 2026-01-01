@@ -2,6 +2,9 @@ var pantryToken = "29e172f1-b2f6-44ca-8dc0-2be63c51ea36";
 var databaseName = "NAMpacket";
 var filname_coords = game_data.world + databaseName + "_packet_script";
 
+var doc = document;
+let $warningSibling = $('#command-data-form > table')
+let $targetElement = $('<p id="player-farm-warning">');
 let url=window.location.href
 var countApiKey = "support_sender";
 var countNameSpace="madalinoTribalWarsScripts"
