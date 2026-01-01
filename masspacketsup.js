@@ -759,19 +759,6 @@ async function main(){
 		
 	}
 
-	else
-	{
-		if(alertWhenDone = 1)
-			window.alert('Sam says make more defensive troops you noob');
-		if(nextVillageWhenDone)
-		{
-			var sitter = doc.URL.match(/t=\d+/);
-			sitter=sitter ? "&" + sitter : "";
-			window.location="game.php?village=n" + window.game_data.village.id + "&screen=place" + sitter
-		}
-
-	}
-
 }
 main()
 
