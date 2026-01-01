@@ -719,7 +719,7 @@ function countTotalTroops(){
 
 
 async function main(){
-	if(pop>minPop)
+	
 	{
 		let data=await readFile(filname_coords,pantryToken).catch(error=>{
             alert("database is not initialized!")
