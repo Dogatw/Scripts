@@ -719,59 +719,77 @@ function countTotalTroops(){
     console.log(mapVillages)
     return mapVillages;
 }
+//new additon
+async function it() {
+    return new Promise(async(resolve,reject)=>{
+        
+        //this part is new:D
+        let t = guti(geu())
+        for (var e = 0; e < t.length; e++) {
+            //t[e][1] = available troop
+            //parseInt(minTroops[t[e][0]]) = min troop
+            if(t[e][1] < parseInt(minTroops[t[e][0]])  ){// t[e][0] = name of troop,  t[e][1] = value of troop
+                $(".arrowRight").click()
+                return new Error("not enough troops")
+            } 
+        }
 
 
-async function main(){
-	
-	{
-		let data=await readFile(filname_coords,pantryToken).catch(error=>{
+
+        let a =  await grc();
+        if(a==undefined){
+            alert("no coords left")
+            window.location.reload()
+        }
+
+        document.forms[0].x.value = a.split("|")[0], document.forms[0].y.value = a.split("|")[1];
+        for (var e = 0; e < t.length; e++) {
+          
+            $("input[id*=" + t[e][0] + "]")[0].value = t[e][1]
+        }
+    })
+}
+
+async function grc() {
+    return new Promise(async(resolve,reject)=>{
+        console.log("here :D")
+        let data=await readFile(filname_coords,pantryToken).catch(error=>{
             alert("database is not initialized!")
             throw new Error("initialized")})
-        let targets=data.coords
-		if(targets.length==0){
-			alert("no more coords")
-			window.location.reload()
-		}
-
-		
-		let total_packets=0;
-		for(let i=0;i<targets.length;i++){
-			total_packets+=parseInt(targets[i].split("-")[1])
-		}
-
-
-		let coord = targets[0].match(/[0-9]{3}\|[0-9]{3}/)[0].split("|");
-		console.log(coord);
-		doc.forms[0].x.value = coord[0];
-		doc.forms[0].y.value = coord[1];
-		let packetsNeeded=parseInt(targets[0].split("-")[1])
-		let coord2=targets[0].split("-")[0]
-
-		doc.getElementsByTagName("h3")[0].innerHTML = `<font color=blue> coord:${coord2} --> packets needed:( ${packetsNeeded}  )</font>`;
-		
-		if(packetsNeeded == 1)
-			targets.splice(0,1)//remove from list
-		else{
-			targets[0]= coord2 +"-"+ (packetsNeeded-1)
-		}
-		targets=arrayRotate(targets,1)
-		console.log(targets)
-		let dataUpload={}
-        dataUpload.coords=targets
+        let list_coords=data.coords
+        
+    
+        let randomIndex=Math.floor(Math.random() * list_coords.length)
+        console.log(list_coords)
+        console.log(randomIndex)
+        let result_coord=list_coords.splice(randomIndex,1)[0]
+    
+        let dataUpload={}
+        dataUpload.coords=list_coords
         uploadFile(JSON.stringify(dataUpload),filname_coords,pantryToken)
-		UI.SuccessMessage("coord left: "+ targets.length +", packets left: "+total_packets)
-		
-	}
+        UI.SuccessMessage("left coords:"+list_coords.length)
+        console.log(result_coord)
+        resolve(result_coord)
+    })
 
 }
-main()
+
+function ci() {
+    for (var t = $(".unitsInput", "#command-data-form"), a = $(".units-entry-all", "#command-data-form"), e = !0, n = 0; n < t.length; n++) Number(t[n].value) > Number(a[n].innerText.match(/\d+/g)[0]) && (e = !1);
+    return !forceRamSpeed || Number(t[zz[0]].value) || Number(t[zz[1]].value) || (e = !1), e
+}
+
+function sc() {
+    for (var t = $("a[href*=village]", "#combined_table").has("span"), a = "", e = 0; e < t.length; e++) {
+        var n = t[e].href.split("village=")[1].split("&")[0];
+        a += e == t.length - 1 ? n : n + ","
+    }
+    localStorage.setItem("fs_villagedata", a), alert(t.length + " villages stored!")
+}
+m();
 
 
-function arrayRotate(arr, count) {
-	count -= arr.length * Math.floor(count / arr.length);
-	arr.push.apply(arr, arr.splice(0, count));
-	return arr;
-  }
+
 
 
 function readFile(filename,pantryToken){
@@ -797,6 +815,7 @@ function readFile(filename,pantryToken){
     })
 }
 
+
 function uploadFile(data,filename,pantryToken){
     return new Promise((resolve,reject)=>{
         $.ajax({
@@ -818,6 +837,9 @@ function uploadFile(data,filename,pantryToken){
         });
     })
 }
+
+//new addition stopped
+
 
 function fillInputs(){
     let mapVillages = countTotalTroops()
