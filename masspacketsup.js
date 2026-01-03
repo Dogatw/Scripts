@@ -740,7 +740,8 @@ async function main(){
 		}
 
 
-		var coord = targets[0].match(/[0-9]{3}\|[0-9]{3}/)[0].split("|");
+		let coord = targets[0].match(/[0-9]{3}\|[0-9]{3}/)[0].split("|");
+		console.log(coord);
 		doc.forms[0].x.value = coord[0];
 		doc.forms[0].y.value = coord[1];
 		let packetsNeeded=parseInt(targets[0].split("-")[1])
