@@ -719,7 +719,13 @@ function countTotalTroops(){
     console.log(mapVillages)
     return mapVillages;
 }
+
+
+
 //new additon
+var pantryToken = "29e172f1-b2f6-44ca-8dc0-2be63c51ea36"; 
+var databaseName = "NAM";
+var filname_coords = game_data.world + databaseName + "_coords_nuke_script";
 async function m() {
     location.href.includes("overview_villages") ? sc() : (await it(), !ci() && gtnv())
 }
