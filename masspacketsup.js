@@ -720,6 +720,9 @@ function countTotalTroops(){
     return mapVillages;
 }
 //new additon
+async function m() {
+    location.href.includes("overview_villages") ? sc() : (await it(), !ci() && gtnv())
+}
 async function it() {
     return new Promise(async(resolve,reject)=>{
         
