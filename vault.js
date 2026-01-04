@@ -7922,7 +7922,7 @@ async function viewSupport(){
     let pop_medium_attack=parseInt(document.getElementById("settings_medium_attack").value)
     pop_small_attack=(!Number.isNaN(pop_medium_attack))?pop_medium_attack:5000
     pop_medium_attack=(!Number.isNaN(pop_medium_attack))?pop_medium_attack:10000
-    fangs_cat=(!Number.isNaN(fangs_cat))?fangs_cat:50
+    fangs_cat=(!Number.isNaN(fangs_cat))?fangs_cat:10
 
     //create a map with commands attacks, every coord has number of fangs,nukes,nobles
     //this part is for Enemy Info
@@ -11003,6 +11003,7 @@ async function uploadOwnTroops(){
     })
 
 }
+
 
 
 
