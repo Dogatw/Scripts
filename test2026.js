@@ -8339,7 +8339,13 @@ async function viewSupport(){
         totalPop = Math.round( totalPop / 1000)
         totalPopOff = Math.round( totalPopOff / 1000)
         totalPopDef = Math.round( totalPopDef / 1000)
-
+        
+        //chatgpt solution
+if (!obj || typeof obj !== "object" || !("villageId" in obj)) {
+    console.warn("Skipping invalid object:", obj);
+    return;
+}
+//end
         if(!mapVillageById.has(villageDetails.villageId)){
             mapVillageById.set(villageDetails.villageId + "", {
                 "villageId": villageDetails.villageId,
