@@ -7552,10 +7552,16 @@ async function viewSupport(){
     Array.from(map_coming.keys()).forEach(key=>{
         try {
             let obj_output={}
-            let playerId=mapVillages.get(key).playerId
-            // console.log(playerId)
-            let villageId=mapVillages.get(key).villageId
-            let playerName=mapVillages.get(key).playerName
+           let villageObj = mapVillages.get(key);
+if (!villageObj) {
+    console.warn("Missing village in mapVillages:", key);
+    return; // skips this key safely
+}
+
+let playerId = villageObj.playerId;
+let villageId = villageObj.villageId;
+let playerName = villageObj.playerName;
+
             
             let list_coming=map_coming.get(key)
             let hasAttacks=false
@@ -7913,8 +7919,12 @@ async function viewSupport(){
                 let coord=text_input.value.match(/\d+\|\d+/)[0]
                 text_input.value=coord
                 // console.log(coord)
-                let playerId=mapVillages.get(coord).playerId
-                let villageId=mapVillages.get(coord).villageId
+                let v = mapVillages.get(coord);
+if (!v) return;
+
+let playerId = v.playerId;
+let villageId = v.villageId;
+
 
                 if($(`.table_player img[coord-id=${villageId}]`).is(":visible")==false)
                     $(`#table_view img[player-id=${playerId}]`).click();
@@ -7950,8 +7960,12 @@ async function viewSupport(){
         try {//if a village become a barb
             let obj_report=map_reports.get(key)
   
-            let villageId=mapVillages.get(key).villageId
-            let player_destination_name=mapVillages.get(key).playerName
+            let v = mapVillages.get(key);
+if (!v) return;
+
+let villageId = v.villageId;
+let player_destination_name = v.playerName;
+
             let player_destination_id=mapVillages.get(key).playerId
             let time_report=obj_report.time_report
 
@@ -8340,12 +8354,6 @@ async function viewSupport(){
         totalPopOff = Math.round( totalPopOff / 1000)
         totalPopDef = Math.round( totalPopDef / 1000)
         
-        //chatgpt solution
-if (!obj || typeof obj !== "object" || !("villageId" in obj)) {
-    console.warn("Skipping invalid object:", obj);
-    return;
-}
-//end
         if(!mapVillageById.has(villageDetails.villageId)){
             mapVillageById.set(villageDetails.villageId + "", {
                 "villageId": villageDetails.villageId,
