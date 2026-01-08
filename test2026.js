@@ -985,27 +985,42 @@ async function uploadReports(){
 
 
                         //remove non existent villages
-                        if(infoVillages.get(key) == undefined){
-                            map_dropbox.delete(key)
+                       if (infoVillages.get(key) == undefined) {
+    map_dropbox.delete(key);
+}
 
-                        }
-
-                        if(key == obj.coordAttacker){
-                            if(tribemates.includes(obj.nameAttacker.toLowerCase()) || obj.nameAttacker.toLowerCase() != obj_village.playerName.toLowerCase()  ){
-                                map_dropbox.delete(key)
-                                console.log(`delete coord ${key} old owner:${obj.nameAttacker.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (off report)`)
-                                counterAttacker++
-                            }
-                            else if(obj.typeAttacker=="?"){
-                                map_dropbox.delete(key)
-                                counterTypAttacker++
-                            }
-                        }
-                        else if(key == obj.coordDefender){
-                            if(tribemates.includes(obj.nameDefender.toLowerCase()) || const obj_village = getVillageSafe(key);
+const obj_village = getVillageSafe(key);
 if (!obj_village) {
     map_dropbox.delete(key);
     return;
+}
+
+if (key == obj.coordAttacker) {
+    if (
+        tribemates.includes(obj.nameAttacker.toLowerCase()) ||
+        obj.nameAttacker.toLowerCase() !== obj_village.playerName.toLowerCase()
+    ) {
+        map_dropbox.delete(key);
+        console.log(
+            `delete coord ${key} old owner:${obj.nameAttacker.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (off report)`
+        );
+        counterAttacker++;
+    } else if (obj.typeAttacker == "?") {
+        map_dropbox.delete(key);
+        counterTypAttacker++;
+    }
+}
+else if (key == obj.coordDefender) {
+    if (
+        tribemates.includes(obj.nameDefender.toLowerCase()) ||
+        obj.nameDefender.toLowerCase() !== obj_village.playerName.toLowerCase()
+    ) {
+        map_dropbox.delete(key);
+        counterDefender++;
+    } else if (obj.typeDefender == "?") {
+        map_dropbox.delete(key);
+        counterTypDefender++;
+    }
 }
 
 if (
