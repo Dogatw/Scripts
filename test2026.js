@@ -1002,7 +1002,17 @@ async function uploadReports(){
                             }
                         }
                         else if(key == obj.coordDefender){
-                            if(tribemates.includes(obj.nameDefender.toLowerCase()) || obj.nameDefender.toLowerCase() != obj_village.playerName.toLowerCase() ){
+                            if(tribemates.includes(obj.nameDefender.toLowerCase()) || const obj_village = getVillageSafe(key);
+if (!obj_village) {
+    map_dropbox.delete(key);
+    return;
+}
+
+if (
+    tribemates.includes(obj.nameDefender.toLowerCase()) ||
+    obj.nameDefender.toLowerCase() !== obj_village.playerName.toLowerCase()
+)
+ ){
                                 map_dropbox.delete(key)
                                 counterDefender++
                                 console.log(`delete coord ${key} old owner:${obj.nameDefender.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (def report)`)
