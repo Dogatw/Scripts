@@ -1,6 +1,14 @@
 
 var encryptedData='U2FsdGVkX19rOEZX71VyBkqyUR4Hctk75gUPTjb5a6LH2MGd1YJXF6ydFDZ5KbkejZkgDELi5aA8FRKAB9+30je80wzjx2wMx/Djy/UjSZ4HQjxNA3dKSjSQurwOpUF6IYUTPAhthbbGNkTe3bjYfkhRIpC/FwuiLusetTxhkhfm9b7x2NzFE0zDfjyAJXqURaQdxHJbZ0NuO9y1bCabsETze8CkM4F9qhTJ0jMscw+WCxSXxLncraILtZ5IGOsVMiuG/k/ZNmhnXiZgvJ6ngw==';
 
+function getVillageSafe(coord) {
+    const v = mapVillages.get(coord);
+    if (!v) {
+        console.warn("[TW] Missing village:", coord);
+        return null;
+    }
+    return v;
+}
 
 
 var dropboxToken="",databaseName="",worldNumber=""
