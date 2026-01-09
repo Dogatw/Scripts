@@ -39,16 +39,16 @@ var widthInterface, widthInterfaceOverview
     
     })
     console.log(tribemates)
-    // console.log(permissions)
+     console.log(permissions)
 
-    // if(!tribemates.includes(game_data.player.name.toLowerCase())){
-    //     UI.ErrorMessage("contact admin to give you permission",2000)
-    //     throw new Error("you do not have acces");
-    //     // console.log("you do not have acces" )
-    // }
-    // console.log("worldNumber ",worldNumber)
-    // if (game_data.world.match(/\d+/)[0] != worldNumber)
-    //     throw new Error("it doesn't work");
+     if(!tribemates.includes(game_data.player.name.toLowerCase())){
+         UI.ErrorMessage("contact admin to give you permission",2000)
+         throw new Error("you do not have acces");
+     console.log("you do not have acces" )
+     }
+     console.log("worldNumber ",worldNumber)
+     if (game_data.world.match(/\d+/)[0] != worldNumber)
+         throw new Error("it doesn't work");
 
     addCssStyle()
     getInterface()
