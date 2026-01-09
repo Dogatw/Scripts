@@ -1,14 +1,6 @@
 
-var encryptedData='U2FsdGVkX19rOEZX71VyBkqyUR4Hctk75gUPTjb5a6LH2MGd1YJXF6ydFDZ5KbkejZkgDELi5aA8FRKAB9+30je80wzjx2wMx/Djy/UjSZ4HQjxNA3dKSjSQurwOpUF6IYUTPAhthbbGNkTe3bjYfkhRIpC/FwuiLusetTxhkhfm9b7x2NzFE0zDfjyAJXqURaQdxHJbZ0NuO9y1bCabsETze8CkM4F9qhTJ0jMscw+WCxSXxLncraILtZ5IGOsVMiuG/k/ZNmhnXiZgvJ6ngw==';
+var encryptedData='U2FsdGVkX183mfEUEBJpmQCRS04xNA4Y7G3TKaVV+mJ3pHKbCOIMO35YnvfTUTSU9iCs2y5BPaSzkQasdLtfNDVEQH3o2/10gdy6ttCsCd2T02AB3dPBNkhiNM6rYyHdwGpeS1zTv7kUn7TAMoZIVEBRJvUSM/P78ZrDuUg/InN/JQs/Ia1A/6npdTPTB02j5c40zu25GA5UWQlFcGpjoxRajwjp7Ogqcm5QebQzmjQZA5xze6DUWx04zx9/opRKRwdDNKtxLngYROByIWfGyP4bFnlaWLIuoQfILAvEalE2cjcqLN7m63jetJ/mKZGT';
 
-function getVillageSafe(coord) {
-    const v = mapVillages.get(coord);
-    if (!v) {
-        console.warn("[TW] Missing village:", coord);
-        return null;
-    }
-    return v;
-}
 
 
 var dropboxToken="",databaseName="",worldNumber=""
@@ -47,13 +39,13 @@ var widthInterface, widthInterfaceOverview
     
     })
     console.log(tribemates)
-     console.log(permissions)
+    // console.log(permissions)
 
-     if(!tribemates.includes(game_data.player.name.toLowerCase())){
-         UI.ErrorMessage("contact admin to give you permission",2000)
-         throw new Error("you do not have acces");
-     console.log("you do not have acces" )
-     }
+    // if(!tribemates.includes(game_data.player.name.toLowerCase())){
+    //     UI.ErrorMessage("contact admin to give you permission",2000)
+    //     throw new Error("you do not have acces");
+    //     // console.log("you do not have acces" )
+    // }
     // console.log("worldNumber ",worldNumber)
     // if (game_data.world.match(/\d+/)[0] != worldNumber)
     //     throw new Error("it doesn't work");
@@ -985,49 +977,24 @@ async function uploadReports(){
 
 
                         //remove non existent villages
-                       if (infoVillages.get(key) == undefined) {
-    map_dropbox.delete(key);
-}
+                        if(infoVillages.get(key) == undefined){
+                            map_dropbox.delete(key)
 
-const obj_village = getVillageSafe(key);
-if (!obj_village) {
-    map_dropbox.delete(key);
-    return;
-}
+                        }
 
-if (key == obj.coordAttacker) {
-    if (
-        tribemates.includes(obj.nameAttacker.toLowerCase()) ||
-        obj.nameAttacker.toLowerCase() !== obj_village.playerName.toLowerCase()
-    ) {
-        map_dropbox.delete(key);
-        console.log(
-            `delete coord ${key} old owner:${obj.nameAttacker.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (off report)`
-        );
-        counterAttacker++;
-    } else if (obj.typeAttacker == "?") {
-        map_dropbox.delete(key);
-        counterTypAttacker++;
-    }
-}
-else if (key == obj.coordDefender) {
-    if (
-        tribemates.includes(obj.nameDefender.toLowerCase()) ||
-        obj.nameDefender.toLowerCase() !== obj_village.playerName.toLowerCase()
-    ) {
-        map_dropbox.delete(key);
-        counterDefender++;
-    } else if (obj.typeDefender == "?") {
-        map_dropbox.delete(key);
-        counterTypDefender++;
-    }
-}
-
-if (
-    tribemates.includes(obj.nameDefender.toLowerCase()) ||
-    obj.nameDefender.toLowerCase() !== obj_village.playerName.toLowerCase()
-)
- ){
+                        if(key == obj.coordAttacker){
+                            if(tribemates.includes(obj.nameAttacker.toLowerCase()) || obj.nameAttacker.toLowerCase() != obj_village.playerName.toLowerCase()  ){
+                                map_dropbox.delete(key)
+                                console.log(`delete coord ${key} old owner:${obj.nameAttacker.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (off report)`)
+                                counterAttacker++
+                            }
+                            else if(obj.typeAttacker=="?"){
+                                map_dropbox.delete(key)
+                                counterTypAttacker++
+                            }
+                        }
+                        else if(key == obj.coordDefender){
+                            if(tribemates.includes(obj.nameDefender.toLowerCase()) || obj.nameDefender.toLowerCase() != obj_village.playerName.toLowerCase() ){
                                 map_dropbox.delete(key)
                                 counterDefender++
                                 console.log(`delete coord ${key} old owner:${obj.nameDefender.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (def report)`)
@@ -7585,16 +7552,10 @@ async function viewSupport(){
     Array.from(map_coming.keys()).forEach(key=>{
         try {
             let obj_output={}
-           let villageObj = mapVillages.get(key);
-if (!villageObj) {
-    console.warn("Missing village in mapVillages:", key);
-    return; // skips this key safely
-}
-
-let playerId = villageObj.playerId;
-let villageId = villageObj.villageId;
-let playerName = villageObj.playerName;
-
+            let playerId=mapVillages.get(key).playerId
+            // console.log(playerId)
+            let villageId=mapVillages.get(key).villageId
+            let playerName=mapVillages.get(key).playerName
             
             let list_coming=map_coming.get(key)
             let hasAttacks=false
@@ -7952,12 +7913,8 @@ let playerName = villageObj.playerName;
                 let coord=text_input.value.match(/\d+\|\d+/)[0]
                 text_input.value=coord
                 // console.log(coord)
-                let v = mapVillages.get(coord);
-if (!v) return;
-
-let playerId = v.playerId;
-let villageId = v.villageId;
-
+                let playerId=mapVillages.get(coord).playerId
+                let villageId=mapVillages.get(coord).villageId
 
                 if($(`.table_player img[coord-id=${villageId}]`).is(":visible")==false)
                     $(`#table_view img[player-id=${playerId}]`).click();
@@ -7993,12 +7950,8 @@ let villageId = v.villageId;
         try {//if a village become a barb
             let obj_report=map_reports.get(key)
   
-            let v = mapVillages.get(key);
-if (!v) return;
-
-let villageId = v.villageId;
-let player_destination_name = v.playerName;
-
+            let villageId=mapVillages.get(key).villageId
+            let player_destination_name=mapVillages.get(key).playerName
             let player_destination_id=mapVillages.get(key).playerId
             let time_report=obj_report.time_report
 
@@ -8386,7 +8339,7 @@ let player_destination_name = v.playerName;
         totalPop = Math.round( totalPop / 1000)
         totalPopOff = Math.round( totalPopOff / 1000)
         totalPopDef = Math.round( totalPopDef / 1000)
-        
+
         if(!mapVillageById.has(villageDetails.villageId)){
             mapVillageById.set(villageDetails.villageId + "", {
                 "villageId": villageDetails.villageId,
