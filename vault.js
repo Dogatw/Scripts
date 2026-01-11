@@ -8,17 +8,18 @@
 
     await new Promise(r => s.onload = r);
 
-    // 🔴 REPLACE THESE WITH YOUR REAL VALUES
-    const SUPABASE_URL = "https://xjrgjnsxahfxlseakk.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
+    const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
+    const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
 
     window.sb = supabase.createClient(
         SUPABASE_URL,
         SUPABASE_ANON_KEY
     );
 
-    console.log("✅ Supabase initialized");
+    console.log("✅ Supabase initialized", window.sb);
 })();
+
 
 
 // ===============================
@@ -10730,6 +10731,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
