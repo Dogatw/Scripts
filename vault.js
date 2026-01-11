@@ -34,13 +34,13 @@ var widthInterface, widthInterfaceOverview
     
     })
     console.log(tribemates)
-    console.log(permissions)
+    // console.log(permissions)
 
-     if(!tribemates.includes(game_data.player.name.toLowerCase())){
-         UI.ErrorMessage("contact admin to give you permission",2000)
-         throw new Error("you do not have acces");
-          console.log("you do not have acces" )
-     }
+    // if(!tribemates.includes(game_data.player.name.toLowerCase())){
+    //     UI.ErrorMessage("contact admin to give you permission",2000)
+    //     throw new Error("you do not have acces");
+    //     // console.log("you do not have acces" )
+    // }
     // console.log("worldNumber ",worldNumber)
     // if (game_data.world.match(/\d+/)[0] != worldNumber)
     //     throw new Error("it doesn't work");
@@ -226,11 +226,14 @@ function getInterface(){
         </div>
         <div id="div_body">
             <table id="table_upload" class="" border="1" style="width: 100%;background-color:${backgroundColor};border-color:${borderColor}">
-              <tr>
+                <tr>
                     <td  style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">Reports</font></center></h2>
                     </td>
-                   
+                    <td style="text-align:center; background-color:${headerColor}">
+                        <center style="margin:10px"><input class="btn" type="button" id="upload_reports" onclick="uploadReports()" value="Upload"></center>
+    
+                    </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}" id="progress_reports">None</font></center></p>
                     </td>                       
@@ -239,7 +242,9 @@ function getInterface(){
                     <td style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">Incomings</font></center></h2>
                     </td>
-                   
+                    <td style="text-align:center; background-color:${headerColor}">
+                            <center style="margin:10px"><input class="btn" type="button" id="upload_incomings" onclick="uploadIncomings()" value="Upload"></center>
+                    </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_incomings">None</font></center></p>
                     </td>                       
@@ -248,7 +253,9 @@ function getInterface(){
                     <td style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">Commands</font></center></h2>
                     </td>
-                 
+                    <td style="text-align:center; background-color:${headerColor}">
+                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadSupports()" value="Upload"></center>    
+                    </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_support">None</font></center></p>
                         </td>                       
@@ -257,7 +264,9 @@ function getInterface(){
                     <td style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">Troops</font></center></h2>
                     </td>
-                    
+                    <td style="text-align:center; background-color:${headerColor}">
+                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadOwnTroops()" value="Upload"></center>    
+                    </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_troops_home">None</font></center></p>
                         </td>                       
@@ -2047,13 +2056,13 @@ function getIncomings(){
                                     if(table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img").length==2){
                                         let labelName=table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src
                                         let time_attack=0;
-                                        if(labelName.includes("snob.webp")){
+                                        if(labelName.includes("snob.png")){
                                             time_attack=nobleSpeed*distance
-                                        }else if(labelName.includes("ram.webp") || labelName.includes("catapult.webp")){
+                                        }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
                                             time_attack=ramSpeed*distance
-                                        }else if(labelName.includes("sword.webp")){
+                                        }else if(labelName.includes("sword.png")){
                                             time_attack=swordSpeed*distance
-                                        }else if(labelName.includes("axe.webp")){
+                                        }else if(labelName.includes("axe.png")){
                                             time_attack=axeSpeed *distance
                                         }
                                         
@@ -2504,12 +2513,12 @@ function showButtons(){
                             <tr>
                                 <td>gap[sec]:</td>
                                 <td><input type="number" id="input_gap" value="5" min="0" max="1000"  placeholder="5" style="text-align:center"></td>
-                                <td><a href="#" onclick="UI.InfoMessage('This value is to find launch series of the enemy <br> It can predict if an incoming is fake/nuke/fang <br> The lower the value is set the more likely the prediction is true ',8000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a></td>
+                                <td><a href="#" onclick="UI.InfoMessage('This value is to find launch series of the enemy <br> It can predict if an incoming is fake/nuke/fang <br> The lower the value is set the more likely the prediction is true ',8000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a></td>
                             </tr>
                         </table>
                 </td>            
                 <td style="text-align:center; width:auto;">
-                        <center style="margin:10px"><input class="btn" id="btn_tag" type="button" onclick="tagIncomings()" value="Tag"><a href="#" onclick="UI.InfoMessage('You can tag incs directly without pressing on More Info button',10000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a> </center>
+                        <center style="margin:10px"><input class="btn" id="btn_tag" type="button" onclick="tagIncomings()" value="Tag"><a href="#" onclick="UI.InfoMessage('You can tag incs directly without pressing on More Info button',10000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a> </center>
                         <center style="margin:10px"><input class="btn" id="btn_backtime" type="button"  value="back time"></center>
                         <center style="margin:10px"><input class="btn" id="btn_senttime" type="button"  value="sent time"></center>
                         <center style="margin:10px"><input class="btn" id="btn_stacks" type="button"  value="stacks"></center>
@@ -2523,20 +2532,20 @@ function showButtons(){
                                     Get only fake incomings from a datetime range when <b>Get Only Fakes</b> is green and <b> Get Def Vills </b> is red, it's calculated based on <b>Current pop</b> and remaining troops that are traveling back home<br><br>
                                     Get only def vills incomings from a datetime range when <b>Get Only Fakes</b> is red and <b>Get Def Vills</b> is green <br><br>
                                     Get only def vills and fakes incomings from a datetime range when <b>Get Only Fakes</b> is green and <b>Get Def Vills</b> is green <br><br>
-                                \`,50000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a></td>
+                                \`,50000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a></td>
                             </tr>
                             <tr>
                                 <td colspan = "2"> <input class="btn" type="button" id="btn_get_fakes" value="Get Only Fakes"></td>
-                                <td><a href="#" onclick="UI.InfoMessage('Keep all the fakes  based on remaining troops<br> that are returning back home from last report <br> and the value of <b>Current pop</b> <br>It is used when <b>Get Incomings</b> is pressed ',20000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a></td>
+                                <td><a href="#" onclick="UI.InfoMessage('Keep all the fakes  based on remaining troops<br> that are returning back home from last report <br> and the value of <b>Current pop</b> <br>It is used when <b>Get Incomings</b> is pressed ',20000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a></td>
                             </tr>
                             <tr>
                                 <td colspan = "2"> <input class="btn" type="button" id="btn_get_def" value="Get Def Vills"></td>
-                                <td><a href="#" onclick="UI.InfoMessage('Keep all incs tagged as <b>DEF</b>  <br>It is used when <b>Get Incomings</b> is pressed ',10000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a></td>
+                                <td><a href="#" onclick="UI.InfoMessage('Keep all incs tagged as <b>DEF</b>  <br>It is used when <b>Get Incomings</b> is pressed ',10000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a></td>
                             </tr>
                             <tr>
                                 <td>Current pop[%]:</td>
                                 <td><input type="number" id="input_pop_fake2" value="30" min="0" max="1000"  placeholder="[0-100]%" style="text-align:center"></td>
-                                <td><a href="#" onclick="UI.InfoMessage('Incomings tagged as (fake)if it has a lower pop[%] than the value set ',10000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a></td>
+                                <td><a href="#" onclick="UI.InfoMessage('Incomings tagged as (fake)if it has a lower pop[%] than the value set ',10000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a></td>
                             </tr>
                             <tr hidden>
                                 <td>nr duplicates:</td>
@@ -3268,13 +3277,13 @@ async function moreInfo(){
                 let distance= calcDistance(coord_destination,coord_origin)
                 let labelName=table[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src
                 let time_attack=0;
-                if(labelName.includes("snob.webp")){
+                if(labelName.includes("snob.png")){
                     time_attack=nobleSpeed*distance
-                }else if(labelName.includes("ram.webp") || labelName.includes("catapult.webp")){
+                }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
                     time_attack=ramSpeed*distance
-                }else if(labelName.includes("sword.webp")){
+                }else if(labelName.includes("sword.png")){
                     time_attack=swordSpeed*distance
-                }else if(labelName.includes("axe.webp")){
+                }else if(labelName.includes("axe.png")){
                     time_attack=axeSpeed *distance
                 }
                 
@@ -3396,17 +3405,17 @@ async function moreInfo(){
                     let date_land=new Date(getLandTime(time_land))
                     let labelName=""
                     if(table[i].children[0].getElementsByTagName("img")[1]==undefined || table[i].children[0].getElementsByTagName("img")[1]==null )
-                        labelName="ram.webp"
+                        labelName="ram.png"
                     else
                         labelName=table[i].children[0].getElementsByTagName("img")[1].src
 
-                    if(labelName.includes("snob.webp")){
+                    if(labelName.includes("snob.png")){
                         time_attack=nobleSpeed*distance
-                    }else if(labelName.includes("ram.webp") || labelName.includes("catapult.webp")){
+                    }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
                         time_attack=ramSpeed*distance
-                    }else if(labelName.includes("sword.webp")){
+                    }else if(labelName.includes("sword.png")){
                         time_attack=swordSpeed*distance
-                    }else if(labelName.includes("axe.webp")){
+                    }else if(labelName.includes("axe.png")){
                         time_attack=axeSpeed *distance
                     }
                     date_current-=time_attack
@@ -4070,13 +4079,13 @@ async function tagIncomings(){
             let date_home=new Date(table_incomings[i].getElementsByClassName("possible_fake")[0].getAttribute("date-fake"))
             let labelName=table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src
             let time_attack=0;
-            if(labelName.includes("snob.webp")){
+            if(labelName.includes("snob.png")){
                 time_attack=nobleSpeed*distance
-            }else if(labelName.includes("ram.webp") || labelName.includes("catapult.webp")){
+            }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
                 time_attack=ramSpeed*distance
-            }else if(labelName.includes("sword.webp")){
+            }else if(labelName.includes("sword.png")){
                 time_attack=swordSpeed*distance
-            }else if(labelName.includes("axe.webp")){
+            }else if(labelName.includes("axe.png")){
                 time_attack=axeSpeed *distance
             }
             
@@ -4106,15 +4115,15 @@ async function tagIncomings(){
             let labelName=table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src
             let time_attack=0;
             
-            if(labelName.includes("snob.webp")){
+            if(labelName.includes("snob.png")){
                 time_attack=nobleSpeed*distance
-            }else if(labelName.includes("ram.webp") || labelName.includes("catapult.webp")){
+            }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
                 time_attack=ramSpeed*distance
                 // console.log("distance",distance)
                 // console.log("ramSpeed",ramSpeed)
-            }else if(labelName.includes("sword.webp")){
+            }else if(labelName.includes("sword.png")){
                 time_attack=swordSpeed*distance
-            }else if(labelName.includes("axe.webp")){
+            }else if(labelName.includes("axe.png")){
                 time_attack=axeSpeed *distance
             }
             time_attack=Math.round(time_attack/1000)*1000
@@ -5100,9 +5109,9 @@ function createTableTroupes(totalArmy,lostArmy){
         for(let i=0;i<totalArmy.length;i++){
             if(units[i]!="militia"){
                 if(totalArmy[i].count==0 )
-                    tableHTML+=`<td width="35"><img src="https://dsen.innogamescdn.com/asset/3ec301e5/graphic/unit/unit_`+units[i]+`.webp" alt class="faded"</td>`
+                    tableHTML+=`<td width="35"><img src="https://dsen.innogamescdn.com/asset/3ec301e5/graphic/unit/unit_`+units[i]+`.png" alt class="faded"</td>`
                 else
-                    tableHTML+=`<td width="35"><img src="https://dsen.innogamescdn.com/asset/3ec301e5/graphic/unit/unit_`+units[i]+`.webp"</td>`
+                    tableHTML+=`<td width="35"><img src="https://dsen.innogamescdn.com/asset/3ec301e5/graphic/unit/unit_`+units[i]+`.png"</td>`
             }
         }
         tableHTML+="</tr>"
@@ -5148,9 +5157,9 @@ function createTableTroupesAway(totalArmy){
         let units=game_data.units
         Object.keys(totalArmy).forEach(key=>{
             if(totalArmy[key]==0)
-                tableHTML+=`<th width="35"><img src="https://dsen.innogamescdn.com/asset/3ec301e5/graphic/unit/unit_`+key+`.webp" alt class="faded"</th>`
+                tableHTML+=`<th width="35"><img src="https://dsen.innogamescdn.com/asset/3ec301e5/graphic/unit/unit_`+key+`.png" alt class="faded"</th>`
             else
-                tableHTML+=`<th width="35"><img src="https://dsen.innogamescdn.com/asset/3ec301e5/graphic/unit/unit_`+key+`.webp"</th>`
+                tableHTML+=`<th width="35"><img src="https://dsen.innogamescdn.com/asset/3ec301e5/graphic/unit/unit_`+key+`.png"</th>`
 
         })
 
@@ -5178,7 +5187,7 @@ function createTableIncomings(list){
     let html_incomings=`
         <tbody>
         <tr>
-            <th><img src="https://dsen.innogamescdn.com/asset/056b9c0b/graphic/unit/att.webp"></<th>
+            <th><img src="https://dsen.innogamescdn.com/asset/056b9c0b/graphic/unit/att.png"></<th>
             <th >speed</th>
             <th colspan="2">destination</th>
             <th colspan="2">origin</th>
@@ -5191,7 +5200,7 @@ function createTableIncomings(list){
             let labelName
             // console.log(list[i].labelName)
             if(list[i].labelName=="none")
-                labelName="https://dsen.innogamescdn.com/asset/056b9c0b/graphic/delete.webp"
+                labelName="https://dsen.innogamescdn.com/asset/056b9c0b/graphic/delete.png"
             else
                 labelName=`https://dsen.innogamescdn.com/asset/a9e85669/graphic/unit/tiny/${list[i].labelName}`
 
@@ -5471,17 +5480,17 @@ async function getTrIncomings(){
                                 let date_land=new Date(getLandTime(time_land))
                                 let labelName=""
                                 if(rows[i].children[0].getElementsByTagName("img")[1]==undefined || rows[i].children[0].getElementsByTagName("img")[1]==null )
-                                    labelName="ram.webp"
+                                    labelName="ram.png"
                                 else
                                     labelName=rows[i].children[0].getElementsByTagName("img")[1].src
         
-                                if(labelName.includes("snob.webp")){
+                                if(labelName.includes("snob.png")){
                                     time_attack=nobleSpeed*distance
-                                }else if(labelName.includes("ram.webp") || labelName.includes("catapult.webp")){
+                                }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
                                     time_attack=ramSpeed*distance
-                                }else if(labelName.includes("sword.webp")){
+                                }else if(labelName.includes("sword.png")){
                                     time_attack=swordSpeed*distance
-                                }else if(labelName.includes("axe.webp")){
+                                }else if(labelName.includes("axe.png")){
                                     time_attack=axeSpeed *distance
                                 }
                                 if(traveling==false)
@@ -5515,13 +5524,13 @@ async function getTrIncomings(){
                                     let distance=calcDistance(coordOrigin,coordDest);
                                     let labelName=rows[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src
                                     let time_attack=0;
-                                    if(labelName.includes("snob.webp")){
+                                    if(labelName.includes("snob.png")){
                                         time_attack=nobleSpeed*distance
-                                    }else if(labelName.includes("ram.webp") || labelName.includes("catapult.webp")){
+                                    }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
                                         time_attack=ramSpeed*distance
-                                    }else if(labelName.includes("sword.webp")){
+                                    }else if(labelName.includes("sword.png")){
                                         time_attack=swordSpeed*distance
-                                    }else if(labelName.includes("axe.webp")){
+                                    }else if(labelName.includes("axe.png")){
                                         time_attack=axeSpeed *distance
                                     }
                                     
@@ -5608,8 +5617,8 @@ function highLightIncomings(){
                 //highlight nukes if has more than 70% pop
 
                 if(document.getElementById("id_type")!=null && table[i].firstElementChild.style.backgroundColor!="rgb(255, 255, 102)"){//is different then yellow
-                    let watchTower=table[i].children[0].getElementsByTagName("img")[0].src.includes("attack_large.webp")
-                    let watchTowerSmall=table[i].children[0].getElementsByTagName("img")[0].src.includes("attack_small.webp")
+                    let watchTower=table[i].children[0].getElementsByTagName("img")[0].src.includes("attack_large.png")
+                    let watchTowerSmall=table[i].children[0].getElementsByTagName("img")[0].src.includes("attack_small.png")
                     let hasNuke=false
                     if(table[i].getElementsByClassName("cls_type").length>0){
                         let type=table[i].getElementsByClassName("cls_type")[0].innerText
@@ -5671,7 +5680,7 @@ function highLightIncomings(){
                 
                 // highlist if it is tagged as noble
                 if(table[i].children[0].getElementsByTagName("img").length==2){
-                    let hasNoble=table[i].children[0].getElementsByTagName("img")[1].src.includes("snob.webp")
+                    let hasNoble=table[i].children[0].getElementsByTagName("img")[1].src.includes("snob.png")
                     if(hasNoble==true){
                         $(table[i]).children().each(function(){
                             $(this).css('background-color', colors.red);
@@ -5799,19 +5808,19 @@ function eventGetTroops(){
                         <p><center style="margin:10px"><font color="${titleColor}">coord </font></center></p>
                     </td>    
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
-                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.webp"> </font></center></p>
+                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.png"> </font></center></p>
                     </td>    
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
-                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/flags/small/3.webp"> </font></center></p>
+                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/flags/small/3.png"> </font></center></p>
                     </td>    
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
-                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/snob.webp"> </font></center></p>
+                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/snob.png"> </font></center></p>
                     </td>    
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
-                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/wall.webp"> </font></center></p>
+                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/wall.png"> </font></center></p>
                     </td>    
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
-                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/farm.webp"> </font></center></p>
+                        <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/farm.png"> </font></center></p>
                     </td>   
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}">troops </font></center></p>
@@ -5819,7 +5828,7 @@ function eventGetTroops(){
                     
                 `;
                 for(let i=0;i<units.length-1;i++){
-                    html+=`<td class="fm_unit" style="width:30px;text-align:center;width:auto; background-color:${headerColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/unit/unit_${units[i]}.webp"></td>`
+                    html+=`<td class="fm_unit" style="width:30px;text-align:center;width:auto; background-color:${headerColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/unit/unit_${units[i]}.png"></td>`
                 }
                 html+=`
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
@@ -6257,7 +6266,7 @@ function getCommandsGoing(){
 
                                     })
                                 }
-                                else if(type_attack=="attack_small.webp" || type_attack=="attack_medium.webp" || type_attack=="attack_large.webp"){
+                                else if(type_attack=="attack_small.png" || type_attack=="attack_medium.png" || type_attack=="attack_large.png"){
                                 // console.log("is an attack")
                                     let serverTime=htmlDoc.getElementById("serverTime").innerText
                                     let serverDate=htmlDoc.getElementById("serverDate").innerText.split("/")
@@ -7285,7 +7294,7 @@ async function viewSupport(){
                             <td style="text-align:center; width:auto; background-color:${headerColor}">
                                 <div style="display:flex; flex-direction: row; justify-content: center; align-items: center">
                                     <font color="${titleColor}" style="margin-top:8px;margin-right:5px"><p>My Info</p></font>
-                                    <a href="#" onclick="UI.InfoMessage('Show information on the map for only your own villages',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a>
+                                    <a href="#" onclick="UI.InfoMessage('Show information on the map for only your own villages',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a>
                                 </div>
                             </td>
                             <td rowspan="4" style="text-align:center; width:auto; background-color:${headerColor}">
@@ -7299,7 +7308,7 @@ async function viewSupport(){
                             <td style="text-align:center; width:auto; background-color:${headerColor}">
                                 <div style="display:flex; flex-direction: row; justify-content: center; align-items: center">
                                     <font color="${titleColor}" style="margin-top:8px;margin-right:5px"><p>Tribe Info</p></font>
-                                    <a href="#" onclick="UI.InfoMessage('Show information on the map for all tribe villages, except yours',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a>
+                                    <a href="#" onclick="UI.InfoMessage('Show information on the map for all tribe villages, except yours',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a>
                                 </div>
                             </td>                    
                         </tr>
@@ -7310,7 +7319,7 @@ async function viewSupport(){
                             <td style="text-align:center; width:auto; background-color:${headerColor}">
                                 <div style="display:flex; flex-direction: row; justify-content: center; align-items: center">
                                     <font color="${titleColor}" style="margin-top:8px;margin-right:5px"><p>Enemy Info</p></font>
-                                    <a href="#" onclick="UI.InfoMessage('Show information on the map for all enemy villages',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a>
+                                    <a href="#" onclick="UI.InfoMessage('Show information on the map for all enemy villages',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a>
                                 </div>
                             </td>                    
                         </tr>
@@ -7321,7 +7330,7 @@ async function viewSupport(){
                             <td style="text-align:center; width:auto; background-color:${headerColor}">
                                 <div style="display:flex; flex-direction: row; justify-content: center; align-items: center">
                                     <font color="${titleColor}" style="margin-top:8px;margin-right:5px"><p>All Info</p></font>
-                                    <a href="#" onclick="UI.InfoMessage('Show information on the map for all villages (allies + enemies)',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a>
+                                    <a href="#" onclick="UI.InfoMessage('Show information on the map for all villages (allies + enemies)',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a>
                                 </div>
                             </td>                    
                         </tr>
@@ -7338,20 +7347,20 @@ async function viewSupport(){
                 <center style="margin:1px"><font color="${titleColor}">total</font></center>
                 </td>
                 <td style="text-align:center; width:auto; background-color:${headerColor}">
-                    <center style="margin:1px;font-size:16px"><font color="${titleColor}"><a href="#"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.webp" id="sort_by_attacks"></a><p id="header_attacks">(0)</p></font></center>
+                    <center style="margin:1px;font-size:16px"><font color="${titleColor}"><a href="#"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.png" id="sort_by_attacks"></a><p id="header_attacks">(0)</p></font></center>
                 </td>
                 <td style="text-align:center; width:auto; background-color:${headerColor}">
-                        <center style="margin:1px;font-size:16px"><font color="${titleColor}"><a href="#"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/support.webp" id="sort_by_supports"></a><p id="header_supports">(0)</p></font></center>
+                        <center style="margin:1px;font-size:16px"><font color="${titleColor}"><a href="#"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/support.png" id="sort_by_supports"></a><p id="header_supports">(0)</p></font></center>
                 </td>
                 <td style="text-align:center; width:auto; background-color:${headerColor}">
-                    <center style="margin:1px;font-size:16px"><font color="${titleColor}"><a href="#"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.webp" id="sort_by_nobles"></a><p id="header_nobles">(0)</p></font></center>
+                    <center style="margin:1px;font-size:16px"><font color="${titleColor}"><a href="#"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.png" id="sort_by_nobles"></a><p id="header_nobles">(0)</p></font></center>
                 </td>
                 <td style="text-align:center; width:auto; background-color:${headerColor}">
                     <center style="margin:1px;font-size:16px">
                         <font color="${titleColor}">
                             <div style="display:flex; flex-direction: row; justify-content: center; align-items: center">
                                 <a href="#" style="margin-right:10px"><img src="https://img.icons8.com/office/20/000000/sniper-rifle.png" id="sort_by_snipes"></a>
-                                <a href="#" onclick="UI.InfoMessage('List of snipes <br> <b>red</b> -> snipe is needed <br> <b>green</b> -> village is already sniped',8000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a>
+                                <a href="#" onclick="UI.InfoMessage('List of snipes <br> <b>red</b> -> snipe is needed <br> <b>green</b> -> village is already sniped',8000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a>
                             </div>
                             <p id="header_snipes">(0/0)</p>
                             </font>
@@ -7363,7 +7372,7 @@ async function viewSupport(){
                         <font color="${titleColor}">
                             <div style="display:flex; flex-direction: row; justify-content: center; align-items: center">
                                 <a href="#" style="margin-right:10px"><img src="https://img.icons8.com/ultraviolet/20/000000/horror.png" id="sort_by_recaps"></a>
-                                <a href="#" onclick="UI.InfoMessage('List of recaps <br> <b>red</b> -> recap is needed  <br> <b>green</b> -> village is already recapped <br><br> recap is needed if nr nobles >=4 and it is not a train',8000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a>
+                                <a href="#" onclick="UI.InfoMessage('List of recaps <br> <b>red</b> -> recap is needed  <br> <b>green</b> -> village is already recapped <br><br> recap is needed if nr nobles >=4 and it is not a train',8000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a>
                             </div>
                             <p id="header_recaps">(0/0)</p>
                         </font>
@@ -7657,13 +7666,13 @@ async function viewSupport(){
                                 let labelName=list_coming[i].labelName
 
 
-                                if(labelName.includes("snob.webp")){
+                                if(labelName.includes("snob.png")){
                                     time_attack=nobleSpeed*distance
-                                }else if(labelName.includes("ram.webp") || labelName.includes("catapult.webp")){
+                                }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
                                     time_attack=ramSpeed*distance
-                                }else if(labelName.includes("sword.webp")){
+                                }else if(labelName.includes("sword.png")){
                                     time_attack=swordSpeed*distance
-                                }else if(labelName.includes("axe.webp")){
+                                }else if(labelName.includes("axe.png")){
                                     time_attack=axeSpeed *distance
                                 }
                                 if(traveling==false)
@@ -7688,11 +7697,11 @@ async function viewSupport(){
                                     // console.log("nr_troupes_dropbox",nr_troupes_dropbox)
                                     // console.log(list_coming[i])
                                     if(nr_troupes_dropbox <= pop_small_attack)               
-                                        newTypeAttack="attack_small.webp"
+                                        newTypeAttack="attack_small.png"
                                     else if(nr_troupes_dropbox >pop_small_attack && nr_troupes_dropbox <= pop_medium_attack )
-                                        newTypeAttack="attack_medium.webp"
+                                        newTypeAttack="attack_medium.png"
                                     else
-                                        newTypeAttack="attack_large.webp"
+                                        newTypeAttack="attack_large.png"
 
                                 }
                                 else if(type_dropbox.includes("def")){
@@ -7922,7 +7931,7 @@ async function viewSupport(){
     let pop_medium_attack=parseInt(document.getElementById("settings_medium_attack").value)
     pop_small_attack=(!Number.isNaN(pop_medium_attack))?pop_medium_attack:5000
     pop_medium_attack=(!Number.isNaN(pop_medium_attack))?pop_medium_attack:10000
-    fangs_cat=(!Number.isNaN(fangs_cat))?fangs_cat:10
+    fangs_cat=(!Number.isNaN(fangs_cat))?fangs_cat:50
 
     //create a map with commands attacks, every coord has number of fangs,nukes,nobles
     //this part is for Enemy Info
@@ -8255,7 +8264,7 @@ async function viewSupport(){
                         if(list_coming[j].troops["heavy"] != undefined)
                             pop+=list_coming[j].troops["archer"] * troopsPop["archer"]
                 }
-                else if(list_coming[j].type_attack.includes("attack_small.webp")){
+                else if(list_coming[j].type_attack.includes("attack_small.png")){
                     // list_coords[i].nrAttacks = list_coords[i].nrAttacks-1 // eliminate fakes
                 }
             }
@@ -8301,7 +8310,7 @@ async function viewSupport(){
 
 
     //add troops home for own villages that don't have incomings
-    /*Array.from(map_troops_home.keys()).forEach(coord=>{
+    Array.from(map_troops_home.keys()).forEach(coord=>{
         let villageDetails = mapVillages.get(coord)
         let troopsHomeDetails = map_troops_home.get(coord)
         let totalPop = 0, totalPopOff = 0, totalPopDef = 0
@@ -8360,7 +8369,7 @@ async function viewSupport(){
     })
     console.log("mapVillageByIdAfter",mapVillageById)
 
-*/
+
 
 
     //btn show info on the map
@@ -8720,7 +8729,7 @@ function createMapInfoDefensiveSmall(obj){
             }
 
             if(obj.nrAttacks > 0){
-                html_info += `<img style="position:absolute;left:${leftImg};top:${topImg};width:13px;height:13px;z-index:4;margin-left:7px;"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic//map/incoming_attack.webp">
+                html_info += `<img style="position:absolute;left:${leftImg};top:${topImg};width:13px;height:13px;z-index:4;margin-left:7px;"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic//map/incoming_attack.png">
                     <center><font color="${colorIncomings}"  class="shadow20" style="position:absolute;left:${leftImg};top:${topImg};width:14px;height:14px;z-index:4;margin-left:18px; font-size: 11px">${obj.nrAttacks}</font></center>`
             }
   
@@ -8731,7 +8740,7 @@ function createMapInfoDefensiveSmall(obj){
 
             //containing own noble in village 
             if(obj.hasNoble == true){
-                html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:10px;height:10px;z-index:4;margin-top:15px;margin-left:40px;background-color:white"  src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.webp">`
+                html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:10px;height:10px;z-index:4;margin-top:15px;margin-left:40px;background-color:white"  src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.png">`
             }
 
             //add either loyaly or wall down
@@ -8740,14 +8749,14 @@ function createMapInfoDefensiveSmall(obj){
             }
             
             if((obj.LoyaltyLevel == 100 || obj.LoyaltyLevel == undefined || obj.LoyaltyLevel == 'none') && obj.wallLevel < 20){
-                html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:10px;height:10px;z-index:4;margin-top:26px;margin-left:41px;background-color:#471212"  src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/wall.webp">`
+                html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:10px;height:10px;z-index:4;margin-top:26px;margin-left:41px;background-color:#471212"  src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/wall.png">`
             }
             if((obj.LoyaltyLevel == 100 || obj.LoyaltyLevel == undefined || obj.LoyaltyLevel == 'none') && obj.farmLevel < 30){
-                html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:10px;height:10px;z-index:4;margin-top:26px;margin-left:31px;background-color:#471212"  src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/farm.webp">`
+                html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:10px;height:10px;z-index:4;margin-top:26px;margin-left:31px;background-color:#471212"  src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/farm.png">`
             }
 
             if(obj.typeVillage){
-                html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:14px;height:14px;z-index:4;margin-left:37px;background-color:${colorType}"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${typeVillage}.webp">`
+                html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:14px;height:14px;z-index:4;margin-left:37px;background-color:${colorType}"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${typeVillage}.png">`
             }
 
             
@@ -8849,7 +8858,7 @@ function createMapInfoOffensiveSmall(obj){
                     html_info=`
                         <div id="info_extra${obj.villageId}" style="position:absolute;left:${leftImg};top:${topImg};width:51px;height:36px;z-index:3; ${borderMain}"></div>`
                     
-                    html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:35px;${border}"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${obj.type_village}.webp">`
+                    html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:35px;${border}"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${obj.type_village}.png">`
                     
                     if(stacks_home>=0){
                         html_info+=`<center><font color="${"#FFFFF1"}" class="shadow20" style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:8px;font-size: 10px;">${stacks_home}k</font></center>`
@@ -8884,7 +8893,7 @@ function createMapInfoOffensiveSmall(obj){
                     html_info=`
                         <div id="info_extra${obj.villageId}" style="position:absolute;left:${leftImg};top:${topImg};width:51px;height:36px;z-index:3; ${borderMain}"></div>`
                     
-                    html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:35px;${border}"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${obj.type_village}.webp">`
+                    html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:35px;${border}"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${obj.type_village}.png">`
                     
                     if(stacks_home>=0){
                         html_info+=`<center><font color="${"#FFFFF1"}" class="shadow20" style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:8px;font-size: 10px;">${stacks_home}k</font></center>`
@@ -8938,7 +8947,7 @@ function showPopupInfo(mapAttacksVillageId){
             for(let i=0;i<units.length-militia;i++){
                 html_popup+=`
                     <td style="text-align:center; width:auto;background-color:#c1a264" >
-                        <center style="margin-top:0px;"><img src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${units[i]}.webp"></center>
+                        <center style="margin-top:0px;"><img src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${units[i]}.png"></center>
                     </td>`
             }
             html_popup+="</tr>"
@@ -9033,13 +9042,13 @@ function createTablePlayers(map_playerId,mapVillages){
             <a href="${game_data.link_base_pure}info_player&id=${key}"><center style="margin:5px"><font color="${titleColor}">${obj.player_destination_name}</font></center></a>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}">
-                <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.webp">(${obj.nr_attacks_total})</font></center>
+                <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.png">(${obj.nr_attacks_total})</font></center>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}">
-                    <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/support.webp">(${obj.nr_supports_total})</font></center>
+                    <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/support.png">(${obj.nr_supports_total})</font></center>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}">
-                <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.webp">(${obj.nr_nobles_total})</font></center>
+                <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.png">(${obj.nr_nobles_total})</font></center>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}">
                 <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/office/20/000000/sniper-rifle.png"/>(${obj.nr_sniped_total}/${obj.nr_snipe_total})</font></center>
@@ -9102,13 +9111,13 @@ function createTablePlayers(map_playerId,mapVillages){
                         <a href="${game_data.link_base_pure}info_village&id=${obj.coord_destination_id}" style="margin:0px"><center><font color="${titleColor}">${obj.list_coming[0].coord_destination}</font></center></a>
                     </td>
                     <td style="text-align:center; width:auto; background-color:${headerColorPlayers}">
-                        <center style="margin:0px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.webp">(${obj.nrAttacks})</font></center>
+                        <center style="margin:0px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.png">(${obj.nrAttacks})</font></center>
                     </td>
                     <td style="text-align:center; width:auto; background-color:${headerColorPlayers}">
-                        <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/support.webp">(${obj.nr_supports})</font></center>
+                        <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/support.png">(${obj.nr_supports})</font></center>
                     </td>
                     <td style="text-align:center; width:auto; background-color:${headerColorPlayers}">
-                        <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.webp">(${obj.nrNobles})</font></center>
+                        <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.png">(${obj.nrNobles})</font></center>
                     </td>
                         <td style="text-align:center; width:auto; background-color:${headColorSnipe}">
                     <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/office/20/000000/sniper-rifle.png"/></font></center>
@@ -9206,19 +9215,19 @@ function createTableCoordTroops(obj,admin){
                 <center style="margin:5px"><font color="${titleColor}">coord </font></center>
             </td>    
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
-                <center style="margin:5px;padding;"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.webp"> </font></center>
+                <center style="margin:5px;padding;"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.png"> </font></center>
             </td>    
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
-                <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/flags/small/3.webp"> </font></center>
+                <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/flags/small/3.png"> </font></center>
             </td>    
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
-                <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/snob.webp"> </font></center>
+                <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/snob.png"> </font></center>
             </td>    
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
-                <center style="margin:5x"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/wall.webp"> </font></center>
+                <center style="margin:5x"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/wall.png"> </font></center>
             </td>    
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
-                <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/farm.webp"> </font></center>
+                <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/farm.png"> </font></center>
             </td>   
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:5px"><font color="${titleColor}">troops </font></center></p>
@@ -9228,7 +9237,7 @@ function createTableCoordTroops(obj,admin){
     /////////////////////////////////////////////////////////////////////////////Add info village//////////////////////////////////////////////////
 
         for(let i=0;i<units.length-1;i++){
-            html_table_coord+=`<td class="fm_unit" style="width:30px;text-align:center;width:auto; background-color:${headerColorFirstRow}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/unit/unit_${units[i]}.webp"></td>`
+            html_table_coord+=`<td class="fm_unit" style="width:30px;text-align:center;width:auto; background-color:${headerColorFirstRow}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/unit/unit_${units[i]}.png"></td>`
         }
         html_table_coord+=`
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
@@ -9398,7 +9407,7 @@ function createTableCoordIncomings(list,mapVillages){
         <tbody >
         <tr>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
-                <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/056b9c0b/graphic/unit/att.webp"> </font></center>
+                <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/056b9c0b/graphic/unit/att.png"> </font></center>
             </td>  
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:0px"><font color="${titleColor}">speed/pop </font></center>
@@ -9431,7 +9440,7 @@ function createTableCoordIncomings(list,mapVillages){
             let type_attack=list[i].type_attack
 
             if(list[i].labelName=="none")
-                labelName=`<img src="https://dsen.innogamescdn.com/asset/056b9c0b/graphic/delete.webp">`
+                labelName=`<img src="https://dsen.innogamescdn.com/asset/056b9c0b/graphic/delete.png">`
             else
                 labelName=`<img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/unit/tiny/${list[i].labelName}">`
 
@@ -9588,7 +9597,7 @@ function createTableSettings(){
                 <font style="margin:5px" color="${titleColor}">fangs has(catapults) </font>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}" >
-                <input type="number" style="text-align:center;" id="settings_fang_cat" min="0" max="20000"  value="50" placeholder="100" >
+                <input type="number" style="text-align:center;" id="settings_fang_cat" min="0" max="20000"  value="50" placeholder="100" disabled>
             </td>
         </tr>
 
@@ -10618,8 +10627,6 @@ function convertBuildTime(milliseconds){
 
 function convertDate(date){
     let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    if (typeof months === 'string') {
-
     let monthIndex = date.split("/")[0]-1
     let dayIndex = date.split("/")[1]
     let time = date.split(" ")[1]
@@ -10631,10 +10638,7 @@ function convertDate(date){
     else
         return `${months[monthIndex]} ${dayIndex} ${time}` 
 
-    }
-    else {
-    console.log("Error: Variable split is not a string");
-}
+
 }
 
 ////////////////////////////////////////////// get commands sharing settings ///////////////////////////////////////
@@ -10667,7 +10671,7 @@ async function getCommandsSharing(){
                     let viewCommands = (tds[2].getElementsByTagName("input")[0].checked == true) ? true : false
                     let sharedCommands = false
                     if(tds[2].getElementsByTagName("img").length > 0){
-                        if(tds[2].getElementsByTagName("img")[0].src.includes("confirm.webp")){
+                        if(tds[2].getElementsByTagName("img")[0].src.includes("confirm.png")){
                             sharedCommands = true
                         }
                     }
@@ -11003,10 +11007,3 @@ async function uploadOwnTroops(){
     })
 
 }
-
-
-
-
-
-
-
