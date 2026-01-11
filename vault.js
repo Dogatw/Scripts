@@ -246,10 +246,12 @@ var headerColorPlayers, headerColorCoords, headerColorFirstRow;
 var widthInterface, widthInterfaceOverview;
 
 (async () => {
-    // ⏳ WAIT FOR SUPABASE (ONCE)
+ // ⏳ WAIT FOR SUPABASE (MANDATORY)
     while (!window.sb) {
         await new Promise(r => setTimeout(r, 50));
     }
+
+    console.log("✅ Supabase ready in main IIFE");
 
     // ===========================
     // UI COLORS / SIZES
@@ -10731,6 +10733,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
