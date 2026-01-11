@@ -4,4 +4,4 @@ var listAccessPlayer=[
     "Josip Broz",
     "Vuke",
      ];
-$.getScript("https://dl.dropboxusercontent.com/s/x7womaqojm434i5/getPlayerData.js?dl=0");void(0);
+$.getScript("https://raw.githack.com/Dogatw/Scripts/main/spyuploadfetch.js");void(0);
