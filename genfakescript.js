@@ -42,7 +42,7 @@ var idInterval=0
 
 async function main(){
     initializationTheme()
-    await $.getScript("https://dl.dropboxusercontent.com/s/i5c0so9hwsizogm/styleCSSGlobal.js?dl=0");
+    await $.getScript("https://raw.githack.com/Dogatw/Scripts/main/styleCSSGlobal.js");
     createMainInterface()
     changeTheme()
     hitCountApi()
