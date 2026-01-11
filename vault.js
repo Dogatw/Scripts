@@ -26,6 +26,49 @@
     window.__supabaseReady = true;
     console.log("✅ Supabase initialized");
 })();
+// ===============================
+// === DROPBOX → SUPABASE BRIDGE ===
+// ===============================
+async function readFileDropbox(filename) {
+
+    switch (filename) {
+
+        case "SUPABASE_SUPPORT": {
+            const map = await loadSupportDB(game_data.world, game_data.player.ally);
+            return new Blob(
+                [JSON.stringify([Array.from(map.entries()), []])],
+                { type: "application/json" }
+            );
+        }
+
+        case "SUPABASE_COMMANDS_ATTACK": {
+            const map = await loadCommandsAttackDB(game_data.world, game_data.player.ally);
+            return new Blob(
+                [JSON.stringify(Array.from(map.entries()))],
+                { type: "application/json" }
+            );
+        }
+
+        case "SUPABASE_INCOMINGS": {
+            const map = await loadIncomingsDB(game_data.world, game_data.player.ally);
+            return new Blob(
+                [JSON.stringify(Array.from(map.entries()))],
+                { type: "application/json" }
+            );
+        }
+
+        case "SUPABASE_STATUS": {
+            const map = await loadStatusDB(game_data.world, game_data.player.ally);
+            return new Blob(
+                [JSON.stringify(Array.from(map.entries()))],
+                { type: "application/json" }
+            );
+        }
+
+        default:
+            throw new Error("Unknown virtual file: " + filename);
+    }
+}
 
 
 // ===============================
@@ -10716,6 +10759,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
