@@ -725,7 +725,7 @@ async function uploadReports(){
     document.getElementById("progress_reports").innerText = "Getting data...";
 
     // ===========================
-    // HISTORY (unchanged – Dropbox)
+    // HISTORY (Dropbox – unchanged)
     // ===========================
     let [map_history_upload] = await Promise.all([
         readFileDropbox(filename_history_upload),
@@ -776,7 +776,7 @@ async function uploadReports(){
     let nr_reports = 0;
     let nr_reports_total = list_href.length;
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
 
         async function ajaxRequest(urls) {
 
@@ -823,8 +823,13 @@ async function uploadReports(){
                     game_data.player.ally
                 );
 
+                let map_support = await loadSupportDB(
+                    game_data.world,
+                    game_data.player.ally
+                );
+
                 // ===========================
-                // STATUS (unchanged – Dropbox)
+                // STATUS (Dropbox – unchanged)
                 // ===========================
                 let mapStatus;
                 try {
@@ -873,6 +878,18 @@ async function uploadReports(){
                     await saveIncomingsDB(
                         coord,
                         incList,
+                        game_data.world,
+                        game_data.player.ally
+                    );
+                }
+
+                // ===========================
+                // SAVE SUPPORT ➜ SUPABASE
+                // ===========================
+                for (const [coord, supportList] of map_support.entries()) {
+                    await saveSupportDB(
+                        coord,
+                        supportList,
                         game_data.world,
                         game_data.player.ally
                     );
@@ -10806,6 +10823,7 @@ async function uploadOwnTroops(){
     })
 
 }
+
 
 
 
