@@ -541,49 +541,26 @@ function closeWindow(){
 }
 
 async function getUsers() {
-    await insertCryptoLibrary();
 
-    const decrypted = CryptoJS.AES.decrypt(
-        encryptedData,
-        "isFuckingWorking"
-    ).toString(CryptoJS.enc.Utf8);
+    const { data, error } = await sb
+        .from("users")
+        .select("name, permission")
+        .eq("world", game_data.world)
+        .eq("tribe", game_data.player.ally);
 
-    if (!decrypted) {
-        throw new Error("AES decrypt failed");
+    if (error) {
+        console.error("getUsers failed", error);
+        throw new Error("Cannot load users from Supabase");
     }
 
-    new Function(decrypted)();
-    console.log("DB NAME =", databaseName);
-
-    // 🔐 Validate AES config
-    if (!databaseName || !dropboxToken) {
-        throw new Error("Invalid AES config");
+    if (!data || data.length === 0) {
+        throw new Error("No users found for this tribe/world");
     }
 
-    const filename_users = `${databaseName}/Users.txt`;
-
-    let result;
-
-    await $.ajax({
-        url: "https://content.dropboxapi.com/2/files/download",
-        method: "POST",
-        dataType: "text",
-        headers: {
-            Authorization: "Bearer " + dropboxToken,
-            "Dropbox-API-Arg": JSON.stringify({ path: "/" + filename_users })
-        },
-        success: data => result = data,
-        error: err => {
-            console.error("Dropbox download failed", err);
-            throw err;
-        }
-    });
-
-    if (!result) {
-        throw new Error("Users.txt not found or empty");
-    }
-
-    return result;
+    // Return SAME format as Users.txt
+    return data
+        .map(u => `${u.name},${u.permission}`)
+        .join("\n");
 }
 
 
@@ -10807,3 +10784,4 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
