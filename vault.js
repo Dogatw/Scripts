@@ -293,11 +293,6 @@ var widthInterface, widthInterfaceOverview;
     showButtons();
     hitCountApi();
 
-    // ===========================
-    // DROPBOX (TEMPORARY)
-    // ===========================
-    filename_status_upload = `${databaseName}/status.gz`;
-    filename_history_upload = `${databaseName}/history_upload.gz`;
 
 })();
 
@@ -10770,6 +10765,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
