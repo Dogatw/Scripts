@@ -550,6 +550,11 @@ function closeWindow(){
 }
 
 async function getUsers() {
+    // make sure game_data exists
+    while (typeof window.game_data === "undefined") {
+        await new Promise(r => setTimeout(r, 50));
+    }
+
     const { data, error } = await sb
         .from("users")
         .select("username, permission")
@@ -561,12 +566,13 @@ async function getUsers() {
         throw new Error("Cannot load users from Supabase");
     }
 
-    // Convert to SAME FORMAT as old Dropbox Users.txt
-    // "player,permission"
+    // Keep SAME format as old Users.txt
+    // player,permission
     return data
         .map(u => `${u.username},${u.permission}`)
         .join("\n");
 }
+
 
 
 
@@ -10772,6 +10778,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
