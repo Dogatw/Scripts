@@ -28,6 +28,13 @@
 })();
 
 
+// ===============================
+// === VIRTUAL FILENAMES (SUPABASE)
+// ===============================
+var filename_support = "SUPABASE_SUPPORT";
+var filename_commands_attack = "SUPABASE_COMMANDS_ATTACK";
+var filename_incomings = "SUPABASE_INCOMINGS";
+var filename_status_upload = "SUPABASE_STATUS";
 
 
 // ===============================
@@ -10709,6 +10716,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
