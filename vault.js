@@ -10706,167 +10706,114 @@ async function getVillagesBuildings(){
 }
 
 async function uploadOwnTroops(){
-    document.getElementById("progress_troops_home").innerText="Getting data...";
-    
-    let [mapVillages, troopsHomeData, statusUploadData,status]=await Promise.all([
-        getInfoVillages(), 
-        let [mapVillages, statusUploadData, status] = await Promise.all([
-    getInfoVillages(),
-    readFileDropbox(filename_status_upload),
-    insertlibraryLocalBase()
-]);
 
+    document.getElementById("progress_troops_home").innerText = "Getting data...";
+
+    // ===========================
+    // LOAD REQUIRED DATA
+    // ===========================
+    let [mapVillages, statusUploadData] = await Promise.all([
+        getInfoVillages(),
         readFileDropbox(filename_status_upload),
-        insertlibraryLocalBase() 
-    ]).catch(err=>{alert(err)})
+        insertlibraryLocalBase()
+    ]).catch(err => {
+        alert(err);
+        throw err;
+    });
 
+    // ===========================
+    // LOAD TROOPS HOME (SUPABASE)
+    // ===========================
+    let mapTroopsHome = await loadTroopsHomeDB(
+        game_data.world,
+        game_data.player.ally
+    );
 
-
-    /////////////////////////////////////////////////////////////////////////Get current troops home from dropbox database/////////////////////////
-    let mapTroopsHomeDropbox = new Map()
-    try {
-        let decompressedData = await decompress(await troopsHomeData.arrayBuffer() , 'gzip');  
-        mapTroopsHomeDropbox=new Map(JSON.parse(decompressedData))
-
-    } catch (error) {
-        console.log("erorr map troops home from dropbox: " + error)
-    }
-
-    //if  database is stored locally
-    if(await localBase.getItem(game_data.world+"troops_home")!=undefined){
-        try{
-            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "troops_home"))
-            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
-    
-            let map_localBase=new Map( JSON.parse(decompressedData));
-            mapTroopsHomeDropbox=new Map([...map_localBase, ...mapTroopsHomeDropbox])
-        } catch (error) {
-            console.log("erorr map troops home from localbase: " + error)
-        }
-    }
-
-    /////////////////////////////////////////////////////////////////////////Get map status from dropbox database/////////////////////////
+    // ===========================
+    // LOAD STATUS (DROPBOX – TEMP)
+    // ===========================
     let mapStatus = new Map();
     try {
-        let decompressedData = await decompress(await statusUploadData.arrayBuffer() , 'gzip');  
-        mapStatus=new Map( JSON.parse(decompressedData));
-    } catch (error) {
-        console.log("erorr map status from dropbox: " + error)
+        let d = await decompress(await statusUploadData.arrayBuffer(), "gzip");
+        mapStatus = new Map(JSON.parse(d));
+    } catch (e) {
+        console.log("status read error", e);
     }
 
+    // ===========================
+    // GET CURRENT TROOPS
+    // ===========================
+    let troopsHome = await getOwnTroopsInfo();
+    let mapVillagesWall = await getVillagesBuildings();
 
-    // console.log(mapTroopsHomeDropbox)
-    // console.log(mapStatus)
-    /////////////////////////////////////////////////////////////////////////Get current troops home for all villages/////////////////////////
-
-    let troopsHome=await getOwnTroopsInfo().catch(err=>{alert(err);throw err})
-    let mapVillagesWall=await getVillagesBuildings().catch(err=>{alert(err);throw err})
-
-    console.log(troopsHome)
-    //add villages wall
-    Array.from(troopsHome.keys()).forEach(coord=>{
-        if(mapVillagesWall.has(coord)){
-            let updateObj = troopsHome.get(coord);
-            updateObj.wallLvl = mapVillagesWall.get(coord).wallLvl
-            updateObj.farmLvl = mapVillagesWall.get(coord).farmLvl
-            troopsHome.set(coord, updateObj)
+    // add wall + farm
+    troopsHome.forEach((val, coord) => {
+        if (mapVillagesWall.has(coord)) {
+            val.wallLvl = mapVillagesWall.get(coord).wallLvl;
+            val.farmLvl = mapVillagesWall.get(coord).farmLvl;
+            troopsHome.set(coord, val);
         }
-    })
+    });
 
-    // console.log(mapVillages)
-    // console.log(mapTroopsHomeDropbox)
+    // ===========================
+    // MERGE TROOPS (SUPABASE + NEW)
+    // ===========================
+    mapTroopsHome = new Map([...mapTroopsHome, ...troopsHome]);
 
-    //update map from dropbox
-    mapTroopsHomeDropbox=new Map([...mapTroopsHomeDropbox, ...troopsHome])
-
-    //remove old coords
-    Array.from(mapTroopsHomeDropbox.keys()).forEach(coord=>{
-        if(mapVillages.has(coord)){
-            if(mapVillages.get(coord).playerId != mapTroopsHomeDropbox.get(coord).playerId){//old information-> needs to be removed
-                mapTroopsHomeDropbox.delete(coord)
+    // remove invalid villages
+    mapTroopsHome.forEach((val, coord) => {
+        if (mapVillages.has(coord)) {
+            if (mapVillages.get(coord).playerId !== val.playerId) {
+                mapTroopsHome.delete(coord);
             }
         }
-    })
+    });
 
+    // ===========================
+    // UPDATE STATUS
+    // ===========================
+    let serverTime = document.getElementById("serverTime").innerText;
+    let serverDate = document.getElementById("serverDate").innerText.split("/");
+    serverDate = `${serverDate[1]}/${serverDate[0]}/${serverDate[2]}`;
+    let date_current = `${serverDate} ${serverTime}`;
 
+    mapStatus.set(game_data.player.id.toString(), {
+        name: game_data.player.name,
+        troops_date: date_current
+    });
 
-
-
-
-    
-
-    //update status troops home
-    let serverTime=document.getElementById("serverTime").innerText
-    let serverDate=document.getElementById("serverDate").innerText.split("/")
-    serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
-    let date_current=serverDate+" "+serverTime
-    console.log(date_current)
-    let obj_status={
-        name:game_data.player.name,
-        troops_date:date_current,
+    // ===========================
+    // SAVE TROOPS HOME → SUPABASE
+    // ===========================
+    for (const [coord, troopsData] of mapTroopsHome.entries()) {
+        await saveTroopsHomeDB(
+            coord,
+            troopsData,
+            game_data.world,
+            game_data.player.ally
+        );
     }
-    if(mapStatus.has(game_data.player.id.toString())){
-        let obj_update=mapStatus.get(game_data.player.id.toString())
-        mapStatus.set(game_data.player.id.toString(), {...obj_update, ...obj_status} )
-    }
-    else{
-        mapStatus.set(game_data.player.id.toString(),obj_status)
-    }
 
+    // ===========================
+    // SAVE STATUS (DROPBOX – TEMP)
+    // ===========================
+    let data_status = JSON.stringify(Array.from(mapStatus.entries()));
+    let dataCompressed = await compress(data_status, "gzip");
+    await uploadFile(dataCompressed, filename_status_upload, dropboxToken);
 
-    return new Promise(async(resolve, reject)=>{
-        let timeStartUpload = new Date().getTime();
-        let nr_start=new Date().getTime()
-    
-        //upload troops home
-        let data=JSON.stringify(Array.from(mapTroopsHomeDropbox.entries()))
-        let length_data = data.length
-        let sizeTroopsHomeDB = formatBytes(new TextEncoder().encode(data).length)
-    
-        let compressedData = await compress(data,'gzip')
-        let compressedDataBase64 = await blobToBase64(compressedData);
-        let length_data_compressed=compressedData.size;
-    
-        let nr_stop=new Date().getTime()
-    
-        console.log("compressing data Troops home: "+(nr_stop-nr_start))
-        console.log("length before: "+length_data+" length after compression: "+length_data_compressed)
-        console.log("compression factor: "+(length_data/length_data_compressed))
-    
-                
-        await localBase.setItem(game_data.world + "troops_home",compressedDataBase64)
-        let result=await uploadFile(compressedData, filename_troops_home, dropboxToken).catch(err=>alert(err))
-    
-    
-    
-        let data_status=JSON.stringify(Array.from(mapStatus.entries()))
-        let dataCompressed = await compress(data_status, "gzip")
-        let resultStatus=await uploadFile(dataCompressed, filename_status_upload, dropboxToken).catch(err=>alert(err))
-    
-        console.log(resultStatus)
-        if(resultStatus == "succes"){
-            let timeStopUpload = new Date().getTime();
-            let totalTimeUpload =  Math.round(((timeStopUpload - timeStartUpload) / 1000) * 100) / 100
-            let nrCoord = mapTroopsHomeDropbox.size
-            document.getElementById("progress_troops_home").innerText = `${nrCoord} coords`;
-            UI.SuccessMessage(`Troops home done <br> 
-                                Upload time: <b>${totalTimeUpload} sec</b> <br>
-                                Size DB: <b>${sizeTroopsHomeDB} </b>`, 10000)
-            resolve({
-                totalTimeUpload: totalTimeUpload,
-                status: "success"
-            })
-        }
-        else{
-            reject("error upload troops info")
-        }
-    })
+    // ===========================
+    // UI
+    // ===========================
+    document.getElementById("progress_troops_home").innerText =
+        `${mapTroopsHome.size} coords`;
 
+    UI.SuccessMessage(
+        `Troops home done<br>
+         Villages: <b>${mapTroopsHome.size}</b>`,
+        8000
+    );
+
+    return {
+        status: "success"
+    };
 }
-
-
-
-
-
-
-
