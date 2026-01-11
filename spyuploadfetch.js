@@ -1,158 +1,199 @@
-// Constants & Globals
+    /**************** CONFIG ****************/
+    const CONFIG = {
+        databaseName: "samClassic1/",
+        commandsFile: "extraDataCommands.txt",
+        dropboxToken: "voeQxDKEfdAAAAAAAAAAAWmeVbsqR6fFyKdfA2gXF05UhEt-ztkJqkFZY6PkMTzk",
+        ajaxDelay: 200
+    };
 
-const DATABASE_NAME = "samClassic1/";
-const COMMANDS_FILE = DATABASE_NAME + "extraDataCommands.txt";
-const DROPBOX_TOKEN = "voeQxDKEfdAAAAAAAAAAAWmeVbsqR6fFyKdfA2gXF05UhEt-ztkJqkFZY6PkMTzk";
+    /**************** HELPERS ****************/
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// Main Entry
-async function main() {
-    const players = document
-        .getElementById("input_player")
-        .value
-        .split(",")
-        .map(p => p.trim());
+    function ajaxGet(url) {
+        return new Promise((resolve, reject) => {
+            const start = Date.now();
+            $.ajax({
+                url,
+                method: "GET",
+                success: html => {
+                    const diff = Date.now() - start;
+                    setTimeout(() => resolve(html), Math.max(CONFIG.ajaxDelay - diff, 0));
+                },
+                error: reject
+            });
+        });
+    }
 
-    let commandsMap = new Map();
+    /**************** DISPLAY ALL VILLAGES ****************/
+    async function ensureDisplayAllVillages() {
+        const btn = $("a[href*='screen=info_player'][href*='mode=all']");
+        if (!btn.length) return;
 
-    for (let i = 0; i < players.length; i++) {
-        UI.SuccessMessage(`${i + 1} / ${players.length}`);
+        btn[0].click();
 
-        const url = game_data.link_base_pure + "info_player&id=" + players[i];
-        const html = await ajaxGet(url);
-        document.body.innerHTML = html;
+        await new Promise(resolve => {
+            const i = setInterval(() => {
+                if ($("#villages_list tr").length > 100) {
+                    clearInterval(i);
+                    resolve();
+                }
+            }, 200);
+        });
+    }
 
-        // pagination auto-click
+    async function getAllVillageLinks() {
+        await ensureDisplayAllVillages();
+
+        const links = new Set();
+        $("#villages_list tr").each((_, tr) => {
+            const a = tr.querySelector(".village_anchor a");
+            if (a) links.add(a.href);
+        });
+
+        return [...links];
+    }
+
+    /**************** LAND TIME ****************/
+    function getLandTime(text) {
+        const serverDate = document.getElementById("serverDate").innerText.split("/");
+        const time = text.match(/\d+:\d+:\d+:\d+/)?.[0];
+        if (!time) return null;
+
+        return `${serverDate[1]}/${serverDate[0]}/${serverDate[2]} ${time}`;
+    }
+
+    /**************** COMMAND SCRAPER ****************/
+    async function getInfoCommands(villageLinks) {
+        const map = new Map();
+
+        for (let i = 0; i < villageLinks.length; i++) {
+            UI.SuccessMessage(`${i + 1} / ${villageLinks.length}`);
+
+            const html = await ajaxGet(villageLinks[i]);
+            document.body.innerHTML = html;
+
+            $(".command-row").each((_, row) => {
+                const id = row.getAttribute("data-id");
+                if (!id) return;
+
+                const img = row.querySelector("img")?.src || "";
+                let type = null;
+
+                if (img.includes("small")) type = "small";
+                else if (img.includes("medium")) type = "medium";
+                else if (img.includes("large")) type = "large";
+
+                if (!type) return;
+
+                const hasNoble = img.includes("snob");
+                const dateLand = getLandTime(row.innerText);
+
+                map.set(id, { type, hasNoble, dateLand });
+            });
+
+            await sleep(CONFIG.ajaxDelay);
+        }
+
+        return map;
+    }
+
+    /**************** DROPBOX ****************/
+    function readDropbox(path) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: "https://content.dropboxapi.com/2/files/download",
+                method: "POST",
+                headers: {
+                    Authorization: "Bearer " + CONFIG.dropboxToken,
+                    "Dropbox-API-Arg": JSON.stringify({ path: "/" + path })
+                },
+                success: resolve,
+                error: reject
+            });
+        });
+    }
+
+    function uploadDropbox(data, path) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "https://content.dropboxapi.com/2/files/upload", false);
+            xhr.setRequestHeader("Authorization", "Bearer " + CONFIG.dropboxToken);
+            xhr.setRequestHeader("Content-Type", "application/octet-stream");
+            xhr.setRequestHeader("Dropbox-API-Arg", JSON.stringify({
+                path: "/" + path,
+                mode: "overwrite",
+                autorename: false,
+                mute: true
+            }));
+
+            xhr.onload = () => xhr.status === 200 ? resolve() : reject(xhr.responseText);
+            xhr.send(new Blob([data]));
+        });
+    }
+
+    /**************** MAIN ****************/
+    async function main() {
+        const players = $("#input_player")
+            .val()
+            .split(",")
+            .map(p => p.trim())
+            .filter(Boolean);
+
+        let collected = new Map();
+
+        for (const player of players) {
+            const url = game_data.link_base_pure + "info_player&id=" + player;
+            const html = await ajaxGet(url);
+            document.body.innerHTML = html;
+
+            const villages = await getAllVillageLinks();
+            const commands = await getInfoCommands(villages);
+
+            commands.forEach((v, k) => collected.set(k, v));
+        }
+
+        let stored = "[]";
         try {
-            if ($("#villages_list tr").eq(1).children().length === 101) {
-                $("#villages_list").eq(-1).find("a").click();
+            stored = await readDropbox(CONFIG.databaseName + CONFIG.commandsFile);
+        } catch {}
+
+        let db = stored === "[]"
+            ? new Map()
+            : new Map(JSON.parse(lzw_decode(stored)));
+
+        const now = new Date();
+        collected.forEach((v, k) => db.set(k, v));
+
+        for (const [k, v] of db.entries()) {
+            if (v.dateLand && new Date(v.dateLand) < now) {
+                db.delete(k);
             }
-        } catch (e) {}
-
-        const villageRows = $("#villages_list tr").children().children();
-        let villageLinks = [];
-
-        for (const row of villageRows) {
-            const link = row.getElementsByClassName("village_anchor")[0]
-                .getElementsByTagName("a")[0].href;
-            villageLinks.push(link);
         }
 
-        const newCommands = await getInfoCommands(villageLinks);
-        commandsMap = new Map([...commandsMap, ...newCommands]);
+        const output = lzw_encode(JSON.stringify([...db.entries()]));
+        await uploadDropbox(output, CONFIG.databaseName + CONFIG.commandsFile);
+
+        UI.SuccessMessage("Finished ✔");
     }
 
-    // Load old data
-    let stored = await readFileDropbox(COMMANDS_FILE);
-    let oldMap = stored === "[]"
-        ? new Map()
-        : new Map(JSON.parse(lzw_decode(stored)));
-
-    const merged = new Map([...oldMap, ...commandsMap]);
-
-    // Remove expired commands
-    const serverDate = document.getElementById("serverDate").innerText.split("/");
-    const serverTime = document.getElementById("serverTime").innerText;
-    const now = new Date(`${serverDate[1]}/${serverDate[0]}/${serverDate[2]} ${serverTime}`);
-
-    for (const [key, value] of merged.entries()) {
-        if (now > new Date(value.dateLand)) {
-            merged.delete(key);
+    /**************** UI ****************/
+    function Interface() {
+        if (!listAccessPlayer.includes(game_data.player.name)) {
+            throw new Error("No access");
         }
+
+        if ($("#div_container").length) return;
+
+        $("body").append(`
+            <div id="div_container" style="position:fixed;top:10px;left:10px;z-index:9999;background:#fff;padding:10px">
+                <textarea id="input_player" rows="8" style="width:280px"></textarea><br><br>
+                <button class="btn" id="start_script">Start</button>
+            </div>
+        `);
+
+        $("#start_script").on("click", main);
     }
 
-    let output = JSON.stringify([...merged.entries()]);
-    output = lzw_encode(output);
+    Interface();
 
-    await uploadFile(output, COMMANDS_FILE, DROPBOX_TOKEN);
-}
 
-// UI Injection
-function Interface() {
-    if (!listAccessPlayer.includes(game_data.player.name)) {
-        throw new Error("you don't have access");
-    }
-
-    const html = `
-    <div id="div_container">
-        <textarea id="input_player" style="width:100%" rows="20"></textarea>
-        <center style="margin:10px">
-            <input class="btn" type="button" onclick="main()" value="Start">
-        </center>
-    </div>`;
-
-    if (!document.getElementById("div_container")) {
-        $("#contentContainer").remove();
-        $("#mobileContent").eq(0).prepend(html);
-        $("#contentContainer").eq(0).prepend(html);
-        $("#div_container").css("position", "fixed").draggable();
-
-        const saved = localStorage.getItem(game_data.world + "input_player");
-        if (saved) $("#input_player").val(saved);
-
-        $("#input_player").on("input", () => {
-            localStorage.setItem(
-                game_data.world + "input_player",
-                $("#input_player").val()
-            );
-        });
-    }
-}
-Interface();
-
-// Command Scanner
-async function getInfoCommands(villageLinks) {
-    let map = new Map();
-
-    for (let i = 0; i < villageLinks.length; i++) {
-        const html = await ajaxGet(villageLinks[i]);
-        document.body.innerHTML = html;
-
-        UI.SuccessMessage(`${i} / ${villageLinks.length}`);
-
-        $(".command-row").each(row => {
-            const imgSrc = row.getElementsByTagName("img")[0].src;
-            const id = row.getAttribute("data-id");
-
-            if (imgSrc.includes("small")) {
-                map.set(id, { type: "small", hasNoble: false, dateLand: getLandTime(row.innerText) });
-            } else if (imgSrc.includes("medium")) {
-                map.set(id, { type: "medium", hasNoble: false, dateLand: getLandTime(row.innerText) });
-            } else if (imgSrc.includes("large")) {
-                map.set(id, { type: "large", hasNoble: false, dateLand: getLandTime(row.innerText) });
-            }
-        });
-    }
-
-    return map;
-}
-
-// AJAX Helpers
-function ajaxGet(url) {
-    return new Promise((resolve, reject) => {
-        const start = Date.now();
-        $.ajax({
-            url,
-            method: "GET",
-            success: data => {
-                const delay = 200 - (Date.now() - start);
-                setTimeout(() => resolve(data), Math.max(delay, 0));
-            },
-            error: reject
-        });
-    });
-}
-// Dropbox Upload / Download
-function readFileDropbox(path) {
-    return new Promise((resolve, reject) => {
-        $.ajax({
-            url: "https://content.dropboxapi.com/2/files/download",
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + DROPBOX_TOKEN,
-                "Dropbox-API-Arg": JSON.stringify({ path: "/" + path })
-            },
-            success: resolve,
-            error: reject
-        });
-    });
-}
