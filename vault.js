@@ -759,39 +759,19 @@ if(document.getElementById("incomings_table")!=null){
 
 
 /////////////////////////////////////////////////get all reports info//////////////////////////////////////////////////////////////////
-async function uploadReports(){
+async function uploadReports() {
 
     document.getElementById("progress_reports").innerText = "Getting data...";
 
     // ===========================
-    // HISTORY (Dropbox – unchanged)
+    // LOAD HISTORY (SUPABASE)
     // ===========================
-    let [map_history_upload] = await Promise.all([
-        readFileDropbox(filename_history_upload),
-        insertlibraryLocalBase()
-    ]).catch(err => { alert(err) });
+    let map_history_upload = await loadHistoryDB(
+        game_data.world,
+        game_data.player.ally
+    );
 
-    try {
-        let d = await decompress(await map_history_upload.arrayBuffer(), 'gzip');
-        map_history_upload = new Map(JSON.parse(d));
-    } catch {
-        map_history_upload = new Map();
-    }
-
-    if (await localBase.getItem(game_data.world + "history_upload") != undefined) {
-        try {
-            let b = base64ToBlob(await localBase.getItem(game_data.world + "history_upload"));
-            let d = await decompress(await b.arrayBuffer(), 'gzip');
-            let map_local = new Map(JSON.parse(d));
-            map_history_upload = new Map([...map_local, ...map_history_upload]);
-        } catch {
-            let map_local = new Map(JSON.parse(
-                lzw_decode(await localBase.getItem(game_data.world + "history_upload"))
-            ));
-            map_history_upload = new Map([...map_local, ...map_history_upload]);
-        }
-    }
-
+    // remove old history (> 8 days)
     Array.from(map_history_upload.keys()).forEach(key => {
         let now = Date.now();
         let reportDate = new Date(map_history_upload.get(key).date).getTime();
@@ -811,7 +791,6 @@ async function uploadReports(){
     list_href = list_href.reverse();
 
     let list_data_reports = [];
-    let list_data_typeAttack = [];
     let nr_reports = 0;
     let nr_reports_total = list_href.length;
 
@@ -824,12 +803,12 @@ async function uploadReports(){
             if (current_url !== "stop") {
 
                 $.ajax({
-                    method: 'GET',
-                    url: current_url,
-                }).done(async function (result) {
+                    method: "GET",
+                    url: current_url
+                }).done(async result => {
 
                     const parser = new DOMParser();
-                    const htmlDoc = parser.parseFromString(result, 'text/html');
+                    const htmlDoc = parser.parseFromString(result, "text/html");
 
                     let list = getDataReport(tribemates, htmlDoc);
 
@@ -852,7 +831,7 @@ async function uploadReports(){
                 // ===========================
                 // LOAD FROM SUPABASE
                 // ===========================
-                let map_dropbox = await loadReportsDB(
+                let map_reports = await loadReportsDB(
                     game_data.world,
                     game_data.player.ally
                 );
@@ -867,17 +846,10 @@ async function uploadReports(){
                     game_data.player.ally
                 );
 
-                // ===========================
-                // STATUS (Dropbox – unchanged)
-                // ===========================
-                let mapStatus;
-                try {
-                    let s = await readFileDropbox(filename_status_upload);
-                    let d = await decompress(await s.arrayBuffer(), 'gzip');
-                    mapStatus = new Map(JSON.parse(d));
-                } catch {
-                    mapStatus = new Map();
-                }
+                let mapStatus = await loadStatusDB(
+                    game_data.world,
+                    game_data.player.ally
+                );
 
                 // ===========================
                 // MERGE REPORTS
@@ -886,22 +858,22 @@ async function uploadReports(){
                 let nr_write = 0;
 
                 list_data_reports.forEach(el => {
-                    if (map_dropbox.has(el.coord)) {
-                        map_dropbox.set(el.coord, {
-                            ...map_dropbox.get(el.coord),
+                    if (map_reports.has(el.coord)) {
+                        map_reports.set(el.coord, {
+                            ...map_reports.get(el.coord),
                             ...el.reportInfo
                         });
                         nr_update++;
                     } else {
-                        map_dropbox.set(el.coord, el.reportInfo);
+                        map_reports.set(el.coord, el.reportInfo);
                         nr_write++;
                     }
                 });
 
                 // ===========================
-                // SAVE REPORTS ➜ SUPABASE
+                // SAVE REPORTS
                 // ===========================
-                for (const [coord, reportData] of map_dropbox.entries()) {
+                for (const [coord, reportData] of map_reports.entries()) {
                     await saveReportDB(
                         coord,
                         reportData,
@@ -911,7 +883,7 @@ async function uploadReports(){
                 }
 
                 // ===========================
-                // SAVE INCOMINGS ➜ SUPABASE
+                // SAVE INCOMINGS
                 // ===========================
                 for (const [coord, incList] of map_incomings.entries()) {
                     await saveIncomingsDB(
@@ -923,7 +895,7 @@ async function uploadReports(){
                 }
 
                 // ===========================
-                // SAVE SUPPORT ➜ SUPABASE
+                // SAVE SUPPORT
                 // ===========================
                 for (const [coord, supportList] of map_support.entries()) {
                     await saveSupportDB(
@@ -934,14 +906,48 @@ async function uploadReports(){
                     );
                 }
 
+                // ===========================
+                // UPDATE STATUS (SUPABASE)
+                // ===========================
+                let serverTime = document.getElementById("serverTime").innerText;
+                let serverDate = document.getElementById("serverDate").innerText.split("/");
+                serverDate = `${serverDate[1]}/${serverDate[0]}/${serverDate[2]}`;
+                let date_current = `${serverDate} ${serverTime}`;
+
+                mapStatus.set(game_data.player.id.toString(), {
+                    name: game_data.player.name,
+                    report_date: date_current
+                });
+
+                for (const [playerId, statusData] of mapStatus.entries()) {
+                    await saveStatusDB(
+                        playerId,
+                        statusData,
+                        game_data.world,
+                        game_data.player.ally
+                    );
+                }
+
+                // ===========================
+                // SAVE HISTORY (SUPABASE)
+                // ===========================
+                for (const [reportId, historyData] of map_history_upload.entries()) {
+                    await saveHistoryDB(
+                        reportId,
+                        historyData,
+                        game_data.world,
+                        game_data.player.ally
+                    );
+                }
+
                 document.getElementById("progress_reports").innerText =
                     `${nr_reports_total} reports`;
 
                 UI.SuccessMessage(
                     `<b>Upload reports done</b><br>
-                     Reports Updated: <b>${nr_update}</b><br>
-                     Reports Added: <b>${nr_write}</b><br>
-                     Total Reports: <b>${map_dropbox.size}</b>`,
+                     Updated: <b>${nr_update}</b><br>
+                     Added: <b>${nr_write}</b><br>
+                     Total: <b>${map_reports.size}</b>`,
                     8000
                 );
 
@@ -10821,5 +10827,6 @@ async function uploadOwnTroops(){
         status: "success"
     };
 }
+
 
 
