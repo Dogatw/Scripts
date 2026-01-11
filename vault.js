@@ -1,19 +1,25 @@
-// === Supabase init ===
+// ===============================
+// === SUPABASE INIT (REQUIRED) ===
+// ===============================
 (async function initSupabase() {
-  const s = document.createElement("script");
-  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-  await new Promise(r => {
-    s.onload = r;
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
     document.head.appendChild(s);
-  });
 
-  window.sb = window.supabase.createClient(
-    "https://xjrgjnsxahfxlseakk.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4"
-  );
+    await new Promise(r => s.onload = r);
 
-  console.log("Supabase ready");
+    // 🔴 REPLACE THESE WITH YOUR REAL VALUES
+    const SUPABASE_URL = "https://xjrgjnsxahfxlseakk.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
+
+    window.sb = supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+    console.log("✅ Supabase initialized");
 })();
+
 
 // ===============================
 // === REPORTS via Supabase DB ===
@@ -10734,6 +10740,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
