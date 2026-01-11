@@ -1967,189 +1967,124 @@ function getIncomings(){
 }
 ///////////////////////////////////////////////////////upload all incomings//////////////////////////////////////////////////////////////////////////
 
-async function uploadIncomings(){
-    
-    var [incomings_data, map_incomings_dropbox,mapStatus,status]=await Promise.all([getIncomings(), readFileDropbox(filename_incomings),readFileDropbox(filename_status_upload),insertlibraryLocalBase()]).catch(err=>{alert(err)})
-    console.log(status)
+async function uploadIncomings() {
+    document.getElementById("progress_incomings").innerText = "Getting data...";
 
-
-    
-    return new Promise(async(resolve,reject)=>{
-        UI.SuccessMessage("compressing database, wait few seconds",5000)
-
-        //merge map dropbox with map locabase
-        try {
-            let decompressedData = await decompress(await map_incomings_dropbox.arrayBuffer() , 'gzip');  
-            map_incomings_dropbox=new Map( JSON.parse(decompressedData));
-        } catch (error) {
-            console.log("erorrr map report from dropbox")
-            map_incomings_dropbox=new Map()
-        }
-
-        //if there database is stored locally
-        if(await localBase.getItem(game_data.world+"incomings")!=undefined){
-            try{
-                let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "incomings"))
-                let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
-        
-                let map_localBase=new Map( JSON.parse(decompressedData));
-                console.log("map_localBase history upload",map_localBase)
-                map_incomings_dropbox=new Map([...map_localBase, ...map_incomings_dropbox])
-
-            } catch (error) {
-                let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "incomings"))));
-                map_incomings_dropbox=new Map([...map_localBase, ...map_incomings_dropbox])
-            }
-        }
-
-
-        try {
-            let decompressedData = await decompress(await mapStatus.arrayBuffer() , 'gzip');  
-            mapStatus=new Map( JSON.parse(decompressedData));
-        } catch (error) {
-            console.log("erorrr map report from dropbox")
-            mapStatus=new Map()
-        }
-
-
-            
-        let server_date=document.getElementById("serverDate").innerText.split("/")
-        let server_time=document.getElementById("serverTime").innerText
-        let current_date=new Date(server_date[1]+"/"+server_date[0]+"/"+server_date[2]+" "+server_time);
-
-
-
-        console.log(map_incomings_dropbox)
-        /////////////////////////////////eliminate old incomings from dropbox////////////////////////////////////
-        let start=new Date();
-        Array.from(map_incomings_dropbox.keys()).forEach(el=>{
-            let list=map_incomings_dropbox.get(el);
-            let update=false;
-            for(let i=0;i<list.length;i++){
-
-                let date_incomings=new Date(list[i].date_land).getTime();
-                let two_days=50*3600*1000;
-
-                if(date_incomings + two_days < current_date || list[i].date_land == ""){
-                    list.splice(i,1);
-                    i--;
-                    update=true;
-                }
-
-                if(list[i]==""){
-                    list.splice(i,1);
-                    update=true;
-                }
-            }
-            if(update==true || list.length==0){
-                if(list.length==0)
-                    map_incomings_dropbox.delete(el);
-                else{
-                    map_incomings_dropbox.set(el,list);
-                }
-            }
-
-
-        })
-        console.log(map_incomings_dropbox)
-        let stop=new Date();
-        console.log(stop-start)
-        
-        let newIncs = 0;
-        Array.from(incomings_data.keys()).forEach(el=>{
-            let list=incomings_data.get(el)
-            if(map_incomings_dropbox.has(el)){//update
-                let list_dropbox=map_incomings_dropbox.get(el)
-                list_dropbox=list_dropbox.concat(list);
-                var list_concat =[...new Map(list_dropbox.map(item => [item["date_land"], item])).values()].sort((o1,o2)=>{
-                    return (new Date(o1.date_land).getTime() > new Date(o2.date_land).getTime()) ? 1 : 
-                             (new Date(o1.date_land).getTime() << new Date(o2.date_land).getTime()) ? -1 : 0
-                })
-                console.log(list_concat)
-                map_incomings_dropbox.set(el,list_concat);
-            }
-            else{//add
-                map_incomings_dropbox.set(el,list);
-                newIncs += list.length
-            }
-        })
-        let totalIncs = 0;
-        Array.from(map_incomings_dropbox.keys()).forEach(el=>{
-            let list=map_incomings_dropbox.get(el);
-            totalIncs += list.length
-        })
-
-
-
-
-
-        let serverTime=document.getElementById("serverTime").innerText
-        let serverDate=document.getElementById("serverDate").innerText.split("/")
-        serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
-        let date_current=serverDate+" "+serverTime
-
-        //update status map
-        let obj_status={
-            name:game_data.player.name,
-            incoming_date:date_current,
-        }
-
-
-        if(mapStatus.has(game_data.player.id.toString())){
-            let obj_update=mapStatus.get(game_data.player.id.toString())
-            mapStatus.set(game_data.player.id.toString(), {...obj_update, ...obj_status} )
-        }
-        else{
-            mapStatus.set(game_data.player.id.toString(),obj_status)
-        }
-
-
-        // console.log(map_incomings_dropbox)
-        let timeStartUpload = new Date().getTime();
-
-        // UI.SuccessMessage("compressing database, wait few seconds",2000)
-        var data=JSON.stringify(Array.from(map_incomings_dropbox.entries()))
-        let sizeIncomingsDB = formatBytes(new TextEncoder().encode(data).length)
-
-        let compressedData = await compress(data, 'gzip')
-        let compressedDataBase64 = await blobToBase64(compressedData);
-
-
-        try {
-            document.getElementById("progress_incomings").innerText=incomings_data.size+" coords";
-            document.getElementById("progress_all").innerText="done";
-        } catch (error) {
-            
-        }
-        UI.SuccessMessage("upload incomings done","slow")
-
-
-
-        let data_status=JSON.stringify(Array.from(mapStatus.entries()))
-        let dataCompressed = await compress(data_status, "gzip")
-        let resultStatus=await uploadFile(dataCompressed,filename_status_upload,dropboxToken).catch(err=>alert(err))
-
-
-        await localBase.setItem(game_data.world+"incomings", compressedDataBase64)
-        let result=await uploadFile(compressedData, filename_incomings, dropboxToken)
-        if(result=="succes"){
-            let timeStopUpload = new Date().getTime();
-            let totalTimeUpload =  Math.round(((timeStopUpload - timeStartUpload) / 1000) * 100) / 100
-            UI.SuccessMessage(`<b>Upload incomings done</b> <br><br>
-                                Upload time: <b>${totalTimeUpload} sec</b>  <br>
-                                New incomings: <b>${newIncs} </b> <br>
-                                Total incomings: <b>${totalIncs} </b> <br>
-                                Size DB: <b>${sizeIncomingsDB}</b>
-                                `, 10000)
-            resolve({
-                totalTimeUpload: totalTimeUpload,
-                status: "success"
-            })
+    // ⏳ ensure Supabase + game data
+    while (!window.__supabaseReady || typeof game_data === "undefined") {
+        await new Promise(r => setTimeout(r, 50));
     }
-        else
-            reject("error upload incomings")
-         
-    })
+
+    // ===========================
+    // 1️⃣ GET NEW INCOMINGS
+    // ===========================
+    const incomings_data = await getIncomings(); // Map<coord, list[]>
+
+    // ===========================
+    // 2️⃣ LOAD EXISTING (SUPABASE)
+    // ===========================
+    let map_incomings = await loadIncomingsDB(
+        game_data.world,
+        game_data.player.ally
+    );
+
+    // ===========================
+    // 3️⃣ CLEAN OLD INCOMINGS
+    // ===========================
+    const now = Date.now();
+    const MAX_AGE = 50 * 3600 * 1000; // ~2 days
+
+    map_incomings.forEach((list, coord) => {
+        list = list.filter(inc => {
+            if (!inc.date_land) return false;
+            return new Date(inc.date_land).getTime() + MAX_AGE > now;
+        });
+
+        if (list.length === 0) {
+            map_incomings.delete(coord);
+        } else {
+            map_incomings.set(coord, list);
+        }
+    });
+
+    // ===========================
+    // 4️⃣ MERGE NEW INCOMINGS
+    // ===========================
+    let newIncs = 0;
+
+    incomings_data.forEach((list, coord) => {
+        if (map_incomings.has(coord)) {
+            const merged = [
+                ...map_incomings.get(coord),
+                ...list
+            ];
+
+            // deduplicate by date_land
+            const unique = [
+                ...new Map(
+                    merged.map(i => [i.date_land, i])
+                ).values()
+            ].sort((a, b) =>
+                new Date(a.date_land) - new Date(b.date_land)
+            );
+
+            map_incomings.set(coord, unique);
+        } else {
+            map_incomings.set(coord, list);
+            newIncs += list.length;
+        }
+    });
+
+    // ===========================
+    // 5️⃣ SAVE TO SUPABASE
+    // ===========================
+    let totalIncs = 0;
+
+    for (const [coord, list] of map_incomings.entries()) {
+        totalIncs += list.length;
+        await saveIncomingsDB(
+            coord,
+            list,
+            game_data.world,
+            game_data.player.ally
+        );
+    }
+
+    // ===========================
+    // 6️⃣ UPDATE STATUS (SUPABASE)
+    // ===========================
+    const serverTime = document.getElementById("serverTime").innerText;
+    const serverDate = document
+        .getElementById("serverDate")
+        .innerText.split("/");
+
+    const date_current =
+        `${serverDate[1]}/${serverDate[0]}/${serverDate[2]} ${serverTime}`;
+
+    await saveStatusDB(
+        game_data.player.id.toString(),
+        {
+            name: game_data.player.name,
+            incoming_date: date_current
+        },
+        game_data.world,
+        game_data.player.ally
+    );
+
+    // ===========================
+    // 7️⃣ UI FEEDBACK
+    // ===========================
+    document.getElementById("progress_incomings").innerText =
+        `${map_incomings.size} coords`;
+
+    UI.SuccessMessage(
+        `<b>Upload incomings done</b><br><br>
+         New incomings: <b>${newIncs}</b><br>
+         Total incomings: <b>${totalIncs}</b>`,
+        8000
+    );
+
+    return { status: "success" };
 }
 
 //////////////////////////////////////////////////////upload all data to dropbox/////////////////////////////////////////////////////////////////
@@ -10774,6 +10709,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
