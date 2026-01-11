@@ -10715,40 +10715,24 @@ async function getVillagesBuildings(){
 
 }
 
-async function uploadOwnTroops(){
+async function uploadOwnTroops() {
 
     document.getElementById("progress_troops_home").innerText = "Getting data...";
 
     // ===========================
-    // LOAD REQUIRED DATA
+    // LOAD DATA FROM SUPABASE
     // ===========================
-    let [mapVillages, statusUploadData] = await Promise.all([
-        getInfoVillages(),
-        readFileDropbox(filename_status_upload),
-        insertlibraryLocalBase()
-    ]).catch(err => {
-        alert(err);
-        throw err;
-    });
+    const mapVillages = await getInfoVillages();
 
-    // ===========================
-    // LOAD TROOPS HOME (SUPABASE)
-    // ===========================
     let mapTroopsHome = await loadTroopsHomeDB(
         game_data.world,
         game_data.player.ally
     );
 
-    // ===========================
-    // LOAD STATUS (DROPBOX – TEMP)
-    // ===========================
-    let mapStatus = new Map();
-    try {
-        let d = await decompress(await statusUploadData.arrayBuffer(), "gzip");
-        mapStatus = new Map(JSON.parse(d));
-    } catch (e) {
-        console.log("status read error", e);
-    }
+    let mapStatus = await loadStatusDB(
+        game_data.world,
+        game_data.player.ally
+    );
 
     // ===========================
     // GET CURRENT TROOPS
@@ -10756,21 +10740,19 @@ async function uploadOwnTroops(){
     let troopsHome = await getOwnTroopsInfo();
     let mapVillagesWall = await getVillagesBuildings();
 
-    // add wall + farm
     troopsHome.forEach((val, coord) => {
         if (mapVillagesWall.has(coord)) {
             val.wallLvl = mapVillagesWall.get(coord).wallLvl;
             val.farmLvl = mapVillagesWall.get(coord).farmLvl;
-            troopsHome.set(coord, val);
         }
     });
 
     // ===========================
-    // MERGE TROOPS (SUPABASE + NEW)
+    // MERGE TROOPS
     // ===========================
     mapTroopsHome = new Map([...mapTroopsHome, ...troopsHome]);
 
-    // remove invalid villages
+    // remove villages no longer owned
     mapTroopsHome.forEach((val, coord) => {
         if (mapVillages.has(coord)) {
             if (mapVillages.get(coord).playerId !== val.playerId) {
@@ -10793,7 +10775,7 @@ async function uploadOwnTroops(){
     });
 
     // ===========================
-    // SAVE TROOPS HOME → SUPABASE
+    // SAVE TO SUPABASE
     // ===========================
     for (const [coord, troopsData] of mapTroopsHome.entries()) {
         await saveTroopsHomeDB(
@@ -10804,12 +10786,12 @@ async function uploadOwnTroops(){
         );
     }
 
-    // ===========================
-    // SAVE STATUS (DROPBOX – TEMP)
-    // ===========================
-    let data_status = JSON.stringify(Array.from(mapStatus.entries()));
-    let dataCompressed = await compress(data_status, "gzip");
-    await uploadFile(dataCompressed, filename_status_upload, dropboxToken);
+    await saveStatusDB(
+        game_data.player.id.toString(),
+        mapStatus.get(game_data.player.id.toString()),
+        game_data.world,
+        game_data.player.ally
+    );
 
     // ===========================
     // UI
@@ -10818,15 +10800,10 @@ async function uploadOwnTroops(){
         `${mapTroopsHome.size} coords`;
 
     UI.SuccessMessage(
-        `Troops home done<br>
+        `Troops home uploaded<br>
          Villages: <b>${mapTroopsHome.size}</b>`,
         8000
     );
 
-    return {
-        status: "success"
-    };
+    return { status: "success" };
 }
-
-
-
