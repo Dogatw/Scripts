@@ -247,7 +247,12 @@ var headerColorPlayers, headerColorCoords, headerColorFirstRow;
 var widthInterface, widthInterfaceOverview;
 
 (async () => {
+  // ⏳ WAIT FOR SUPABASE (STEP 2 GOES HERE)
+    while (!window.sb) {
+        await new Promise(r => setTimeout(r, 50));
+    }
 
+    // NOW Supabase is guaranteed ready
     // ===========================
     // UI COLORS / SIZES
     // ===========================
@@ -10765,5 +10770,6 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
