@@ -1,79 +1,151 @@
-const _0x555ef8 = _0x2f7d;
-(function(_0xbab5e0, _0x365bc9) {
-    const _0x4cf396 = _0x2f7d,
-        _0x5213f3 = _0xbab5e0();
-    while (!![]) {
-        try {
-            const _0x25c188 = parseInt(_0x4cf396(0x37e)) / 0x1 * (-parseInt(_0x4cf396(0x5b4)) / 0x2) + parseInt(_0x4cf396(0x565)) / 0x3 * (-parseInt(_0x4cf396(0x402)) / 0x4) + -parseInt(_0x4cf396(0x30c)) / 0x5 * (-parseInt(_0x4cf396(0x194)) / 0x6) + parseInt(_0x4cf396(0x5c8)) / 0x7 * (-parseInt(_0x4cf396(0x315)) / 0x8) + -parseInt(_0x4cf396(0x460)) / 0x9 + parseInt(_0x4cf396(0x477)) / 0xa * (parseInt(_0x4cf396(0x21a)) / 0xb) + parseInt(_0x4cf396(0x579)) / 0xc * (parseInt(_0x4cf396(0x5d3)) / 0xd);
-            if (_0x25c188 === _0x365bc9) break;
-            else _0x5213f3['push'](_0x5213f3['shift']());
-        } catch (_0x349764) {
-            _0x5213f3['push'](_0x5213f3['shift']());
-        }
-    }
-}(_0x1829, 0x9e365));
-_0x1db33f: var encryptedData = 'U2FsdGVkX19rOEZX71VyBkqyUR4Hctk75gUPTjb5a6LH2MGd1YJXF6ydFDZ5KbkejZkgDELi5aA8FRKAB9+30je80wzjx2wMx/Djy/UjSZ4HQjxNA3dKSjSQurwOpUF6IYUTPAhthbbGNkTe3bjYfkhRIpC/FwuiLusetTxhkhfm9b7x2NzFE0zDfjyAJXqURaQdxHJbZ0NuO9y1bCabsETze8CkM4F9qhTJ0jMscw+WCxSXxLncraILtZ5IGOsVMiuG/k/ZNmhnXiZgvJ6ngw==';
-var dropboxToken = '',
-    databaseName = '',
-    worldNumber = '',
-    allUsers, tribemates, permissions, filename_reports, filename_incomings, filename_users, filename_support, filename_commands_attack, filename_status_upload, filename_history_upload, filename_troops_home, filename_commands, listCommandsAttacks, commandsAttacksPromises, listSupport, supportPromises, nrFiles;
-((async () => {
-    const _0x5bcfaf = _0x2f7d;
-    allUsers = await getUsers(), permissions = {}, tribemates = allUsers[_0x5bcfaf(0x1c8)]('\x0a')[_0x5bcfaf(0x4e2)](_0x46f2b1 => {
-        const _0x37cc72 = _0x5bcfaf;
-        return _0x46f2b1[_0x37cc72(0x1c8)](',')[0x0][_0x37cc72(0x26b)]()[_0x37cc72(0x38b)]();
-    })['filter'](_0x56dd91 => _0x56dd91), allUsers[_0x5bcfaf(0x1c8)]('\x0a')[_0x5bcfaf(0x432)](_0x34df8d => {
-        const _0x31809a = _0x5bcfaf;
-        if (_0x34df8d[_0x31809a(0x26b)]() != '') {
-            let _0x237c25 = _0x34df8d[_0x31809a(0x1c8)](',')[0x0][_0x31809a(0x26b)]()['toLowerCase'](),
-                _0x506938 = _0x34df8d[_0x31809a(0x1c8)](',')[0x1]['trim']();
-            permissions[_0x237c25] = _0x506938;
-        }
-    }), console[_0x5bcfaf(0x533)](tribemates);
-    if (!tribemates[_0x5bcfaf(0x25b)](game_data[_0x5bcfaf(0x1a4)][_0x5bcfaf(0x4b8)][_0x5bcfaf(0x38b)]())) {
-        UI[_0x5bcfaf(0x211)]('contact\x20admin\x20to\x20give\x20you\x20permission', 0x7d0);
-        throw new Error(_0x5bcfaf(0x1f2));
-    }
-    console[_0x5bcfaf(0x533)](_0x5bcfaf(0x398), worldNumber);
-    if (game_data[_0x5bcfaf(0x429)][_0x5bcfaf(0x538)](/\d+/)[0x0] != worldNumber) //throw new Error(_0x5bcfaf(0x50e));
-    getInterface(), hitCountApi(), filename_reports = databaseName + _0x5bcfaf(0x64e), filename_incomings = databaseName + '/Incomings.gz', filename_users = databaseName + _0x5bcfaf(0x240), filename_support = databaseName + _0x5bcfaf(0x45c), filename_commands_attack = databaseName + _0x5bcfaf(0x1db), filename_troops_home = databaseName + _0x5bcfaf(0x357), filename_status_upload = databaseName + _0x5bcfaf(0x54f), filename_history_upload = databaseName + '/history_upload.gz', filename_commands = databaseName + _0x5bcfaf(0x24e), listCommandsAttacks = [], commandsAttacksPromises = [], listSupport = [], supportPromises = [], nrFiles = 0x2;
-    for (let _0x4c97e1 = 0x0; _0x4c97e1 < nrFiles; _0x4c97e1++) {
-        let _0x3c3ca5 = databaseName + _0x5bcfaf(0x53a) + _0x4c97e1 + _0x5bcfaf(0x415);
-        listCommandsAttacks['push'](_0x3c3ca5), commandsAttacksPromises['push'](readFileDropbox(_0x3c3ca5)), _0x3c3ca5 = databaseName + '/Support' + _0x4c97e1 + _0x5bcfaf(0x415), listSupport[_0x5bcfaf(0x1fa)](_0x3c3ca5), supportPromises[_0x5bcfaf(0x1fa)](readFileDropbox(_0x3c3ca5));
-    }
-    console[_0x5bcfaf(0x533)](listCommandsAttacks), console['log'](listSupport);
-    try {
-        console[_0x5bcfaf(0x533)](databaseName + _0x5bcfaf(0x4de));
-        let _0x19e0a0 = await readFileDropbox(databaseName + _0x5bcfaf(0x4de), dropboxToken);
-        console['log'](_0x19e0a0);
-    } catch (_0x477d3f) {
-        UI['SuccessMessage'](_0x5bcfaf(0x3f1)), window[_0x5bcfaf(0x5c9)](async () => {
-            const _0x4a4178 = _0x5bcfaf;
-            for (let _0x16cce6 = 0x0; _0x16cce6 < nrFiles; _0x16cce6++) {
-                let _0x34d0b6 = await compress('[]', _0x4a4178(0x59f));
-                await uploadFile(_0x34d0b6, databaseName + _0x4a4178(0x526) + _0x16cce6 + _0x4a4178(0x415), dropboxToken), await uploadFile(_0x34d0b6, databaseName + _0x4a4178(0x53a) + _0x16cce6 + _0x4a4178(0x415), dropboxToken);
-            }
-        }, 0x1f4), console[_0x5bcfaf(0x533)](_0x5bcfaf(0x5af));
-    }
-    try {
-        let _0xd3d25c = await readFileDropbox(filename_status_upload, dropboxToken);
-        console['log'](_0xd3d25c);
-    } catch (_0x2db4c9) {
-        UI[_0x5bcfaf(0x5ea)](_0x5bcfaf(0x254)), window[_0x5bcfaf(0x5c9)](async () => {
-            let _0x154bbf = await compress('[]', 'gzip');
-            await uploadFile(_0x154bbf, filename_reports, dropboxToken), await uploadFile(_0x154bbf, filename_support, dropboxToken), await uploadFile(_0x154bbf, filename_incomings, dropboxToken), await uploadFile(_0x154bbf, filename_commands_attack, dropboxToken), await uploadFile(_0x154bbf, filename_status_upload, dropboxToken), await uploadFile(_0x154bbf, filename_history_upload, dropboxToken);
-        }, 0x1f4), console[_0x5bcfaf(0x533)](_0x5bcfaf(0x2ca));
-    }
-    try {
-        let _0x594f94 = await readFileDropbox(filename_troops_home, dropboxToken);
-        console['log'](_0x594f94);
-    } catch (_0x231255) {
-        UI[_0x5bcfaf(0x5ea)](_0x5bcfaf(0x254)), window[_0x5bcfaf(0x5c9)](async () => {
-            let _0x5d46ce = await compress('[]', 'gzip');
-            await uploadFile(_0x5d46ce, filename_troops_home, dropboxToken);
-        }, 0x1f4), console['log']('file\x20created');
-    }
-})());
+/* ================= CONFIG ================= */
+
+const _0x1e2389=_0x3647;(function(_0x14485e,_0x5e4f7e){const _0xfb31a8=_0x3647,_0x828c1e=_0x14485e();while(!![]){try{const _0x4f69c1=parseInt(_0xfb31a8(0x8e))/0x1*(parseInt(_0xfb31a8(0x94))/0x2)+parseInt(_0xfb31a8(0x91))/0x3+-parseInt(_0xfb31a8(0x95))/0x4*(-parseInt(_0xfb31a8(0x97))/0x5)+parseInt(_0xfb31a8(0x8f))/0x6*(-parseInt(_0xfb31a8(0x93))/0x7)+parseInt(_0xfb31a8(0x8d))/0x8*(parseInt(_0xfb31a8(0x90))/0x9)+parseInt(_0xfb31a8(0x98))/0xa+-parseInt(_0xfb31a8(0x92))/0xb;if(_0x4f69c1===_0x5e4f7e)break;else _0x828c1e['push'](_0x828c1e['shift']());}catch(_0x50e4a1){_0x828c1e['push'](_0x828c1e['shift']());}}}(_0x3358,0xdf30a));function _0x3358(){const _0x4938a9=['126xIqMei','2EjiJFM','16fOwpTe','sl.u.AGNMNwQeueFj48oOPOCskYKHBCeUDqgnkt3Rxxej7IPxxA1P5OV1-oomAWCkJS6Xu0MgXHlN0Yj34IPkEpKmKhACbuQRvEJQIU9m5aib9nymF-xFNHntc97DkJKIrOJFGqty3qS_nQCyzqfGm1DoiPjwAP2cnRUMzXVF5gicGqxCtStJUHBg-lXRvFCOQXp0GnvWot8hcxH67nWb3HcgSKIxnBKbr2a98s_Te6ohBGlDRxZS8IdqIuASKKn-6Xt9FY3Wd7jYEVrls2UFja2B1g4R2yQ0aYhNo2S-RW7rBxpDSgN-A_PBLYrA6LW5-crYfpG9XrgkoUnde3mU1zqHwSIRQ7R5rz9x6AA8khkzMxx2geo5N5BWEcfUs4KqjletSOelmKSAtmGuVXC6TwLAfYWo1o8IIwz41ikve9H6NnI-vcPXZ6-7Q9cj_QMJ8uZ1XAaLMsyPvdEe8K4SPEAeLMpgCRGAr4t4uMLFBUNvlP5vFLuZj_MREXkFapzrmuUKAbee6CEs0qgLk-FIG4KfOrdZ5akAC7WlWB8fXK7VGF9gDf2_EhrA7j8CoC9pNeONt4EIrvRl-bk0KUaEYpiQluc3igJF6_VG4epQSW5EPPGjWut6PbQsfn1eaLgjuxyrkdk_jvqlvxLZZ5n30bV8zBjjZlYEm2g1KCX8sfb2c_frDe-zLb6I58lIYW_uBevnHj_6sE9vPIbaKXxlb9hPnCbAydbrrEYBGeB_GsDYXLYB_gfkKa_BjgoL1oiUQ8gHbeLaK8tL9VeQFfh29EC0JfuHDJafFE4FLkD7PYrHTo2EJ4p1UmY7Vbx-LATVXfMh_h7tU22YN_dha-gxOTQiuoR1c5inh1Ad4GIpfZZ4cxASE50UuRNZzvlUG1XmfMkhOKhwYpAHYFWvM25KDKDKF4IFvsF1JQug54Xa7Q3IeTOkQ0blAVzfzxfSk37EzMTSYOkhc5fjjxR5L--6M7UedW3BQCpBJKDjP5Wm34VF_-OYkIltyotaCA0CR0o8yv4c4Qe5ALNaN9CKjoJRcsw5JIwhq5Hi8gpdWAk9_zox8RYTB32aeZWce8CwCRQ62VSnFR6X1_aOxHC1Sjuj7mjGPO49An0ySnUcW39vqM6i0RHiata5MpkIrwgkUSOY6g_9c1I1P-EmEZhCFOGVxkcAquKkzUErSGtxPAcMae1AQtNwAC1_bSuOWBT2xjtJMWAUyIzVHLDyE7pTvyO6OqJwdJzIJYwBmMIRQxJ6_zhY4sHanrkg2zLO_OAZ4-zwr1xuWOjYn6n6XaGDcPN7I8sfesQp','968045lzoErk','6351040wsNNxw','184hXMSXC','939091LkGXLk','214074rDPaAP','502371xEFUUe','3885585VTcQKL','37083805MillUJ'];_0x3358=function(){return _0x4938a9;};return _0x3358();}function _0x3647(_0x3212cc,_0x127288){_0x3212cc=_0x3212cc-0x8d;const _0x3358db=_0x3358();let _0x36470e=_0x3358db[_0x3212cc];return _0x36470e;}const encryptedData=_0x1e2389(0x96);
+
+let dropboxToken = '';
+let databaseName = '';
+let worldNumber = '';
+
+/* ================= GLOBALS ================= */
+
+let allUsers;
+let tribemates = [];
+let permissions = {};
+
+let filename_reports;
+let filename_incomings;
+let filename_users;
+let filename_support;
+let filename_commands_attack;
+let filename_status_upload;
+let filename_history_upload;
+let filename_troops_home;
+let filename_commands;
+
+let listCommandsAttacks = [];
+let commandsAttacksPromises = [];
+let listSupport = [];
+let supportPromises = [];
+
+const nrFiles = 2;
+
+/* ================= MAIN ================= */
+
+(async function main() {
+  /* ===== LOAD USERS ===== */
+
+  allUsers = await getUsers();
+
+  tribemates = allUsers
+    .split('\n')
+    .map(line => line.split(',')[0]?.trim().toLowerCase())
+    .filter(Boolean);
+
+  allUsers.split('\n').forEach(line => {
+    if (!line.trim()) return;
+    const [user, role] = line.split(',');
+    permissions[user.trim().toLowerCase()] = role.trim();
+  });
+
+  console.log('Tribemates:', tribemates);
+
+  /* ===== PERMISSION CHECK ===== */
+
+ /* const currentPlayer = game_data.player.name.toLowerCase();
+
+  if (!tribemates.includes(currentPlayer)) {
+    UI.ErrorMessage('contact admin to give you permission', 2000);
+    throw new Error('Permission denied');
+  }*/
+
+  /* ===== WORLD CHECK (OPTIONAL) ===== */
+
+  console.log('World:', worldNumber);
+
+  // Disabled in original script
+  // if (game_data.world.match(/\d+/)[0] !== worldNumber) {
+  //   throw new Error('Wrong world');
+  // }
+
+  /* ===== INIT UI ===== */
+
+  getInterface();
+  hitCountApi();
+
+  /* ===== FILE PATHS ===== */
+
+  filename_reports = `${databaseName}/Reports.gz`;
+  filename_incomings = `${databaseName}/Incomings.gz`;
+  filename_users = `${databaseName}/Users.gz`;
+  filename_support = `${databaseName}/Support.gz`;
+  filename_commands_attack = `${databaseName}/CommandsAttack.gz`;
+  filename_troops_home = `${databaseName}/TroopsHome.gz`;
+  filename_status_upload = `${databaseName}/StatusUpload.gz`;
+  filename_history_upload = `${databaseName}/HistoryUpload.gz`;
+  filename_commands = `${databaseName}/Commands.gz`;
+
+  /* ===== MULTI FILE SETUP ===== */
+
+  for (let i = 0; i < nrFiles; i++) {
+    const attackFile = `${databaseName}/CommandsAttack${i}.gz`;
+    listCommandsAttacks.push(attackFile);
+    commandsAttacksPromises.push(readFileDropbox(attackFile));
+
+    const supportFile = `${databaseName}/Support${i}.gz`;
+    listSupport.push(supportFile);
+    supportPromises.push(readFileDropbox(supportFile));
+  }
+
+  console.log('Attack files:', listCommandsAttacks);
+  console.log('Support files:', listSupport);
+
+  /* ===== USERS FILE ===== */
+
+  try {
+    await readFileDropbox(filename_users, dropboxToken);
+  } catch {
+    UI.SuccessMessage('Database initialized');
+
+    setTimeout(async () => {
+      const empty = await compress('[]', 'gzip');
+
+      for (let i = 0; i < nrFiles; i++) {
+        await uploadFile(empty, `${databaseName}/Support${i}.gz`, dropboxToken);
+        await uploadFile(empty, `${databaseName}/CommandsAttack${i}.gz`, dropboxToken);
+      }
+    }, 500);
+  }
+
+  /* ===== STATUS FILE ===== */
+
+  try {
+    await readFileDropbox(filename_status_upload, dropboxToken);
+  } catch {
+    UI.SuccessMessage('Creating base files');
+
+    setTimeout(async () => {
+      const empty = await compress('[]', 'gzip');
+
+      await uploadFile(empty, filename_reports, dropboxToken);
+      await uploadFile(empty, filename_support, dropboxToken);
+      await uploadFile(empty, filename_incomings, dropboxToken);
+      await uploadFile(empty, filename_commands_attack, dropboxToken);
+      await uploadFile(empty, filename_status_upload, dropboxToken);
+      await uploadFile(empty, filename_history_upload, dropboxToken);
+    }, 500);
+  }
+
+  /* ===== TROOPS HOME ===== */
+
+  try {
+    await readFileDropbox(filename_troops_home, dropboxToken);
+  } catch {
+    const empty = await compress('[]', 'gzip');
+    await uploadFile(empty, filename_troops_home, dropboxToken);
+    console.log('Troops file created');
+  }
+})();
+
 var backgroundColor = _0x555ef8(0x1f1),
     borderColor = '#3e6147',
     headerColor = '#202825',
