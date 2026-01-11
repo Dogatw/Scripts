@@ -552,7 +552,7 @@ function closeWindow(){
 async function getUsers() {
     const { data, error } = await sb
         .from("users")
-        .select("name, permission")
+        .select("username, permission")
         .eq("world", game_data.world)
         .eq("tribe", game_data.player.ally);
 
@@ -561,13 +561,13 @@ async function getUsers() {
         throw new Error("Cannot load users from Supabase");
     }
 
-    if (!data || !data.length) {
-        throw new Error("No users found");
-    }
-
-    // Same format as Users.txt
-    return data.map(u => `${u.name},${u.permission}`).join("\n");
+    // Convert to SAME FORMAT as old Dropbox Users.txt
+    // "player,permission"
+    return data
+        .map(u => `${u.username},${u.permission}`)
+        .join("\n");
 }
+
 
 
 
@@ -10772,6 +10772,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
