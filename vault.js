@@ -237,15 +237,7 @@ async function saveHistoryDB(reportId, data, world, tribe) {
 // === INITIAL SETUP (SUPABASE ERA, CLEAN VERSION) ===
 // ===================================================
 
-var dropboxToken = "";     // still used TEMPORARILY for status/history
-var databaseName = "";
-var worldNumber = "";
-
 var allUsers, tribemates, permissions;
-
-// ONLY these two still use Dropbox
-var filename_status_upload;
-var filename_history_upload;
 
 // UI config
 var backgroundColor, borderColor, headerColor, titleColor;
@@ -253,7 +245,7 @@ var headerColorPlayers, headerColorCoords, headerColorFirstRow;
 var widthInterface, widthInterfaceOverview;
 
 (async () => {
-    // ⏳ WAIT FOR SUPABASE
+    // ⏳ WAIT FOR SUPABASE (ONCE)
     while (!window.sb) {
         await new Promise(r => setTimeout(r, 50));
     }
@@ -272,23 +264,8 @@ var widthInterface, widthInterfaceOverview;
     widthInterfaceOverview = 900;
 
     // ===========================
-    // USERS / PERMISSIONS
+    // USERS / PERMISSIONS (SUPABASE)
     // ===========================
-(async () => {
-    // ⏳ WAIT FOR SUPABASE
-    while (!window.sb) {
-        await new Promise(r => setTimeout(r, 50));
-    }
-
-    // UI setup
-    backgroundColor = "#32313f";
-    borderColor = "#3e6147";
-    headerColor = "#202825";
-    titleColor = "#ffffdf";
-    widthInterface = 600;
-    widthInterfaceOverview = 900;
-
-    // Users
     allUsers = await getUsers();
 
     permissions = {};
@@ -298,15 +275,21 @@ var widthInterface, widthInterfaceOverview;
         .filter(Boolean);
 
     allUsers.split("\n").forEach(row => {
+        if (!row.trim()) return;
         const [name, value] = row.split(",");
         permissions[name.trim().toLowerCase()] = value.trim();
     });
 
+    console.log("Tribemates:", tribemates);
+
+    // ===========================
+    // UI INIT
+    // ===========================
     addCssStyle();
     getInterface();
     showButtons();
-})();
 
+})();
 
 
 
@@ -10747,6 +10730,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
