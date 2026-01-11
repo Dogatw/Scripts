@@ -34,16 +34,16 @@ var widthInterface, widthInterfaceOverview
     
     })
     console.log(tribemates)
-     console.log(permissions)
+    // console.log(permissions)
 
-     if(!tribemates.includes(game_data.player.name.toLowerCase())){
-        UI.ErrorMessage("contact admin to give you permission",2000)
-        throw new Error("you do not have acces");
-     console.log("you do not have acces" )
-     }
-    console.log("worldNumber ",worldNumber)
-    if (game_data.world.match(/\d+/)[0] != worldNumber)
-        throw new Error("it doesn't work");
+    // if(!tribemates.includes(game_data.player.name.toLowerCase())){
+    //     UI.ErrorMessage("contact admin to give you permission",2000)
+    //     throw new Error("you do not have acces");
+    //     // console.log("you do not have acces" )
+    // }
+    // console.log("worldNumber ",worldNumber)
+    // if (game_data.world.match(/\d+/)[0] != worldNumber)
+    //     throw new Error("it doesn't work");
 
     addCssStyle()
     getInterface()
@@ -8328,63 +8328,79 @@ async function viewSupport(){
 
 
     //add troops home for own villages that don't have incomings
-    Array.from(map_troops_home.keys()).forEach(coord=>{
-        let villageDetails = mapVillages.get(coord)
-        let troopsHomeDetails = map_troops_home.get(coord)
-        let totalPop = 0, totalPopOff = 0, totalPopDef = 0
+   // vault.js ~8120 (PATCH START)
+Array.from(map_troops_home.keys()).forEach(coord => {
 
+    const villageDetails = mapVillages.get(coord);
+    if (!villageDetails || villageDetails.villageId === undefined) {
+        console.warn("Skipped coord (missing villageDetails):", coord);
+        return;
+    }
 
-        Object.keys(troopsHomeDetails.troopInVillage).forEach(troopName=>{
-            if(["spear", "sword", "archer", "heavy"].includes(troopName)){
-                totalPop += troopsHomeDetails.troopInVillage[troopName] * troopsPop[troopName]
-                totalPopDef += troopsHomeDetails.troopsOwn[troopName] * troopsPop[troopName]
-            }
-            if(["axe", "light", "marcher", "ram", "catapult"].includes(troopName)){
-                totalPopOff += troopsHomeDetails.troopsOwn[troopName] * troopsPop[troopName]
-            }
+    const troopsHomeDetails = map_troops_home.get(coord);
+    if (!troopsHomeDetails || !troopsHomeDetails.troopInVillage || !troopsHomeDetails.troopsOwn) {
+        console.warn("Skipped coord (invalid troopsHomeDetails):", coord);
+        return;
+    }
 
-        })
-        let typeVillage = (totalPopDef > totalPopOff) ? "def" : "off"
-        typeVillage = (troopsHomeDetails.troopsOwn['spy'] > 4000) ? "spy" : typeVillage
+    let totalPop = 0, totalPopOff = 0, totalPopDef = 0;
 
-        let hasNoble = (troopsHomeDetails.troopsOwn['snob'] > 0) ? true : false
-        
-        totalPop = Math.round( totalPop / 1000)
-        totalPopOff = Math.round( totalPopOff / 1000)
-        totalPopDef = Math.round( totalPopDef / 1000)
+    Object.keys(troopsHomeDetails.troopInVillage).forEach(troopName => {
 
-        if(!mapVillageById.has(villageDetails.villageId)){
-            mapVillageById.set(villageDetails.villageId + "", {
-                "villageId": villageDetails.villageId,
-                "playerId": villageDetails.playerId,
-                // "nrAttacks": randomIntFromInterval(0,30),
-                // "nrNobles": randomIntFromInterval(0,4),
-                "nrAttacks": 0,
-                "nrNobles": 0,
-                "nrSnipes": 0,
-                "nrSniped": 0,
-                "nrRecaps": 0,
-                "nrRecaped": 0,
-                "pop": totalPop,
-                "typeVillage": typeVillage,
-                "wallLevel": troopsHomeDetails.wallLvl,
-                "farmLevel": troopsHomeDetails.farmLvl,
-                "totalPopOff": totalPopOff,
-                "totalPopDef": totalPopDef,
-                "hasNoble": hasNoble
-            })
-        }
-        else{
-            let updateObj = mapVillageById.get(villageDetails.villageId)
-            updateObj["typeVillage"] = typeVillage
-            updateObj["totalPopOff"] = totalPopOff
-            updateObj["totalPopDef"] = totalPopDef
-            updateObj["hasNoble"] = hasNoble
-            mapVillageById.set(villageDetails.villageId, updateObj)
-
+        if (["spear", "sword", "archer", "heavy"].includes(troopName)) {
+            totalPop += troopsHomeDetails.troopInVillage[troopName] * troopsPop[troopName];
+            totalPopDef += (troopsHomeDetails.troopsOwn[troopName] || 0) * troopsPop[troopName];
         }
 
-    })
+        if (["axe", "light", "marcher", "ram", "catapult"].includes(troopName)) {
+            totalPopOff += (troopsHomeDetails.troopsOwn[troopName] || 0) * troopsPop[troopName];
+        }
+    });
+
+    let typeVillage = (totalPopDef > totalPopOff) ? "def" : "off";
+    typeVillage = ((troopsHomeDetails.troopsOwn['spy'] || 0) > 4000) ? "spy" : typeVillage;
+
+    let hasNoble = ((troopsHomeDetails.troopsOwn['snob'] || 0) > 0);
+
+    totalPop = Math.round(totalPop / 1000);
+    totalPopOff = Math.round(totalPopOff / 1000);
+    totalPopDef = Math.round(totalPopDef / 1000);
+
+    const villageIdKey = villageDetails.villageId + "";
+
+    if (!mapVillageById.has(villageIdKey)) {
+
+        mapVillageById.set(villageIdKey, {
+            villageId: villageDetails.villageId,
+            playerId: villageDetails.playerId,
+            nrAttacks: 0,
+            nrNobles: 0,
+            nrSnipes: 0,
+            nrSniped: 0,
+            nrRecaps: 0,
+            nrRecaped: 0,
+            pop: totalPop,
+            typeVillage: typeVillage,
+            wallLevel: troopsHomeDetails.wallLvl || 0,
+            farmLevel: troopsHomeDetails.farmLvl || 0,
+            totalPopOff: totalPopOff,
+            totalPopDef: totalPopDef,
+            hasNoble: hasNoble
+        });
+
+    } else {
+
+        let updateObj = mapVillageById.get(villageIdKey);
+        updateObj.typeVillage = typeVillage;
+        updateObj.totalPopOff = totalPopOff;
+        updateObj.totalPopDef = totalPopDef;
+        updateObj.hasNoble = hasNoble;
+        mapVillageById.set(villageIdKey, updateObj);
+    }
+
+});
+// PATCH END
+
     console.log("mapVillageByIdAfter",mapVillageById)
 
 
@@ -10643,21 +10659,50 @@ function convertBuildTime(milliseconds){
 
     
 
+// vault.js ~10664 (SAFE PATCH)
 function convertDate(date){
-    let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    let monthIndex = date.split("/")[0]-1
-    let dayIndex = date.split("/")[1]
-    let time = date.split(" ")[1]
-    console.log(date)  
-    console.log(`${months[monthIndex]} ${dayIndex} ${time}` )
 
-    if (months[monthIndex] == undefined)
-        return ""
-    else
-        return `${months[monthIndex]} ${dayIndex} ${time}` 
+    if (!date || typeof date !== "string") {
+        return "";
+    }
 
+    let months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
+    // If already formatted like "Jan 12 12:30:00"
+    if (/^[A-Za-z]{3} \d{1,2}/.test(date)) {
+        return date;
+    }
+
+    let datePart, timePart;
+
+    // Expected formats:
+    // "MM/DD HH:MM:SS"
+    // "MM/DD/YYYY HH:MM:SS"
+    if (date.includes(" ")) {
+        [datePart, timePart] = date.split(" ");
+    } else {
+        return "";
+    }
+
+    if (!datePart || !timePart) {
+        return "";
+    }
+
+    let parts = datePart.split("/");
+    if (parts.length < 2) {
+        return "";
+    }
+
+    let monthIndex = parseInt(parts[0], 10) - 1;
+    let dayIndex = parts[1];
+
+    if (months[monthIndex] === undefined) {
+        return "";
+    }
+
+    return `${months[monthIndex]} ${dayIndex} ${timePart}`;
 }
+
 
 ////////////////////////////////////////////// get commands sharing settings ///////////////////////////////////////
 
@@ -11025,4 +11070,3 @@ async function uploadOwnTroops(){
     })
 
 }
-
