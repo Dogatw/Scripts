@@ -6808,50 +6808,83 @@ async function uploadSupports(){
         let splitByTroopsHome = Math.ceil(troopsHome.length /nrFiles)
 
 
-        const run = async () => {
-            console.log("Starting...");
-            for (let i = 0; i < nrFiles; i++) {
-                //save command attacks
-                let subList = commandsAttacks.slice(i * splitByAttacks, (i+1) * splitByAttacks)
+       const run = async () => {
+    console.log("Starting...");
+    for (let i = 0; i < nrFiles; i++) {
 
-                let compressedData = await compress(JSON.stringify(subList), 'gzip')
-                let base64CompressedData = await blobToBase64(compressedData)
+        // =============================
+        // SAVE COMMAND ATTACKS
+        // =============================
+        let subList = commandsAttacks.slice(
+            i * splitByAttacks,
+            (i + 1) * splitByAttacks
+        );
 
-                let fileName = `${databaseName}/Commands_attack${i}.gz`
-                let fileNameLocal = `${databaseName}/Commands_attack${i}.txt`
-
-                await Promise.all([
-                    uploadFile(compressedData,fileName,dropboxToken).catch(err=>alert(err)),
-                    localBase.setItem(fileNameLocal, base64CompressedData)
-                ])
-
-                //save support
-                let subListSupport = commandsSupport.slice(i * splitBySupport, (i+1) *splitBySupport)
-                let subListTroopsHome = troopsHome.slice(i * splitByTroopsHome, (i+1) *splitByTroopsHome)
-
-                let data_list=[subListSupport,subListTroopsHome]
-
-                compressedData =  await compress(JSON.stringify(data_list), 'gzip')
-                base64CompressedData = await blobToBase64(compressedData)
-                fileName = `${databaseName}/Support${i}.gz`
-                fileNameLocal = `${databaseName}/Support${i}.txt`
-
-                let base64CompressedDataSupport = await blobToBase64(await compress(JSON.stringify(subListSupport), 'gzip'))
-                let base64CompressedDataSupportHome = await blobToBase64(await compress(JSON.stringify(subListTroopsHome), 'gzip'))
-                await Promise.all([
-                    uploadFile(compressedData,fileName,dropboxToken).catch(err=>alert(err)),
-                    localBase.setItem(fileNameLocal, base64CompressedDataSupport),
-                    localBase.setItem(fileNameLocal+"Home", base64CompressedDataSupportHome),
-
-                ])
-            }  
+        for (const [commandId, command] of subList) {
+            await sb.from("commands_attack").upsert({
+                command_id: commandId,
+                data: command,
+                world: game_data.world,
+                tribe: game_data.player.ally,
+                updated_at: new Date().toISOString()
+            });
         }
+
+        // =============================
+        // SAVE SUPPORT + TROOPS HOME
+        // =============================
+        let subListSupport = commandsSupport.slice(
+            i * splitBySupport,
+            (i + 1) * splitBySupport
+        );
+
+        let subListTroopsHome = troopsHome.slice(
+            i * splitByTroopsHome,
+            (i + 1) * splitByTroopsHome
+        );
+
+        for (const [coord, support] of subListSupport) {
+            await sb.from("support").upsert({
+                coord,
+                data: support,
+                world: game_data.world,
+                tribe: game_data.player.ally,
+                updated_at: new Date().toISOString()
+            });
+        }
+
+        for (const [coord, troops] of subListTroopsHome) {
+            await sb.from("troops_home").upsert({
+                coord,
+                data: troops,
+                world: game_data.world,
+                tribe: game_data.player.ally,
+                updated_at: new Date().toISOString()
+            });
+        }
+    }
+};
+
         await run();
 
 
 
-        let compressedData = await compress(data_status, 'gzip')
-        let result_Status=await uploadFile(compressedData, filename_status_upload,dropboxToken).catch(err=>alert(err))
+       for (const [playerId, status] of mapStatus.entries()) {
+    await sb.from("status").upsert({
+        player_id: playerId,
+        data: status,
+        world: game_data.world,
+        tribe: game_data.player.ally,
+        updated_at: new Date().toISOString()
+    });
+}
+
+let result_Status = "succes";
+const { error } = await sb.from("support").upsert(payload);
+if (error) {
+    console.error("Supabase upsert failed:", error);
+}
+
 
         if(result_Status=="succes"){
             console.log("here save status")
@@ -10759,6 +10792,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
