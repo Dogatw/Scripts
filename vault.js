@@ -314,13 +314,15 @@ async function initWorldSpeedOnce() {
         throw new Error("Cannot load users from Supabase");
     }
 
-    permissions = {};
-    tribemates = [];
+   permissions = {};
+tribemates = [];
 
-    data.forEach(u => {
-        tribemates.push(u.name.toLowerCase());
-        permissions[u.name.toLowerCase()] = u.permission;
-    });
+data.forEach(u => {
+  const name = u.player_name.toLowerCase();
+  tribemates.push(name);
+  permissions[name] = true; // allow all users
+});
+
 
     console.log("👥 Tribemates:", tribemates);
 
@@ -10772,6 +10774,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
