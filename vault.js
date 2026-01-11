@@ -564,25 +564,6 @@ async function getUsers() {
 }
 
 
-
-
-
-function insertCryptoLibrary(){
-    return new Promise((resolve,reject)=>{
-
-        let start=new Date().getTime()
-        let script = document.createElement('script');
-        script.type="text/javascript"
-        script.src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"
-        script.onload = function () {
-            let stop=new Date().getTime()
-            console.log(`insert crypto-js library in ${stop-start} ms`)
-            resolve("done")
-        };
-        document.head.appendChild(script);
-    })
-}
-
 function addWindow(){
     $("#contentContainer").eq(0).prepend(html);
     $("#mobileContent").eq(0).prepend(html);
@@ -10784,4 +10765,5 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
