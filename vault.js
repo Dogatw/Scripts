@@ -158,138 +158,73 @@ async function saveTroopsHomeDB(coord, troopsData, world, tribe) {
 // ===============================
 // === EXISTING SCRIPT CONTINUES ===
 // ===============================
-var dropboxToken="",databaseName="",worldNumber=""
+// ===================================================
+// === INITIAL SETUP (SUPABASE ERA, CLEAN VERSION) ===
+// ===================================================
 
-var allUsers ,tribemates, permissions
-var filename_reports,filename_incomings,filename_users,filename_support,filename_commands_attack,filename_status_upload,filename_history_upload,filename_troops_home
+var dropboxToken = "";     // still used TEMPORARILY for status/history
+var databaseName = "";
+var worldNumber = "";
 
-var listCommandsAttacks, commandsAttacksPromises
-var listSupport, supportPromises
-var nrFiles 
+var allUsers, tribemates, permissions;
 
-var backgroundColor, borderColor, headerColor, headerColor,titleColor, headerColorPlayers, headerColorCoords, headerColorFirstRow, headerColorFirstRow
-var widthInterface, widthInterfaceOverview 
+// ONLY these two still use Dropbox
+var filename_status_upload;
+var filename_history_upload;
+
+// UI config
+var backgroundColor, borderColor, headerColor, titleColor;
+var headerColorPlayers, headerColorCoords, headerColorFirstRow;
+var widthInterface, widthInterfaceOverview;
+
 (async () => {
+
+    // ===========================
+    // UI COLORS / SIZES
+    // ===========================
     backgroundColor = "#32313f";
     borderColor = "#3e6147";
     headerColor = "#202825";
     titleColor = "#ffffdf";
-    headerColorPlayers="#323232"
-    headerColorCoords="#4d4d4d"
-    headerColorFirstRow="#666600"
-    widthInterface = 600
-    widthInterfaceOverview = 900
+    headerColorPlayers = "#323232";
+    headerColorCoords = "#4d4d4d";
+    headerColorFirstRow = "#666600";
+    widthInterface = 600;
+    widthInterfaceOverview = 900;
 
+    // ===========================
+    // USERS / PERMISSIONS
+    // ===========================
+    allUsers = await getUsers();
 
-    allUsers =   await getUsers()
+    permissions = {};
+    tribemates = allUsers
+        .split("\n")
+        .map(r => r.split(",")[0].trim().toLowerCase())
+        .filter(Boolean);
 
-    permissions = {}
-    tribemates=allUsers.split("\n").map(e=>{return e.split(",")[0].trim().toLowerCase()}).filter(e => e)
     allUsers.split("\n").forEach(row => {
-        if(row.trim() != ''){
-            let name = row.split(",")[0].trim().toLowerCase()
-            let value = row.split(",")[1].trim()
-            permissions[name] = value
-        }
-    
-    })
-    console.log(tribemates)
-    // console.log(permissions)
+        if (!row.trim()) return;
+        let [name, value] = row.split(",");
+        permissions[name.trim().toLowerCase()] = value.trim();
+    });
 
-    // if(!tribemates.includes(game_data.player.name.toLowerCase())){
-    //     UI.ErrorMessage("contact admin to give you permission",2000)
-    //     throw new Error("you do not have acces");
-    //     // console.log("you do not have acces" )
-    // }
-    // console.log("worldNumber ",worldNumber)
-    // if (game_data.world.match(/\d+/)[0] != worldNumber)
-    //     throw new Error("it doesn't work");
+    console.log("Tribemates:", tribemates);
 
-    addCssStyle()
-    getInterface()
+    // ===========================
+    // UI INIT
+    // ===========================
+    addCssStyle();
+    getInterface();
     showButtons();
-    hitCountApi()
-    filename_incomings=`${databaseName}/Incomings.gz`;
-    filename_users=`${databaseName}/Users.txt`;
-    filename_support=`${databaseName}/Support.gz`;
-    filename_commands_attack=`${databaseName}/Commands_attack.gz`;
-    filename_troops_home=`${databaseName}/Troops_home.gz`;
-    
-    filename_status_upload=`${databaseName}/status.gz`;
-    filename_history_upload=`${databaseName}/history_upload.gz`;
+    hitCountApi();
 
+    // ===========================
+    // DROPBOX (TEMPORARY)
+    // ===========================
+    filename_status_upload = `${databaseName}/status.gz`;
+    filename_history_upload = `${databaseName}/history_upload.gz`;
 
-
-    
-
-    listCommandsAttacks = []
-    commandsAttacksPromises = []
-    listSupport = []
-    supportPromises = []
-
-    nrFiles = 2
-    for(let i=0;i<nrFiles;i++){
-        let fileName = `${databaseName}/Commands_attack${i}.gz`
-        listCommandsAttacks.push(fileName)
-        commandsAttacksPromises.push(readFileDropbox(fileName))
-
-        fileName = `${databaseName}/Support${i}.gz`
-        listSupport.push(fileName)
-        supportPromises.push(readFileDropbox(fileName))
-    }
-    console.log(listCommandsAttacks)
-    console.log(listSupport)
-
-
-    try { 
-        console.log(`${databaseName}/Support0.gz`)
-        let response = await readFileDropbox(`${databaseName}/Support0.gz`,dropboxToken)
-        console.log(response)
-    } catch (error) {
-        UI.SuccessMessage("create additional files")
-        window.setTimeout(async ()=>{
-            for(let i=0;i<nrFiles;i++){
-                let compressedData = await compress("[]", 'gzip')
-                await uploadFile(compressedData, `${databaseName}/Support${i}.gz`, dropboxToken)
-                await uploadFile(compressedData, `${databaseName}/Commands_attack${i}.gz`, dropboxToken)
-            }
-        },500)
-        console.log("files created")
-    }
-
-
-    try { 
-        let response = await readFileDropbox(filename_status_upload,dropboxToken)
-        console.log(response)
-    } catch (error) {
-        UI.SuccessMessage("create additional file")
-        window.setTimeout(async ()=>{
-            let compressedData = await compress("[]", 'gzip')
-            await uploadFile(compressedData, filename_reports, dropboxToken)
-            await uploadFile(compressedData, filename_support, dropboxToken)
-            await uploadFile(compressedData, filename_incomings, dropboxToken)
-            await uploadFile(compressedData, filename_commands_attack, dropboxToken)
-            await uploadFile(compressedData, filename_status_upload, dropboxToken)
-            await uploadFile(compressedData, filename_history_upload, dropboxToken)
-        },500)
-        console.log("file created")
-    }
-
-
-    try { 
-        let response = await readFileDropbox(filename_troops_home,dropboxToken)
-        console.log(response)
-    } catch (error) {
-        UI.SuccessMessage("create additional file")
-        window.setTimeout(async ()=>{
-            let compressedData = await compress("[]", 'gzip')
-            await uploadFile(compressedData, filename_troops_home, dropboxToken)
-        },500)
-        console.log("file created")
-    }
-
-
-    
 })();
 
 
@@ -10817,3 +10752,4 @@ async function uploadOwnTroops(){
         status: "success"
     };
 }
+
