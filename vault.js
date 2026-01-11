@@ -550,26 +550,20 @@ function closeWindow(){
 }
 
 async function getUsers() {
-    // make sure game_data exists
-    while (typeof window.game_data === "undefined") {
-        await new Promise(r => setTimeout(r, 50));
-    }
-
     const { data, error } = await sb
         .from("users")
-        .select("username, permission")
+        .select("player_name, permission")
         .eq("world", game_data.world)
-        .eq("tribe", game_data.player.ally);
+        .eq("tribe", String(game_data.player.ally));
 
     if (error) {
         console.error("getUsers failed", error);
         throw new Error("Cannot load users from Supabase");
     }
 
-    // Keep SAME format as old Users.txt
-    // player,permission
+    // Convert to old format your script expects
     return data
-        .map(u => `${u.username},${u.permission}`)
+        .map(u => `${u.player_name},${u.permission}`)
         .join("\n");
 }
 
@@ -10778,6 +10772,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
