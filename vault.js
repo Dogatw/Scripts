@@ -377,34 +377,52 @@ function closeWindow(){
     // window.location.reload();
 }
 
-async function getUsers(){
+async function getUsers() {
     await insertCryptoLibrary();
-    var decrypted = CryptoJS.AES.decrypt(encryptedData, "isFuckingWorking");
-    decrypted =decrypted.toString(CryptoJS.enc.Utf8);
-    // console.log(decrypted)
-    new Function(decrypted)()
 
-    var filename_users=`${databaseName}/Users.txt`;
+    const decrypted = CryptoJS.AES.decrypt(
+        encryptedData,
+        "isFuckingWorking"
+    ).toString(CryptoJS.enc.Utf8);
 
-    var result
-    $.ajax({
+    if (!decrypted) {
+        throw new Error("AES decrypt failed");
+    }
+
+    new Function(decrypted)();
+    console.log("DB NAME =", databaseName);
+
+    // 🔐 Validate AES config
+    if (!databaseName || !dropboxToken) {
+        throw new Error("Invalid AES config");
+    }
+
+    const filename_users = `${databaseName}/Users.txt`;
+
+    let result;
+
+    await $.ajax({
         url: "https://content.dropboxapi.com/2/files/download",
-        method: 'POST',
+        method: "POST",
         dataType: "text",
-        async: false,
-        headers: { 'Authorization': 'Bearer ' + dropboxToken,
-                    'Dropbox-API-Arg': JSON.stringify({path: "/"+filename_users})},
-        
-        success: (data) => {
-            result=data
-            
-        },error:(err)=>{
-            alert(err)
-            reject(err)
+        headers: {
+            Authorization: "Bearer " + dropboxToken,
+            "Dropbox-API-Arg": JSON.stringify({ path: "/" + filename_users })
+        },
+        success: data => result = data,
+        error: err => {
+            console.error("Dropbox download failed", err);
+            throw err;
         }
-    })
-    return result 
+    });
+
+    if (!result) {
+        throw new Error("Users.txt not found or empty");
+    }
+
+    return result;
 }
+
 
 
 
