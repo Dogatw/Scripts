@@ -274,6 +274,21 @@ var widthInterface, widthInterfaceOverview;
     // ===========================
     // USERS / PERMISSIONS
     // ===========================
+(async () => {
+    // ⏳ WAIT FOR SUPABASE
+    while (!window.sb) {
+        await new Promise(r => setTimeout(r, 50));
+    }
+
+    // UI setup
+    backgroundColor = "#32313f";
+    borderColor = "#3e6147";
+    headerColor = "#202825";
+    titleColor = "#ffffdf";
+    widthInterface = 600;
+    widthInterfaceOverview = 900;
+
+    // Users
     allUsers = await getUsers();
 
     permissions = {};
@@ -283,21 +298,15 @@ var widthInterface, widthInterfaceOverview;
         .filter(Boolean);
 
     allUsers.split("\n").forEach(row => {
-        if (!row.trim()) return;
-        let [name, value] = row.split(",");
+        const [name, value] = row.split(",");
         permissions[name.trim().toLowerCase()] = value.trim();
     });
 
-    console.log("Tribemates:", tribemates);
-
-    // ===========================
-    // UI INIT
-    // ===========================
     addCssStyle();
     getInterface();
     showButtons();
-
 })();
+
 
 
 
@@ -516,7 +525,6 @@ function closeWindow(){
 }
 
 async function getUsers() {
-
     const { data, error } = await sb
         .from("users")
         .select("name, permission")
@@ -528,15 +536,14 @@ async function getUsers() {
         throw new Error("Cannot load users from Supabase");
     }
 
-    if (!data || data.length === 0) {
-        throw new Error("No users found for this tribe/world");
+    if (!data || !data.length) {
+        throw new Error("No users found");
     }
 
-    // Return SAME format as Users.txt
-    return data
-        .map(u => `${u.name},${u.permission}`)
-        .join("\n");
+    // Same format as Users.txt
+    return data.map(u => `${u.name},${u.permission}`).join("\n");
 }
+
 
 
 function addWindow(){
@@ -10740,6 +10747,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
