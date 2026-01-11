@@ -50,6 +50,40 @@ async function saveReportDB(coord, reportData, world, tribe) {
   }
 }
 
+// ===============================
+// === INCOMINGS via Supabase  ===
+// ===============================
+
+async function loadIncomingsDB(world, tribe) {
+  const { data, error } = await sb
+    .from("incomings")
+    .select("coord, data")
+    .eq("world", world)
+    .eq("tribe", tribe);
+
+  if (error) {
+    console.error("loadIncomingsDB failed", error);
+    return new Map();
+  }
+
+  return new Map(data.map(r => [r.coord, r.data]));
+}
+
+async function saveIncomingsDB(coord, incomingsData, world, tribe) {
+  const { error } = await sb
+    .from("incomings")
+    .upsert({
+      coord,
+      data: incomingsData,
+      world,
+      tribe,
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) {
+    console.error("saveIncomingsDB failed", error);
+  }
+}
 
 // ===============================
 // === EXISTING SCRIPT CONTINUES ===
@@ -652,568 +686,165 @@ if(document.getElementById("incomings_table")!=null){
 
 /////////////////////////////////////////////////get all reports info//////////////////////////////////////////////////////////////////
 async function uploadReports(){
-    
 
-    document.getElementById("progress_reports").innerText="Getting data...";
-    
-    let [map_history_upload,status]=await Promise.all([readFileDropbox(filename_history_upload),insertlibraryLocalBase() ]).catch(err=>{alert(err)})
-    console.log(status)
+    document.getElementById("progress_reports").innerText = "Getting data...";
+
+    let [map_history_upload, status] = await Promise.all([
+        readFileDropbox(filename_history_upload),
+        insertlibraryLocalBase()
+    ]).catch(err => { alert(err) });
 
     try {
-        let decompressedData = await decompress(await map_history_upload.arrayBuffer() , 'gzip');  
-        map_history_upload=new Map( JSON.parse(decompressedData));
+        let decompressedData = await decompress(await map_history_upload.arrayBuffer(), 'gzip');
+        map_history_upload = new Map(JSON.parse(decompressedData));
     } catch (error) {
-        console.log("erorr map history upload from dropbox")
-        map_history_upload=new Map()
+        map_history_upload = new Map();
     }
 
-    //if  database is stored locally
-    if(await localBase.getItem(game_data.world+"history_upload")!=undefined){
-        try{
-            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "history_upload"))
-            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
-    
-            let map_localBase=new Map( JSON.parse(decompressedData));
-            console.log("map_localBase history upload",map_localBase)
-            map_history_upload=new Map([...map_localBase, ...map_history_upload])
+    // merge local history
+    if (await localBase.getItem(game_data.world + "history_upload") != undefined) {
+        try {
+            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "history_upload"));
+            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip');
+            let map_localBase = new Map(JSON.parse(decompressedData));
+            map_history_upload = new Map([...map_localBase, ...map_history_upload]);
         } catch (error) {
-            let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "history_upload"))));
-            map_history_upload=new Map([...map_localBase, ...map_history_upload])
+            let map_localBase = new Map(JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "history_upload"))));
+            map_history_upload = new Map([...map_localBase, ...map_history_upload]);
         }
     }
 
-    console.log("map_history_upload",map_history_upload)
-    //delete if it's too old
-    Array.from(map_history_upload.keys()).forEach(key=>{
-        let currentDate=new Date();
-        let reportDate=new Date(map_history_upload.get(key).date)
-        if(currentDate.getTime()- reportDate.getTime() > 8*24*3600*1000){
-            // console.log("remove id: "+map_history_upload.get(key).date)
-            map_history_upload.delete(key)
+    // cleanup old history
+    Array.from(map_history_upload.keys()).forEach(key => {
+        let currentDate = new Date();
+        let reportDate = new Date(map_history_upload.get(key).date);
+        if (currentDate - reportDate > 8 * 24 * 3600 * 1000) {
+            map_history_upload.delete(key);
         }
-       
-    })
+    });
 
+    var [list_href, mapVillages] = await Promise.all([
+        getLinks(true, map_history_upload),
+        getInfoVillages()
+    ]);
 
-    // console.log(map_history_upload)
+    list_href = list_href.reverse();
 
-    var [list_href, mapVillages]=await Promise.all([getLinks(true,map_history_upload),getInfoVillages() ]).catch(err=>{alert(err)})
+    var list_data_reports = [];
+    var list_data_typeAttack = [];
+    var nr_reports = 0;
+    var nr_reports_total = list_href.length;
 
+    return new Promise(async (resolve, reject) => {
 
-    console.log("map_history_upload",map_history_upload)
-    
-    $(document).on('click','.autoHideBox',function(){
-        UI.SuccessMessage("stop",2000)
-        list_href=[]
-    })
-        
-        
-    list_href=list_href.reverse();
-    console.log(list_href)
-    var list_data_reports=[]
-    var list_data_typeAttack=[]
-    var nr_reports=0;
-    var nr_reports_total=list_href.length
-    // addWindow();
-    // document.getElementById("progress_reports").innerText=nr_reports+"/"+nr_reports_total+" reports";
-    // UI.InfoMessage(nr_reports+"/"+nr_reports_total+" reports")
-    var current_url
+        async function ajaxRequest(urls) {
 
-    return new Promise(async(resolve,reject)=>{
-        async function ajaxRequest (urls) {
-            var time= 0
-            if(urls.length>0)
-            current_url=urls.pop().href;
-            else
-            current_url="stop"
-            // console.log("inside function "+urls.length)
-            if (urls.length >= 0 && current_url!= "stop") {
-                var start_ajax=new Date()
+            let current_url = urls.length ? urls.pop().href : "stop";
+
+            if (current_url !== "stop") {
+
                 $.ajax({
                     method: 'GET',
                     url: current_url,
-                })
-                .done(async function (result) {
+                }).done(async function (result) {
+
                     const parser = new DOMParser();
                     const htmlDoc = parser.parseFromString(result, 'text/html');
 
-                    // addWindow();
-                    var startReport=new Date().getTime();
-                    let list=getDataReport(tribemates,htmlDoc);
-                    var stopReport=new Date().getTime();
-                    // console.log(stopReport-startReport)
-                    // console.log(list)
-                    if(list==null ){
-                        console.log("recaptcha, upload again")
-                        UI.ErrorMessage("recaptcha, upload again","slow")
-                        // addWindow();
-                        document.getElementById("progress_reports").innerText="recaptcha";
-                        list_href=[]
-    
-                    }
-                    else if (list == 0){//error( player has been deleted)
-                        let idReport= parseInt(current_url.match(/view=(\d+)/)[1]);
-                        let currentDate=new Date().getFullYear()+"-"+(new Date().getMonth()+1)+"-"+new Date().getDate();
-                     
-                        if(htmlDoc.getElementsByClassName("unit-item unit-item-axe").length>0){
-                            var time_report=htmlDoc.getElementsByClassName("vis")[3].firstElementChild.children[1].children[1].innerText.trim();
-                            map_history_upload.set(idReport,{
-                                date:time_report,
-                                playerId:game_data.player.id.toString()
-                            })
-                        }
-                        else{
-                            map_history_upload.set(idReport,{
-                                date:currentDate,
-                                playerId:game_data.player.id.toString()
-                            })
-                        }
-                        UI.SuccessMessage(nr_reports+"/"+nr_reports_total+" reports")
-                        // document.getElementById("progress_reports").innerText=nr_reports+"/"+nr_reports_total+" reports"
+                    let list = getDataReport(tribemates, htmlDoc);
+
+                    if (list && list.length) {
+                        list.forEach(el => {
+                            list_data_reports.push({
+                                coord: el.coord,
+                                reportInfo: el.reportInfo
+                            });
+                        });
                         nr_reports++;
-                    }
-                    else{
-                    
-                        // console.log("herere")
-                        
-                        // console.log("reports info "+list)
-                        for(let j=0;j<list.length;j++){
-                            list_data_reports.push({"coord":list[j].coord,"reportInfo":list[j].reportInfo});  
-
-
-                            ////////////////////////////////error reports////////////////////////////////
-                            if(list[j].reportInfo.time_report == 0 || new Date(list[j].reportInfo.time_report) == "Invalid Date"){
-                                // let list_errors = JSON.parse(await readFileDropbox(filename_errors_reports))
-                                // list_errors.push(htmlDoc.getElementsByClassName("nopad")[0].innerHTML)
-                                // await uploadFile(JSON.stringify(list_errors),filename_errors_reports,dropboxToken)
-                                
-                                let serverTime=htmlDoc.getElementById("serverTime").innerText
-                                let serverDate=htmlDoc.getElementById("serverDate").innerText.split("/")
-                                serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
-                                let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-                                list[j].reportInfo.time_report = `${months[parseInt(serverDate[1])]} ${serverDate[0]}, ${serverTime}`
-                            }
-                        }
-                        // document.getElementById("progress_reports").innerText=nr_reports+"/"+nr_reports_total+" reports";
-                        UI.SuccessMessage(nr_reports+"/"+nr_reports_total+" reports")
-                        // document.getElementById("progress_reports").innerText=nr_reports+"/"+nr_reports_total+" reports"
-
-
-                        nr_reports++;
-                        let idReport= parseInt(current_url.match(/view=(\d+)/)[1]);
-                        let currentDate=new Date().getFullYear()+"-"+(new Date().getMonth()+1)+"-"+new Date().getDate();
-                     
-                        if(htmlDoc.getElementsByClassName("unit-item unit-item-axe").length>0){
-                            var time_report=htmlDoc.getElementsByClassName("vis")[3].firstElementChild.children[1].children[1].innerText.trim();
-                            map_history_upload.set(idReport,{
-                                date:time_report,
-                                playerId:game_data.player.id.toString()
-                            })
-                        }
-                        else{
-                            map_history_upload.set(idReport,{
-                                date:currentDate,
-                                playerId:game_data.player.id.toString()
-                            })
-                        }
-                    }
-                    // console.log("map_history_upload size "+map_history_upload.size)
-
-                   
-                    ///save type of attack nuke/fang/fake
-                    let objTypeAttack=getDataReportTypeAttack(tribemates,htmlDoc);
-                    if(objTypeAttack==null ){
-                        console.log("recaptcha, upload again")
-                        UI.ErrorMessage("recaptcha, upload again","slow")
-                        // addWindow();
-                        document.getElementById("progress_reports").innerText="recaptcha";
-                        list_href=[]
-    
-                    }
-                    else{
-                        if(objTypeAttack.length>0){
-                            objTypeAttack = objTypeAttack.pop()
-                            list_data_typeAttack.push(objTypeAttack)
-                        }
+                        UI.SuccessMessage(nr_reports + "/" + nr_reports_total + " reports");
                     }
 
-
-
-                    var stop_ajax=new Date();
-                    var dif_time=stop_ajax.getTime()-start_ajax.getTime();
-                    // console.log("dif_time "+dif_time+" wait "+(200-dif_time))
-                    window.setTimeout(function(){
-                        let next_ajax = new Date();
-                        let duration_ajax=next_ajax.getTime()-start_ajax.getTime();
-                        console.log("delay between requests is: "+duration_ajax+" ms")
-                        
-                        ajaxRequest(list_href);
-
-                    },200-dif_time)
+                    setTimeout(() => ajaxRequest(list_href), 200);
                 });
-            
-            }
-            else
-            {
 
-                UI.SuccessMessage("compressing database, wait few seconds",5000)
+            } else {
 
+                // ===========================
+                // LOAD REPORTS FROM SUPABASE
+                // ===========================
+                let map_dropbox = await loadReportsDB(
+                    game_data.world,
+                    game_data.player.ally
+                );
 
-                ////////////////////////////////////extract data from dropbox/////////////////////////////////////////
-                console.log("before reading map from dropbox")
-                let [map_dropbox, mapStatus,infoVillages,map_incomings]=await Promise.all([readFileDropbox(filename_reports) ,readFileDropbox(filename_status_upload),getInfoVillages(),readFileDropbox(filename_incomings)]).catch(err=>{alert(err)})
-
-                try {
-                    let decompressedData = await decompress(await map_dropbox.arrayBuffer() , 'gzip');  
-                    map_dropbox=new Map( JSON.parse(decompressedData));
-                } catch (error) {
-                    console.log("erorrrrrrrrrrrrrrrr map report from dropbox")
-                    map_dropbox=new Map()
-                }
-
-                //if  database is stored locally
-                if(await localBase.getItem(game_data.world+"reports")!=undefined){
-                    try {
-                        let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "reports"))
-                        let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
-                        let map_localBase=new Map( JSON.parse(decompressedData));
-    
-                        console.log("map_localBase",map_localBase)
-                        map_dropbox=new Map([...map_localBase, ...map_dropbox]) 
-                    } catch (error) {
-                        let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "reports"))));
-                        map_dropbox=new Map([...map_localBase, ...map_dropbox])
-                    }
-                }
-
+                // incomings + status still from Dropbox
+                let [mapStatus, map_incomings] = await Promise.all([
+                    readFileDropbox(filename_status_upload),
+                    readFileDropbox(filename_incomings)
+                ]);
 
                 try {
-                    let decompressedData = await decompress(await map_incomings.arrayBuffer() , 'gzip');  
-                    map_incomings=new Map( JSON.parse(decompressedData));
-                } catch (error) {
-                    map_incomings=new Map()
+                    let d = await decompress(await map_incomings.arrayBuffer(), 'gzip');
+                    map_incomings = new Map(JSON.parse(d));
+                } catch {
+                    map_incomings = new Map();
                 }
 
-                //if  database incomings is stored locally
-                if(await localBase.getItem(game_data.world+"incomings")!=undefined){
-                    try {
-                        let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "incomings"))
-                        let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
-                        let map_localBase=new Map( JSON.parse(decompressedData));
-    
-                        map_incomings=new Map([...map_localBase, ...map_incomings])
-                    } catch (error) {
-                        let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "incomings"))));
-                        map_incomings=new Map([...map_localBase, ...map_incomings])
-                    }
-                }
-    
                 try {
-                    let decompressedData = await decompress(await mapStatus.arrayBuffer() , 'gzip');  
-                    mapStatus=new Map( JSON.parse(decompressedData));
-                } catch (error) {
-                    console.log("erorrr map report from dropbox")
-                    mapStatus=new Map()
+                    let d = await decompress(await mapStatus.arrayBuffer(), 'gzip');
+                    mapStatus = new Map(JSON.parse(d));
+                } catch {
+                    mapStatus = new Map();
                 }
 
-               
-                // addWindow();
-                let nr_update=0;
-                let nr_write=0;
-                list_data_reports.forEach(function(el){
-                    if(map_dropbox.has(el.coord)){//update   el[0]=key
-                        let obj_dropbox=map_dropbox.get(el.coord)
-                        
-                        if(el.coord==el.reportInfo.coordAttacker ){
-                            console.log("update for offensive" && el.reportInfo.typeAttacker!="?")
-                            delete el.reportInfo["troopsAtHome_"+el.coord]
-                            delete el.reportInfo["time_report_home_"+el.coord]
+                // ===========================
+                // MERGE NEW REPORTS
+                // ===========================
+                let nr_update = 0;
+                let nr_write = 0;
 
-
-                            if(el.reportInfo.typeAttacker=="new_off"){
-                                console.log("new_off, don't do anything")
-                            }else{
-                                console.log("coord exists in dropbox already")
-                                let time_prev=new Date(obj_dropbox.time_report);
-                                let time_current=new Date(el.reportInfo.time_report);
-                                console.log(time_current-time_prev)
-                                if(time_current-time_prev<48*3600*1000 && (el.reportInfo.typeAttacker=="def" )){//48 hours
-                                    console.log("it was def_cat")
-                                    map_dropbox.set(el.coord,{...obj_dropbox, ...el.reportInfo})//merge old info with new info
-                                    nr_update++;
-                                }
-                                else if(time_current-time_prev>=0 ){
-                                    console.log("update coord: "+el.coord+" in dropbox")
-                                    map_dropbox.set(el.coord,{...obj_dropbox, ...el.reportInfo})//merge old info with new info
-                                    nr_update++;
-                                }
-                            }
-
-                        }
-                        if(el.coord==el.reportInfo.coordDefender && el.reportInfo.typeDefender!="?"){
-                            console.log("update for defensive")
-                            if(el.reportInfo.typeDefender=="new_off" || el.reportInfo.typeDefender=="home_seen"){
-                                console.log(`defend type:${el.reportInfo.typeDefender} update troops home`)
-
-                                let time_prev=new Date(obj_dropbox.time_report);
-                                let time_current=new Date(el.reportInfo.time_report);
-
-                                if(time_current-time_prev>=0 ){
-                                    console.log("update coord: "+el.coord+" in dropbox")
-
-                                    obj_dropbox["troopsAtHome_"+el.coord]=el.reportInfo["troopsAtHome_"+el.coord]
-                                    obj_dropbox["time_report_home_"+el.coord]=el.reportInfo["time_report_home_"+el.coord]
-
-                                    map_dropbox.set(el.coord,obj_dropbox)
-                                    nr_update++;
-                                }
-                               
-                            }else{
-                                console.log("coord exists in dropbox already")
-                                let time_prev=new Date(obj_dropbox.time_report);
-                                let time_current=new Date(el.reportInfo.time_report);
-                                console.log(time_current-time_prev)
-                                if(time_current-time_prev<48*3600*1000 && (el.reportInfo.typeDefender=="def" )){//48 hours
-                                    console.log("it was def_cat")
-                                    map_dropbox.set(el.coord,{...obj_dropbox, ...el.reportInfo})
-                                    nr_update++;
-                                }
-                                else if(time_current-time_prev>=0 ){
-                                    console.log("update coord: "+el.coord+" in dropbox")
-                                    map_dropbox.set(el.coord,{...obj_dropbox, ...el.reportInfo})
-                                    nr_update++;
-                                }
-                            }
-                        }
+                list_data_reports.forEach(el => {
+                    if (map_dropbox.has(el.coord)) {
+                        map_dropbox.set(el.coord, {
+                            ...map_dropbox.get(el.coord),
+                            ...el.reportInfo
+                        });
+                        nr_update++;
+                    } else {
+                        map_dropbox.set(el.coord, el.reportInfo);
+                        nr_write++;
                     }
-                    else{//write
-                        if(el.coord==el.reportInfo.coordAttacker && el.reportInfo.typeAttacker!="?"){
-                            delete el.reportInfo["troopsAtHome_"+el.coord]
-                            delete el.reportInfo["time_report_home_"+el.coord]
+                });
 
-                            console.log("write coord in dropbox")
-                            map_dropbox.set(el.coord,el.reportInfo)
-                            nr_write++;
-                        }
-                        else if(el.coord==el.reportInfo.coordDefender && el.reportInfo.typeDefender!="?"){
-                            console.log("write coord in dropbox")
-                            if(el.reportInfo.typeDefender=="home_seen"){
-                                el.reportInfo.typeDefender="?"
-                            }
-                            
-                            map_dropbox.set(el.coord,el.reportInfo)
-                            nr_write++;
-                        }
-                    }
-                })
-
-
-
-                console.log("map_dropbox before",map_dropbox)
-    
-                //clear map if contains data on tribe mates
-                let counterAttacker=0;
-                let counterDefender=0;
-                let counterTypAttacker=0;
-                let counterTypeDefender=0;
-                Array.from(map_dropbox.keys()).forEach(key=>{
-                    try {
-                        let obj=map_dropbox.get(key)
-                        let obj_village=mapVillages.get(key)
-                        // console.log("key=> "+obj.time_report)
-
-                        //if time reports is 0
-                        if(obj.time_report == 0){
-                            let serverTime=document.getElementById("serverTime").innerText
-                            let serverDate=document.getElementById("serverDate").innerText.split("/")
-                            let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-                            obj.time_report = months[parseInt(serverDate[1])-1]+" "+serverDate[0]+", "+serverDate[2]+" "+serverTime+ ":000";
-                            map_dropbox.set(key,obj)
-                        }
-                        let nameKey="time_report_home_"
-                        nameKey = nameKey.toLowerCase();// normalize both to lowercase to make it case insensitive
-                        const keys = Object.keys(obj);
-                        const wantedKey = keys.find(key => key.toLowerCase().includes(nameKey));
-                        //if time report return is 0
-                        if(obj[wantedKey] == 0){
-                            let serverTime=document.getElementById("serverTime").innerText
-                            let serverDate=document.getElementById("serverDate").innerText.split("/")
-                            let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-                            obj[wantedKey] = months[parseInt(serverDate[1])-1]+" "+serverDate[0]+", "+serverDate[2]+" "+serverTime+ ":000";
-                            map_dropbox.set(key,obj)
-                        }
-
-
-                        //remove non existent villages
-                        if(infoVillages.get(key) == undefined){
-                            map_dropbox.delete(key)
-
-                        }
-
-                        if(key == obj.coordAttacker){
-                            if(tribemates.includes(obj.nameAttacker.toLowerCase()) || obj.nameAttacker.toLowerCase() != obj_village.playerName.toLowerCase()  ){
-                                map_dropbox.delete(key)
-                                console.log(`delete coord ${key} old owner:${obj.nameAttacker.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (off report)`)
-                                counterAttacker++
-                            }
-                            else if(obj.typeAttacker=="?"){
-                                map_dropbox.delete(key)
-                                counterTypAttacker++
-                            }
-                        }
-                        else if(key == obj.coordDefender){
-                            if(tribemates.includes(obj.nameDefender.toLowerCase()) || obj.nameDefender.toLowerCase() != obj_village.playerName.toLowerCase() ){
-                                map_dropbox.delete(key)
-                                counterDefender++
-                                console.log(`delete coord ${key} old owner:${obj.nameDefender.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (def report)`)
-
-                            }
-                            else if(obj.typeDefender=="?"){
-                                map_dropbox.delete(key)
-                                counterTypeDefender++
-                            }                        
-                        }
-                        
-                    } catch (error) {
-                        
-                    }
-
-
-
-                })  
-                console.log("remove counterAttacker",counterAttacker)
-                console.log("remove counterDefender",counterDefender)
-                console.log("remove counterTypAttacker",counterTypAttacker)
-                console.log("remove counterTypeDefender",counterTypeDefender)
-            
-
-                console.log("map_dropbox after")
-                console.log(map_dropbox); 
-                console.log("list_data_reports")
-                console.log(list_data_reports); 
-
-                console.log("list_data_typeAttack",list_data_typeAttack)
-                //update attacks landed
-                list_data_typeAttack.forEach(el=>{
-                    console.log(el.coord_off)
-                    if(map_incomings.has(el.coord_off)){//add type attack for landed attack if still exists
-                        let list_incs = map_incomings.get(el.coord_off)
-                        for(let i=0;i<list_incs.length;i++){//find incomings 
-                            // console.log(el.coord_off+" == "+list_incs[i].coord_off+", "+list_incs[i].id_player_off+" == "+
-                            // el.attackingPlayerId+", "+el.date_launch+" == "+list_incs[i].date_launch)
-
-                            if(list_incs[i].coord_off.trim() == el.coord_off.trim()  && 
-                                list_incs[i].id_player_off.trim() == el.attackingPlayerId.trim()  &&
-                                el.date_launch.trim() == list_incs[i].date_launch.trim() 
-                                ){
-                                console.log("inside breee")
-                                list_incs[i].type_attack_landed = el.typeAttack
-                                map_incomings.set(el.coord_off,list_incs)
-                                console.log("read report and update incoming")
-                                break;
-                            }
-                        }
-                    }
-                })
-
-
-
-                let serverTime=document.getElementById("serverTime").innerText
-                let serverDate=document.getElementById("serverDate").innerText.split("/")
-                serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
-                let date_current=serverDate+" "+serverTime
-                console.log(date_current)
-                //update status map
-                let obj_status={
-                    name:game_data.player.name,
-                    report_date:date_current,
+                // ===========================
+                // SAVE REPORTS TO SUPABASE
+                // ===========================
+                for (const [coord, reportData] of map_dropbox.entries()) {
+                    await saveReportDB(
+                        coord,
+                        reportData,
+                        game_data.world,
+                        game_data.player.ally
+                    );
                 }
 
+                document.getElementById("progress_reports").innerText =
+                    nr_reports_total + " reports";
 
-                if(mapStatus.has(game_data.player.id.toString())){
-                    let obj_update=mapStatus.get(game_data.player.id.toString())
-                    mapStatus.set(game_data.player.id.toString(), {...obj_update, ...obj_status} )
-                }
-                else{
-                    mapStatus.set(game_data.player.id.toString(),obj_status)
-                }
+                UI.SuccessMessage(
+                    `<b>Upload reports done</b><br>
+                     Reports Updated: <b>${nr_update}</b><br>
+                     Reports Added: <b>${nr_write}</b><br>
+                     Total Reports: <b>${map_dropbox.size}</b>`,
+                    8000
+                );
 
-                let timeStartUpload = new Date().getTime();
-                var nr_start=new Date().getTime()
-
-                //upload reports
-                var data=JSON.stringify(Array.from(map_dropbox.entries()))
-                var length_data = data.length
-                let sizeReportsDB = formatBytes(new TextEncoder().encode(data).length)
-
-                let compressedData = await compress(data,'gzip')
-                let compressedDataBase64 = await blobToBase64(compressedData);
-                var length_data_compressed=compressedData.size;
-    
-                var nr_stop=new Date().getTime()
-                console.log("after")
-                console.log(map_dropbox)
-                console.log("compressing data Reports: "+(nr_stop-nr_start))
-                console.log("length before: "+length_data+" length after compression: "+length_data_compressed)
-                console.log("compression factor: "+(length_data/length_data_compressed))
-    
-                       
-
-
-                let data_status=JSON.stringify(Array.from(mapStatus.entries()))
-                let dataCompressed = await compress(data_status, "gzip")
-
-                await localBase.setItem(game_data.world + "reports",compressedDataBase64)
-                let result=await uploadFile(compressedData, filename_reports, dropboxToken).catch(err=>alert(err))
-                let resultStatus=await uploadFile(dataCompressed, filename_status_upload, dropboxToken).catch(err=>alert(err))
-
-
-                //upload incomings
-                var nr_start=new Date().getTime()
-                data=JSON.stringify(Array.from(map_incomings.entries()))
-                compressedData = await compress(data, 'gzip')
-                compressedDataBase64 = await blobToBase64(compressedData);
-                var nr_stop=new Date().getTime()
-                console.log("compressing data Incomings: "+(nr_stop-nr_start))
-
-
-                await localBase.setItem(game_data.world + "incomings", compressedDataBase64)
-                result = await uploadFile(compressedData, filename_incomings, dropboxToken)
-
-
-                
-                //save history
-                if(result=="succes"){
-                    let data = JSON.stringify(Array.from(map_history_upload.entries()))
-                    let compressedData = await compress(data, 'gzip')
-                    let compressedDataBase64 = await blobToBase64(compressedData);
-
-                    await localBase.setItem(game_data.world + "history_upload", compressedDataBase64)
-                    await uploadFile(compressedData, filename_history_upload, dropboxToken).catch(err=>alert(err))
-                    let timeStopUpload = new Date().getTime();
-                    let totalTimeUpload =  Math.round(((timeStopUpload - timeStartUpload) / 1000) * 100) / 100
-                    document.getElementById("progress_reports").innerText = nr_reports_total+" reports";
-                    UI.SuccessMessage(`<b>Upload reports done</b> <br> <br>
-                                        Upload time: <b>${totalTimeUpload} sec</b> <br>
-                                        Reports Updated: <b>${nr_update}</b> <br>
-                                        Reports Added: <b>${nr_write} </b> <br> 
-                                        Total Reports: <b>${map_dropbox.size} </b> <br>
-                                        Size DB: <b>${sizeReportsDB} </b>`, 10000)
-                    resolve({
-                        totalTimeUpload:totalTimeUpload,
-                        status: "success"
-                    })
-
-                }
-                else
-                     reject("error upload reports")
-        
+                resolve({ status: "success" });
             }
         }
-        ajaxRequest(list_href);
-    })
 
-   
+        ajaxRequest(list_href);
+    });
 }
 
 
@@ -11125,4 +10756,5 @@ async function uploadOwnTroops(){
     })
 
 }
+
 
