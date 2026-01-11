@@ -1,8 +1,9 @@
 // ===============================
-// === SUPABASE INIT (FINAL) ===
+// === SUPABASE INIT (FIXED) ===
 // ===============================
 (async function initSupabase() {
-    if (window.sb) return; // prevent double init
+    if (window.__supabaseReady) return;
+    window.__supabaseReady = false;
 
     const s = document.createElement("script");
     s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
@@ -14,11 +15,18 @@
     });
 
     const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
+    const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
 
-  
-    console.log("✅ Supabase ready:", window.sb);
+    window.sb = supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+    window.__supabaseReady = true;
+    console.log("✅ Supabase initialized");
 })();
+
 
 
 
@@ -244,22 +252,40 @@ var allUsers, tribemates, permissions;
 var backgroundColor, borderColor, headerColor, titleColor;
 var headerColorPlayers, headerColorCoords, headerColorFirstRow;
 var widthInterface, widthInterfaceOverview;
+async function initWorldSpeedOnce() {
+    if (window.__speedReady) return;
+    window.__speedReady = false;
 
-(async () => {
- // ⏳ HARD WAIT FOR SUPABASE
-    while (!window.sb) {
+    while (typeof window.game_data === "undefined") {
         await new Promise(r => setTimeout(r, 50));
     }
 
-    console.log("🟢 Supabase available in main script");
+    const speed = getSpeedConstant();
+    const sw = speed.worldSpeed;
+    const su = speed.unitSpeed;
 
-    // test immediately
-    const { data, error } = await window.sb
-        .from("users")
-        .select("*")
-        .limit(1);
+    window.nobleSpeed = 2100 * 1000 / (sw * su);
+    window.ramSpeed   = 1800 * 1000 / (sw * su);
+    window.swordSpeed = 1320 * 1000 / (sw * su);
+    window.axeSpeed   = 1080 * 1000 / (sw * su);
+    window.heavySpeed = 660  * 1000 / (sw * su);
+    window.lightSpeed = 600  * 1000 / (sw * su);
+    window.spySpeed   = 540  * 1000 / (sw * su);
 
-    console.log("TEST QUERY:", data, error);
+    window.__speedReady = true;
+    console.log("⚡ World speed initialized");
+}
+
+(async () => {
+    // ⏳ WAIT FOR SUPABASE
+    while (!window.__supabaseReady) {
+        await new Promise(r => setTimeout(r, 50));
+    }
+
+    console.log("🟢 Supabase available");
+
+    // ⏳ WAIT FOR GAME DATA + SPEED
+    await initWorldSpeedOnce();
 
     // ===========================
     // UI COLORS / SIZES
@@ -275,23 +301,28 @@ var widthInterface, widthInterfaceOverview;
     widthInterfaceOverview = 900;
 
     // ===========================
-    // USERS / PERMISSIONS (SUPABASE)
+    // USERS (SUPABASE)
     // ===========================
-    allUsers = await getUsers();
+    const { data, error } = await sb
+        .from("users")
+        .select("name, permission")
+        .eq("world", game_data.world)
+        .eq("tribe", game_data.player.ally);
+
+    if (error) {
+        console.error("getUsers failed", error);
+        throw new Error("Cannot load users from Supabase");
+    }
 
     permissions = {};
-    tribemates = allUsers
-        .split("\n")
-        .map(r => r.split(",")[0].trim().toLowerCase())
-        .filter(Boolean);
+    tribemates = [];
 
-    allUsers.split("\n").forEach(row => {
-        if (!row.trim()) return;
-        const [name, value] = row.split(",");
-        permissions[name.trim().toLowerCase()] = value.trim();
+    data.forEach(u => {
+        tribemates.push(u.name.toLowerCase());
+        permissions[u.name.toLowerCase()] = u.permission;
     });
 
-    console.log("Tribemates:", tribemates);
+    console.log("👥 Tribemates:", tribemates);
 
     // ===========================
     // UI INIT
@@ -299,8 +330,8 @@ var widthInterface, widthInterfaceOverview;
     addCssStyle();
     getInterface();
     showButtons();
-
 })();
+
 
 
 
@@ -10741,6 +10772,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
