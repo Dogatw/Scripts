@@ -689,51 +689,57 @@ async function uploadReports(){
 
     document.getElementById("progress_reports").innerText = "Getting data...";
 
-    let [map_history_upload, status] = await Promise.all([
+    // ===========================
+    // HISTORY (unchanged – Dropbox)
+    // ===========================
+    let [map_history_upload] = await Promise.all([
         readFileDropbox(filename_history_upload),
         insertlibraryLocalBase()
     ]).catch(err => { alert(err) });
 
     try {
-        let decompressedData = await decompress(await map_history_upload.arrayBuffer(), 'gzip');
-        map_history_upload = new Map(JSON.parse(decompressedData));
-    } catch (error) {
+        let d = await decompress(await map_history_upload.arrayBuffer(), 'gzip');
+        map_history_upload = new Map(JSON.parse(d));
+    } catch {
         map_history_upload = new Map();
     }
 
-    // merge local history
     if (await localBase.getItem(game_data.world + "history_upload") != undefined) {
         try {
-            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "history_upload"));
-            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip');
-            let map_localBase = new Map(JSON.parse(decompressedData));
-            map_history_upload = new Map([...map_localBase, ...map_history_upload]);
-        } catch (error) {
-            let map_localBase = new Map(JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "history_upload"))));
-            map_history_upload = new Map([...map_localBase, ...map_history_upload]);
+            let b = base64ToBlob(await localBase.getItem(game_data.world + "history_upload"));
+            let d = await decompress(await b.arrayBuffer(), 'gzip');
+            let map_local = new Map(JSON.parse(d));
+            map_history_upload = new Map([...map_local, ...map_history_upload]);
+        } catch {
+            let map_local = new Map(JSON.parse(
+                lzw_decode(await localBase.getItem(game_data.world + "history_upload"))
+            ));
+            map_history_upload = new Map([...map_local, ...map_history_upload]);
         }
     }
 
-    // cleanup old history
     Array.from(map_history_upload.keys()).forEach(key => {
-        let currentDate = new Date();
-        let reportDate = new Date(map_history_upload.get(key).date);
-        if (currentDate - reportDate > 8 * 24 * 3600 * 1000) {
+        let now = Date.now();
+        let reportDate = new Date(map_history_upload.get(key).date).getTime();
+        if (now - reportDate > 8 * 24 * 3600 * 1000) {
             map_history_upload.delete(key);
         }
     });
 
-    var [list_href, mapVillages] = await Promise.all([
+    // ===========================
+    // LINKS + VILLAGES
+    // ===========================
+    let [list_href, mapVillages] = await Promise.all([
         getLinks(true, map_history_upload),
         getInfoVillages()
     ]);
 
     list_href = list_href.reverse();
 
-    var list_data_reports = [];
-    var list_data_typeAttack = [];
-    var nr_reports = 0;
-    var nr_reports_total = list_href.length;
+    let list_data_reports = [];
+    let list_data_typeAttack = [];
+    let nr_reports = 0;
+    let nr_reports_total = list_href.length;
 
     return new Promise(async (resolve, reject) => {
 
@@ -761,7 +767,7 @@ async function uploadReports(){
                             });
                         });
                         nr_reports++;
-                        UI.SuccessMessage(nr_reports + "/" + nr_reports_total + " reports");
+                        UI.SuccessMessage(`${nr_reports}/${nr_reports_total} reports`);
                     }
 
                     setTimeout(() => ajaxRequest(list_href), 200);
@@ -770,35 +776,32 @@ async function uploadReports(){
             } else {
 
                 // ===========================
-                // LOAD REPORTS FROM SUPABASE
+                // LOAD FROM SUPABASE
                 // ===========================
                 let map_dropbox = await loadReportsDB(
                     game_data.world,
                     game_data.player.ally
                 );
 
-                // incomings + status still from Dropbox
-                let [mapStatus, map_incomings] = await Promise.all([
-                    readFileDropbox(filename_status_upload),
-                    readFileDropbox(filename_incomings)
-                ]);
+                let map_incomings = await loadIncomingsDB(
+                    game_data.world,
+                    game_data.player.ally
+                );
 
+                // ===========================
+                // STATUS (unchanged – Dropbox)
+                // ===========================
+                let mapStatus;
                 try {
-                    let d = await decompress(await map_incomings.arrayBuffer(), 'gzip');
-                    map_incomings = new Map(JSON.parse(d));
-                } catch {
-                    map_incomings = new Map();
-                }
-
-                try {
-                    let d = await decompress(await mapStatus.arrayBuffer(), 'gzip');
+                    let s = await readFileDropbox(filename_status_upload);
+                    let d = await decompress(await s.arrayBuffer(), 'gzip');
                     mapStatus = new Map(JSON.parse(d));
                 } catch {
                     mapStatus = new Map();
                 }
 
                 // ===========================
-                // MERGE NEW REPORTS
+                // MERGE REPORTS
                 // ===========================
                 let nr_update = 0;
                 let nr_write = 0;
@@ -817,7 +820,7 @@ async function uploadReports(){
                 });
 
                 // ===========================
-                // SAVE REPORTS TO SUPABASE
+                // SAVE REPORTS ➜ SUPABASE
                 // ===========================
                 for (const [coord, reportData] of map_dropbox.entries()) {
                     await saveReportDB(
@@ -828,8 +831,20 @@ async function uploadReports(){
                     );
                 }
 
+                // ===========================
+                // SAVE INCOMINGS ➜ SUPABASE
+                // ===========================
+                for (const [coord, incList] of map_incomings.entries()) {
+                    await saveIncomingsDB(
+                        coord,
+                        incList,
+                        game_data.world,
+                        game_data.player.ally
+                    );
+                }
+
                 document.getElementById("progress_reports").innerText =
-                    nr_reports_total + " reports";
+                    `${nr_reports_total} reports`;
 
                 UI.SuccessMessage(
                     `<b>Upload reports done</b><br>
@@ -10756,5 +10771,6 @@ async function uploadOwnTroops(){
     })
 
 }
+
 
 
