@@ -305,7 +305,7 @@ async function initWorldSpeedOnce() {
     // ===========================
     const { data, error } = await sb
         .from("users")
-        .select("name, permission")
+        .select("player_name, permission")
         .eq("world", game_data.world)
         .eq("tribe", game_data.player.ally);
 
@@ -10772,6 +10772,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
