@@ -86,6 +86,41 @@ async function saveIncomingsDB(coord, incomingsData, world, tribe) {
 }
 
 // ===============================
+// === SUPPORT via Supabase     ===
+// ===============================
+
+async function loadSupportDB(world, tribe) {
+  const { data, error } = await sb
+    .from("support")
+    .select("coord, data")
+    .eq("world", world)
+    .eq("tribe", tribe);
+
+  if (error) {
+    console.error("loadSupportDB failed", error);
+    return new Map();
+  }
+
+  return new Map(data.map(r => [r.coord, r.data]));
+}
+
+async function saveSupportDB(coord, supportData, world, tribe) {
+  const { error } = await sb
+    .from("support")
+    .upsert({
+      coord,
+      data: supportData,
+      world,
+      tribe,
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) {
+    console.error("saveSupportDB failed", error);
+  }
+}
+
+// ===============================
 // === EXISTING SCRIPT CONTINUES ===
 // ===============================
 var dropboxToken="",databaseName="",worldNumber=""
@@ -10771,6 +10806,7 @@ async function uploadOwnTroops(){
     })
 
 }
+
 
 
 
