@@ -360,7 +360,7 @@ async function generateScript(){
     `
     let key = CryptoJS.AES.encrypt(plainText, "automateThisAnnoyingPart").toString()
     let outputfakeScript=`javascript:var encryptedData='${key}';
-    $.getScript('https://dl.dropboxusercontent.com/s/2q29vaqbibe6tph/fakeScriptMain.js?dl=0');void(0);`
+    $.getScript('https://raw.githack.com/Dogatw/Scripts/main/fakeScriptMain.js');void(0);`
 
 
     let filname_ally = `${databaseName}/ally.txt`
