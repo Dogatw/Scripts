@@ -156,6 +156,75 @@ async function saveTroopsHomeDB(coord, troopsData, world, tribe) {
 }
 
 // ===============================
+// === STATUS via Supabase     ===
+// ===============================
+async function loadStatusDB(world, tribe) {
+  const { data, error } = await sb
+    .from("status")
+    .select("player_id, data")
+    .eq("world", world)
+    .eq("tribe", tribe);
+
+  if (error) {
+    console.error("loadStatusDB failed", error);
+    return new Map();
+  }
+
+  return new Map(data.map(r => [r.player_id, r.data]));
+}
+
+async function saveStatusDB(playerId, data, world, tribe) {
+  const { error } = await sb
+    .from("status")
+    .upsert({
+      player_id: playerId,
+      data,
+      world,
+      tribe,
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) {
+    console.error("saveStatusDB failed", error);
+  }
+}
+
+// ===============================
+// === HISTORY via Supabase    ===
+// ===============================
+async function loadHistoryDB(world, tribe) {
+  const { data, error } = await sb
+    .from("history_upload")
+    .select("report_id, data")
+    .eq("world", world)
+    .eq("tribe", tribe);
+
+  if (error) {
+    console.error("loadHistoryDB failed", error);
+    return new Map();
+  }
+
+  return new Map(data.map(r => [r.report_id, r.data]));
+}
+
+async function saveHistoryDB(reportId, data, world, tribe) {
+  const { error } = await sb
+    .from("history_upload")
+    .upsert({
+      report_id: reportId,
+      data,
+      world,
+      tribe,
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) {
+    console.error("saveHistoryDB failed", error);
+  }
+}
+
+
+// ===============================
 // === EXISTING SCRIPT CONTINUES ===
 // ===============================
 // ===================================================
@@ -10752,4 +10821,5 @@ async function uploadOwnTroops(){
         status: "success"
     };
 }
+
 
