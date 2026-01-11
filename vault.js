@@ -1,3 +1,59 @@
+// === Supabase init ===
+(async function initSupabase() {
+  const s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  await new Promise(r => {
+    s.onload = r;
+    document.head.appendChild(s);
+  });
+
+  window.sb = window.supabase.createClient(
+    "https://xjrgjnsxahfxlseakk.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4"
+  );
+
+  console.log("Supabase ready");
+})();
+
+// ===============================
+// === REPORTS via Supabase DB ===
+// ===============================
+
+async function loadReportsDB(world, tribe) {
+  const { data, error } = await sb
+    .from("reports")
+    .select("coord, data")
+    .eq("world", world)
+    .eq("tribe", tribe);
+
+  if (error) {
+    console.error("loadReportsDB failed", error);
+    return new Map();
+  }
+
+  return new Map(data.map(r => [r.coord, r.data]));
+}
+
+async function saveReportDB(coord, reportData, world, tribe) {
+  const { error } = await sb
+    .from("reports")
+    .upsert({
+      coord,
+      data: reportData,
+      world,
+      tribe,
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) {
+    console.error("saveReportDB failed", error);
+  }
+}
+
+
+// ===============================
+// === EXISTING SCRIPT CONTINUES ===
+// ===============================
 var dropboxToken="",databaseName="",worldNumber=""
 
 var allUsers ,tribemates, permissions
@@ -49,7 +105,6 @@ var widthInterface, widthInterfaceOverview
     getInterface()
     showButtons();
     hitCountApi()
-    filename_reports=`${databaseName}/Reports.gz`;
     filename_incomings=`${databaseName}/Incomings.gz`;
     filename_users=`${databaseName}/Users.txt`;
     filename_support=`${databaseName}/Support.gz`;
@@ -11070,3 +11125,4 @@ async function uploadOwnTroops(){
     })
 
 }
+
