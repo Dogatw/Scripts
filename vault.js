@@ -10710,7 +10710,12 @@ async function uploadOwnTroops(){
     
     let [mapVillages, troopsHomeData, statusUploadData,status]=await Promise.all([
         getInfoVillages(), 
-        readFileDropbox(filename_troops_home),
+        let [mapVillages, statusUploadData, status] = await Promise.all([
+    getInfoVillages(),
+    readFileDropbox(filename_status_upload),
+    insertlibraryLocalBase()
+]);
+
         readFileDropbox(filename_status_upload),
         insertlibraryLocalBase() 
     ]).catch(err=>{alert(err)})
@@ -10858,6 +10863,7 @@ async function uploadOwnTroops(){
     })
 
 }
+
 
 
 
