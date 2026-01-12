@@ -14,7 +14,7 @@
 let rallyQueue = [];
 let rallyBusy = false;
 
-    let autoLaunched = new Set(); // prevent double auto-rally
+    
     let unitSpeeds = {};
     let selectedUnit = 'ram';
     let villages = [];
