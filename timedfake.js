@@ -1,4 +1,4 @@
-//2.7
+//2.75
 
 (function () {
     'use strict';
@@ -263,21 +263,30 @@ window.openRally = function (index) {
 if (!confirmBtn) return;
 
 // prevent double fire
+
 confirmDone = true;
 
+// close ONLY after navigation starts
+const closeOnUnload = () => {
+    try { win.close(); } catch {}
+};
+
+// attach once
+win.addEventListener('beforeunload', closeOnUnload, { once: true });
+
+// click confirm
 setTimeout(() => {
     confirmBtn.focus();
-    confirmBtn.click(); // ✅ works on this exact page
+    confirmBtn.click();
 }, rand(150, 400));
 
+// safety fallback: if unload never happens, close later
+setTimeout(() => {
+    if (!win.closed) win.close();
+}, 3000);
 
+clearInterval(poll);
 
-                    /* STEP 3 — Close window */
-                    setTimeout(() => {
-                        if (!win.closed) win.close();
-                    }, rand(400, 700));
-
-                    clearInterval(poll);
                 }
 
             } catch {
