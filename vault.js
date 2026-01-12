@@ -836,8 +836,8 @@ async function safeGet(url) {
     try {
         const res = await $.get(url);
 
-        // human-like delay (VERY IMPORTANT for TW)
-        await new Promise(r => setTimeout(r, 900));
+        // human-like delay (500ms)
+        await new Promise(r => setTimeout(r, 250));
 
         return res;
     } catch (e) {
@@ -851,6 +851,7 @@ async function safeGet(url) {
         throw e;
     }
 }
+
 
 // ===============================
 // HELPERS – REPORT SCRAPING
@@ -10629,6 +10630,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
