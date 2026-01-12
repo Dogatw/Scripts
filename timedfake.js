@@ -1,4 +1,4 @@
-//2.75
+//2.8 
 
 (function () {
     'use strict';
@@ -10,6 +10,7 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
+    let autoLaunched = new Set(); // prevent double auto-rally
     let unitSpeeds = {};
     let selectedUnit = 'ram';
     let villages = [];
@@ -182,19 +183,49 @@
 
     /* ================= TIMERS ================= */
     function startTimers(){
-        setInterval(()=>{
-            document.querySelectorAll('.tf-timer').forEach(el=>{
-                let t=+el.dataset.time-1000;
-                el.dataset.time=t;
-                if(t<=0){el.textContent='NOW';el.style.color=COLORS.danger;return;}
-                const s=Math.floor(t/1000)%60;
-                const m=Math.floor(t/60000)%60;
-                const h=Math.floor(t/3600000);
-                el.textContent=`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                el.style.color=t<5*60000?COLORS.danger:t<15*60000?COLORS.warn:COLORS.ok;
-            });
-        },1000);
-    }
+    setInterval(()=>{
+        document.querySelectorAll('.tf-timer').forEach(el=>{
+            let t = +el.dataset.time - 1000;
+            el.dataset.time = t;
+
+            const row = el.closest('tr');
+            if (!row) return;
+
+            const index = Number(row.id.replace('tf-row-',''));
+
+            // === AUTO RALLY AT 7 SECONDS ===
+            if (t <= 7000 && t > 0 && !autoLaunched.has(index)) {
+                autoLaunched.add(index);
+
+                // human-like small hesitation
+                setTimeout(() => {
+                    if (document.getElementById(`tf-row-${index}`)) {
+                        openRally(index);
+                    }
+                }, rand(200, 600));
+            }
+
+            if (t <= 0) {
+                el.textContent = 'NOW';
+                el.style.color = COLORS.danger;
+                return;
+            }
+
+            const s = Math.floor(t / 1000) % 60;
+            const m = Math.floor(t / 60000) % 60;
+            const h = Math.floor(t / 3600000);
+
+            el.textContent =
+                `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+            el.style.color =
+                t < 5 * 60000 ? COLORS.danger :
+                t < 15 * 60000 ? COLORS.warn :
+                COLORS.ok;
+        });
+    }, 1000);
+}
+
 
     /* ================= RALLY AUTO FLOW ================= */
 window.openRally = function (index) {
