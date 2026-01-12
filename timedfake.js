@@ -218,14 +218,21 @@ window.openRally = function (index) {
         document.getElementById(`tf-row-${index}`)?.remove();
 
         let attackClicked = false;
-        let confirmClicked = false;
+        let confirmDone = false;
+        let lastHref = '';
 
         const poll = setInterval(() => {
             try {
                 if (!win || win.closed) return clearInterval(poll);
+
+                // detect real navigation
+                if (win.location.href !== lastHref) {
+                    lastHref = win.location.href;
+                }
+
                 const doc = win.document;
 
-                /* STEP 1 — Fill unit + click Attack */
+                /* STEP 1 — Fill unit + Attack */
                 if (!attackClicked) {
                     const unitInput = doc.querySelector(`#unit_input_${selectedUnit}`);
                     const attackBtn =
@@ -242,42 +249,31 @@ window.openRally = function (index) {
                     return;
                 }
 
-                /* STEP 2 — Detect CONFIRM FORM (DOM-based) */
-                if (attackClicked && !confirmClicked) {
-                   const confirmBtn =
-    doc.querySelector('#troop_confirm_go') ||
-    doc.querySelector('input.btn-confirm-yes') ||
-    doc.querySelector('button.btn-confirm-yes');
+                /* STEP 2 — WAIT for CONFIRM PAGE DOM */
+                if (attackClicked && !confirmDone) {
+                    // confirm page ALWAYS has a form posting to "confirm"
+                    const confirmForm =
+                        doc.querySelector('form[action*="confirm"]') ||
+                        doc.querySelector('form#command-confirm-form');
 
-const confirmForm =
-    doc.querySelector('form[action*="confirm"]') ||
-    doc.querySelector('form#command-confirm-form') ||
-    (confirmBtn ? confirmBtn.closest('form') : null);
+                    if (!confirmForm) return; // still loading
 
-if (!confirmBtn && !confirmForm) return;
+                    confirmDone = true;
 
-// humanized delay
-setTimeout(() => {
-    if (confirmForm) {
-        confirmForm.submit();   // ✅ ALWAYS WORKS
-    } else if (confirmBtn) {
-        confirmBtn.click();     // fallback
-    }
-}, rand(150, 400));
-
-confirmClicked = true;
-
+                    setTimeout(() => {
+                        confirmForm.submit(); // ✅ GUARANTEED
+                    }, rand(150, 400));
 
                     /* STEP 3 — Close window */
                     setTimeout(() => {
                         if (!win.closed) win.close();
-                    }, rand(300, 600));
+                    }, rand(400, 700));
 
                     clearInterval(poll);
                 }
 
             } catch {
-                /* page still loading */
+                // cross-navigation moment, wait for next tick
             }
         }, 120);
     });
