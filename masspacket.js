@@ -19,10 +19,6 @@ async function saveSupportToSupabase(payload) {
 }
 
 
-var heavyCav=4;
-
-
-
 
 let url=window.location.href
 var countApiKey = "support_sender";
@@ -971,7 +967,6 @@ let table = Array.from($(".overview_table .selected"))
 
 table.forEach(row => {
     let coord = row.children[0].innerText.match(/\d+\|\d+/).pop()
-
     if (!mapResult.has(coord)) return
 
     let obj = mapResult.get(coord)
@@ -985,7 +980,7 @@ table.forEach(row => {
 
     if (totalTroopCount <= 1) return
 
-    // ✅ Fill inputs
+    // ✅ Fill mass support inputs
     Object.keys(obj).forEach(troopName => {
         if (troopName !== "speedTroop") {
             $(row)
@@ -1019,56 +1014,6 @@ table.forEach(row => {
         sent_at: new Date().toISOString()
     })
 })
-
-
-            if(totalTroopCount > 1){
-                Object.keys(obj).forEach(troopName=>{
-                    if(troopName != "speedTroop"){
-                        let value = obj[troopName]
-                        $(row).find(`.call-unit-box-${troopName}`).val(value)
-    if (totalTroopCount > 1) {
-
-    Object.keys(obj).forEach(troopName=>{
-        if(troopName != "speedTroop"){
-            let value = obj[troopName]
-            $(row).find(`.call-unit-box-${troopName}`).val(value)
-        }
-    })
-
-    /* ================= SUPABASE LOGGING START ================= */
-
-    const fromVillage = coord;
-    const toVillage = coordDestination;
-
-    let totalPop = 0;
-    totalPop += obj.spear || 0;
-    totalPop += obj.sword || 0;
-    totalPop += obj.archer || 0;
-    totalPop += (obj.heavy || 0) * heavyCav;
-
-    saveSupportToSupabase({
-        world: game_data.world,
-        player_id: game_data.player.id,
-        player_name: game_data.player.name,
-        from_village: fromVillage,
-        to_village: toVillage,
-        spear: obj.spear || 0,
-        sword: obj.sword || 0,
-        archer: obj.archer || 0,
-        spy: obj.spy || 0,
-        heavy: obj.heavy || 0,
-        total_pop: totalPop,
-        sent_at: new Date().toISOString()
-    });
-
-    /* ================= SUPABASE LOGGING END ================= */
-}
-
-                    }
-                })
-            }
-        }
-    })
 
 
     // document.getElementById("fillInputs").disabled=true;
