@@ -989,17 +989,7 @@ table.forEach(row => {
         }
     })
 
-    // ✅ Supabase logging (ONCE per village)
-    const fromVillage = coord
-    const toVillage = coordDestination
 
-    let totalPop = 0
-    totalPop += obj.spear || 0
-    totalPop += obj.sword || 0
-    totalPop += obj.archer || 0
-    totalPop += (obj.heavy || 0) * heavyCav
-
-})
 
 
     // document.getElementById("fillInputs").disabled=true;
@@ -1109,15 +1099,20 @@ function getSpeedConstant() { //Get speed constant (world speed * unit speed) fo
     }
 }
 
+/* ================= LOG SUPPORT ON SEND ================= */
+
 (function hookSupportSend() {
     const form = document.querySelector("#place_call_form");
-    if (!form) return;
+    if (!form) {
+        console.warn("Mass support form not found");
+        return;
+    }
 
     form.addEventListener("submit", () => {
         try {
             const coordDestination =
                 game_data.device === "desktop"
-                    ? $(".village-name").text().match(/\d+\|\d+/)[0]
+                    ? $(".village-name").text().match(/\d+\|\d+/)?.[0]
                     : $("#inputx").val() + "|" + $("#inputy").val();
 
             document
@@ -1132,11 +1127,11 @@ function getSpeedConstant() { //Get speed constant (world speed * unit speed) fo
                             $(row).find(`.call-unit-box-${unit}`).val()
                         ) || 0;
 
-                    const spear = getVal("spear");
-                    const sword = getVal("sword");
+                    const spear  = getVal("spear");
+                    const sword  = getVal("sword");
                     const archer = getVal("archer");
-                    const spy = getVal("spy");
-                    const heavy = getVal("heavy");
+                    const spy    = getVal("spy");
+                    const heavy  = getVal("heavy");
 
                     const totalPop =
                         spear +
@@ -1162,9 +1157,13 @@ function getSpeedConstant() { //Get speed constant (world speed * unit speed) fo
                     });
                 });
         } catch (e) {
-            console.error("Support logging failed", e);
+            console.error("Support send logging failed", e);
         }
     });
+
+    console.log("✅ Supabase logging hooked to SEND SUPPORT");
+})();
+
 
     console.log("✅ Supabase support logging hooked to SEND");
 })();
