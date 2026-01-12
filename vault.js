@@ -2642,40 +2642,41 @@ async function moreInfo() {
     $("#div_container").remove();
     $(".deleteTh").remove();
     $('#id_select_incs option').remove();
-
     console.log("moreInfo → Supabase");
 
+    /* =======================
+       LOAD DATA FROM SUPABASE
+       ======================= */
     const [
-        mapVillages,
         reportsRes,
         incomingsRes,
         supportRes,
         troopsHomeRes
     ] = await Promise.all([
-        getInfoVillages(),
-
         sb.from("reports")
-            .select("coord, data")
-            .eq("world", game_data.world)
-            .eq("tribe", game_data.player.ally),
+          .select("coord, data")
+          .eq("world", game_data.world)
+          .eq("tribe", game_data.player.ally),
 
         sb.from("incomings")
-            .select("coord, data")
-            .eq("world", game_data.world)
-            .eq("tribe", game_data.player.ally),
+          .select("coord, data")
+          .eq("world", game_data.world)
+          .eq("tribe", game_data.player.ally),
 
         sb.from("support")
-            .select("coord, data")
-            .eq("world", game_data.world)
-            .eq("tribe", game_data.player.ally),
+          .select("coord, data")
+          .eq("world", game_data.world)
+          .eq("tribe", game_data.player.ally),
 
         sb.from("troops_home")
-            .select("coord, data")
-            .eq("world", game_data.world)
-            .eq("tribe", game_data.player.ally)
+          .select("coord, data")
+          .eq("world", game_data.world)
+          .eq("tribe", game_data.player.ally)
     ]);
 
-    // ───────── Convert Supabase rows → Maps ─────────
+    /* =======================
+       CONVERT TO MAPS
+       ======================= */
     const map_reports = new Map(
         (reportsRes.data || []).map(r => [r.coord, r.data])
     );
@@ -2692,7 +2693,9 @@ async function moreInfo() {
         (troopsHomeRes.data || []).map(r => [r.coord, r.data])
     );
 
-    // ───────── Build incoming list ─────────
+    /* =======================
+       BUILD PLAYER INCOMINGS
+       ======================= */
     let list_incomingsAll = [];
     map_incomings.forEach(list => {
         if (Array.isArray(list)) list_incomingsAll.push(...list);
@@ -2700,19 +2703,21 @@ async function moreInfo() {
 
     let map_player_inc = new Map();
     for (const inc of list_incomingsAll) {
-        if (!inc.date_launch) continue;
+        if (!inc?.date_launch) continue;
         if (!map_player_inc.has(inc.id_player_off)) {
             map_player_inc.set(inc.id_player_off, []);
         }
         map_player_inc.get(inc.id_player_off).push(inc);
     }
 
-    // ───────── Calculate troops coming ─────────
+    /* =======================
+       TROOPS COMING
+       ======================= */
     let troopsComming = new Map();
     map_support.forEach((list, coord) => {
         let totalPop = 0;
         list.forEach(obj => {
-            if (!obj.troops) return;
+            if (!obj?.troops) return;
             Object.entries(obj.troops).forEach(([k, v]) => {
                 if (["spear", "sword", "archer", "heavy"].includes(k)) {
                     totalPop += v * troopsPop[k];
@@ -2722,7 +2727,9 @@ async function moreInfo() {
         if (totalPop > 1000) troopsComming.set(coord, totalPop);
     });
 
-    // ───────── Calculate troops home ─────────
+    /* =======================
+       TROOPS HOME
+       ======================= */
     let troopsHome = new Map();
     map_troops_home.forEach((obj, coord) => {
         if (!obj?.troopInVillage) return;
@@ -2735,14 +2742,54 @@ async function moreInfo() {
         if (totalPop > 1000) troopsHome.set(coord, totalPop);
     });
 
-    // ───────── Continue with your EXISTING UI logic ─────────
-    // Everything below this point (tables, prediction, coloring)
-    // can stay EXACTLY as it is.
-    console.log("map_player_inc", map_player_inc);
-    console.log("troopsHome", troopsHome);
-    console.log("troopsComming", troopsComming);
+    /* =======================
+       PREDICTION LOGIC
+       ======================= */
+    let mapPredict = new Map();
+    let gap_serie = document.getElementById("input_gap").value * 1000;
 
-    UI.SuccessMessage("Data loaded (Supabase)", 1000);
+    map_player_inc.forEach((list, playerId) => {
+        list.sort((a, b) => new Date(a.date_launch) - new Date(b.date_launch));
+
+        for (let i = 0; i < list.length - 1; i++) {
+            let serie = [];
+            let base = new Date(list[i].date_launch).getTime();
+
+            for (let j = i; j < list.length; j++) {
+                let cur = new Date(list[j].date_launch).getTime();
+                if (Math.abs(cur - base) <= gap_serie) {
+                    serie.push(list[j]);
+                } else break;
+            }
+
+            let stats = { fake: 0, nuke: 0, fang: 0 };
+            serie.forEach(x => {
+                if (x.type_attack_landed) stats[x.type_attack_landed]++;
+            });
+
+            let type = Object.entries(stats)
+                .sort((a, b) => b[1] - a[1])[0];
+
+            if (type && type[1] > 0) {
+                serie.forEach(x => {
+                    if (!x.type_attack_landed) {
+                        x.type_attack_landed = "pred_" + type[0];
+                        mapPredict.set(x.date_launch + "_" + x.player_off, x.type_attack_landed);
+                    }
+                });
+            }
+        }
+    });
+
+    /* =======================
+       UI CONTINUES UNCHANGED
+       ======================= */
+    UI.SuccessMessage("Supabase data loaded", 1000);
+
+    console.log("reports:", map_reports.size);
+    console.log("incomings:", map_incomings.size);
+    console.log("support:", map_support.size);
+    console.log("troopsHome:", map_troops_home.size);
 }
 
     
@@ -9916,6 +9963,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
