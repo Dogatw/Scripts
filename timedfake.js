@@ -10,6 +10,8 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
+    let secondCounter = new Map(); // launchSecond -> used count
+
     let autoLaunched = new Set();
 let rallyQueue = [];
 let rallyBusy = false;
@@ -207,6 +209,9 @@ let rallyBusy = false;
     }, rand(50, 100));
 }
 
+function getLaunchSecond(index) {
+    return Math.floor(results[index].launch / 1000);
+}
 
     /* ================= TIMERS ================= */
     function startTimers(){
@@ -223,11 +228,19 @@ let rallyBusy = false;
           
   // === AUTO RALLY AT 7 SECONDS (QUEUED) ===
 if (t <= 7000 && t > 0 && !autoLaunched.has(index)) {
+    const sec = getLaunchSecond(index);
+    const used = secondCounter.get(sec) || 0;
+
+    // 🚫 allow only FIRST TWO per second
+    if (used >= 2) return;
+
+    secondCounter.set(sec, used + 1);
     autoLaunched.add(index);
     rallyQueue.push(index);
 
-    setTimeout(processRallyQueue, rand(20, 50));
+    setTimeout(processRallyQueue, rand(80, 140));
 }
+
 
 
 
