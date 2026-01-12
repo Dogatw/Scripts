@@ -253,28 +253,21 @@ window.openRally = function (index) {
                 if (attackClicked && !confirmDone) {
                     // confirm page ALWAYS has a form posting to "confirm"
               const confirmBtn =
-    doc.querySelector('#troop_confirm_go') ||
-    doc.querySelector('input.btn-confirm-yes') ||
-    doc.querySelector('button.btn-confirm-yes') ||
-    doc.querySelector('form[action*="confirm"] input[type="submit"]') ||
-    doc.querySelector('form[action*="confirm"] button');
-
-
+    doc.querySelector('#troop_confirm_submit') ||      // ✅ THIS PAGE
+    doc.querySelector('.troop_confirm_go') ||          // class fallback
+    doc.querySelector('#troop_confirm_go') ||          // older worlds
+    doc.querySelector('input[name="submit_confirm"]'); // safest fallback
 
 if (!confirmBtn) return;
 
-// mark done early to avoid double fire
+// prevent double fire
 confirmDone = true;
 
 setTimeout(() => {
-    const evtOpts = { bubbles: true, cancelable: true, view: win };
-
     confirmBtn.focus();
-confirmBtn.dispatchEvent(new MouseEvent('mousedown', evtOpts));
-confirmBtn.dispatchEvent(new MouseEvent('mouseup', evtOpts));
-confirmBtn.dispatchEvent(new MouseEvent('click', evtOpts));
-
+    confirmBtn.click(); // ✅ works on this exact page
 }, rand(150, 400));
+
 
 
                     /* STEP 3 — Close window */
