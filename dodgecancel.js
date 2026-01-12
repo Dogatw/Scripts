@@ -62,8 +62,7 @@ function calculateCancelFromOpen(openSeconds) {
 
     /* ========== AUTOMATION ========== */
 
-    function cancel() {
-        function cancel() {
+  function cancel() {
     const img = document.querySelector('img.cancel_link_icon');
     if (!img) return;
 
@@ -75,7 +74,6 @@ function calculateCancelFromOpen(openSeconds) {
     }
 }
 
-    }
 
     function re() {
         console.log("🔄 Reload triggered");
