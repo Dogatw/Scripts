@@ -6725,8 +6725,9 @@ function ajaxTroopsStationed(villageId){
 
 
 //////////////////////////////////////////////main table + all the logic for creating main table///////////////////////////////////////////////
-var mapAttacksVillageId=new Map()
+let mapAttacksVillageId = new Map();
 let map_playerId = new Map();
+let map_history_upload = new Map();
 
 async function viewSupport(){
     if(document.getElementById("div_container")!=null)
@@ -10494,6 +10495,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
