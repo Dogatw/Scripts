@@ -994,7 +994,7 @@ table.forEach(row => {
 
     // document.getElementById("fillInputs").disabled=true;
 
-}
+
 
 
 function addEvents(){
