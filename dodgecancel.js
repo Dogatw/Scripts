@@ -63,8 +63,18 @@ function calculateCancelFromOpen(openSeconds) {
     /* ========== AUTOMATION ========== */
 
     function cancel() {
-        const a = document.querySelector('a[href*="action=cancel"]');
-        if (a) location.href = location.origin + a.getAttribute("href");
+        function cancel() {
+    const img = document.querySelector('img.cancel_link_icon');
+    if (!img) return;
+
+    const link = img.closest('a');
+    if (link) {
+        link.click();
+    } else {
+        img.click();
+    }
+}
+
     }
 
     function re() {
