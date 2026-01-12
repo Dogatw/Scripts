@@ -1165,6 +1165,5 @@ function getSpeedConstant() { //Get speed constant (world speed * unit speed) fo
 })();
 
 
-    console.log("✅ Supabase support logging hooked to SEND");
-})();
+
 
