@@ -967,18 +967,59 @@ function fillInputs(){
     })
     console.log(mapResult)
 
+let table = Array.from($(".overview_table .selected"))
 
-    let table = Array.from($(".overview_table .selected"))
-    table.forEach(row=>{
-        let coord = row.children[0].innerText.match(/\d+\|\d+/).pop()
-        if(mapResult.has(coord)){
-            let obj = mapResult.get(coord)
-            console.log(obj)
-            let totalTroopCount = 0
-            Object.keys(obj).forEach(troopName=>{
-                if(troopName != "speedTroop" && troopName != "coord")
-                    totalTroopCount += obj[troopName]
-            })
+table.forEach(row => {
+    let coord = row.children[0].innerText.match(/\d+\|\d+/).pop()
+
+    if (!mapResult.has(coord)) return
+
+    let obj = mapResult.get(coord)
+
+    let totalTroopCount = 0
+    Object.keys(obj).forEach(k => {
+        if (k !== "speedTroop" && k !== "coord") {
+            totalTroopCount += obj[k] || 0
+        }
+    })
+
+    if (totalTroopCount <= 1) return
+
+    // ✅ Fill inputs
+    Object.keys(obj).forEach(troopName => {
+        if (troopName !== "speedTroop") {
+            $(row)
+                .find(`.call-unit-box-${troopName}`)
+                .val(obj[troopName] || 0)
+        }
+    })
+
+    // ✅ Supabase logging (ONCE per village)
+    const fromVillage = coord
+    const toVillage = coordDestination
+
+    let totalPop = 0
+    totalPop += obj.spear || 0
+    totalPop += obj.sword || 0
+    totalPop += obj.archer || 0
+    totalPop += (obj.heavy || 0) * heavyCav
+
+    saveSupportToSupabase({
+        world: game_data.world,
+        player_id: game_data.player.id,
+        player_name: game_data.player.name,
+        from_village: fromVillage,
+        to_village: toVillage,
+        spear: obj.spear || 0,
+        sword: obj.sword || 0,
+        archer: obj.archer || 0,
+        spy: obj.spy || 0,
+        heavy: obj.heavy || 0,
+        total_pop: totalPop,
+        sent_at: new Date().toISOString()
+    })
+})
+
 
             if(totalTroopCount > 1){
                 Object.keys(obj).forEach(troopName=>{
