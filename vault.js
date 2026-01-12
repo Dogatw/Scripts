@@ -954,7 +954,7 @@ async function uploadReports() {
     // HISTORY
     // ===========================
     await upsertBatch(
-        "history",
+        "history_upload",
         Array.from(map_history_upload.entries()).map(([id, h]) => ({
             report_id: id,
             ...h,
@@ -10498,6 +10498,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
