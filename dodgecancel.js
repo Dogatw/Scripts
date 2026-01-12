@@ -45,12 +45,16 @@
         return Math.round((min + Math.random() * (max - min)) * 1000);
     }
 
-    function calculateCancelFromOpen(openSeconds) {
+function calculateCancelFromOpen(openSeconds) {
     if (openSeconds <= 0) return 0;
+
     const half = Math.floor(openSeconds / 2);
     const randomDelay = Math.floor(10 + Math.random() * 11); // 10–20 sec
-    return half - randomDelay;
+
+    // subtract, but never go below 1 second
+    return Math.max(1, half - randomDelay);
 }
+
 
 
     const delayInre = timeBetween(10, 15);
