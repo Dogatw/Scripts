@@ -1,7 +1,27 @@
- var heavyCav=4;
+const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
 
-// made by Costache Madalin (lllll llll)
-// discord: costache madalin#8472
+async function saveSupportToSupabase(payload) {
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/support_logs`, {
+            method: "POST",
+            headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (e) {
+        console.error("Supabase insert failed", e);
+    }
+}
+
+
+var heavyCav=4;
+
+
 
 
 let url=window.location.href
