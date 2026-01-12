@@ -252,11 +252,13 @@ window.openRally = function (index) {
                 /* STEP 2 — WAIT for CONFIRM PAGE DOM */
                 if (attackClicked && !confirmDone) {
                     // confirm page ALWAYS has a form posting to "confirm"
-                   const confirmBtn =
+              const confirmBtn =
     doc.querySelector('#troop_confirm_go') ||
     doc.querySelector('input.btn-confirm-yes') ||
     doc.querySelector('button.btn-confirm-yes') ||
-    doc.querySelector('form[action*="confirm"] input[type="submit"]');
+    doc.querySelector('form[action*="confirm"] input[type="submit"]') ||
+    doc.querySelector('form[action*="confirm"] button');
+
 
 
 if (!confirmBtn) return;
