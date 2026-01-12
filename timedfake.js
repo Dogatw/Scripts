@@ -195,55 +195,83 @@
     }
 
     /* ================= RALLY AUTO FLOW ================= */
-    window.openRally=function(index){
-        const r=results[index];
-        const [x,y]=r.t.split('|');
+ window.openRally = function (index) {
+    const r = results[index];
+    const [x, y] = r.t.split('|');
 
-        $.get('/game.php',{
-            village:r.v.id,screen:'api',ajax:'target_selection',
-            input:`${x}|${y}`,type:'coord',limit:1
-        }).done(data=>{
-            const targetId=data?.villages?.[0]?.id;
-            if(!targetId) return alert('Target not found');
+    $.get('/game.php', {
+        village: r.v.id,
+        screen: 'api',
+        ajax: 'target_selection',
+        input: `${x}|${y}`,
+        type: 'coord',
+        limit: 1
+    }).done(data => {
+        const targetId = data?.villages?.[0]?.id;
+        if (!targetId) return alert('Target not found');
 
-            const win=window.open(
-                `/game.php?village=${r.v.id}&screen=place&target=${targetId}`,'_blank'
-            );
-            document.getElementById(`tf-row-${index}`)?.remove();
+        const win = window.open(
+            `/game.php?village=${r.v.id}&screen=place&target=${targetId}`,
+            '_blank'
+        );
 
-            let step=0;
-            const iv=setInterval(()=>{
-                try{
-                    if(!win||win.closed) return clearInterval(iv);
-                    const d=win.document;
+        document.getElementById(`tf-row-${index}`)?.remove();
 
-                    if(step===0){
-                        const u=d.querySelector(`#unit_input_${selectedUnit}`);
-                        if(!u) return;
-                        u.value=1;
-                        u.dispatchEvent(new Event('input',{bubbles:true}));
-                        step++; return;
-                    }
-                    if(step===1){
-                        const a=d.querySelector('#target_attack')||d.querySelector('input.attack');
-                        if(!a) return;
-                        setTimeout(()=>a.click(),rand()); step++; return;
-                    }
-                    if(step===2){
-                        const c=d.querySelector('#troop_confirm_go')||
-                                d.querySelector('input.btn-confirm-yes')||
-                                d.querySelector('button.btn-confirm-yes');
-                        if(!c) return;
-                        setTimeout(()=>c.click(),rand()); step++; return;
-                    }
-                    if(step===3){
-                        setTimeout(()=>{if(!win.closed)win.close();},rand(200,500));
-                        clearInterval(iv);
-                    }
-                }catch{}
-            },200);
-        });
-    };
+        let attacked = false;
+        let confirmed = false;
+
+        const poll = setInterval(() => {
+            try {
+                if (!win || win.closed) return clearInterval(poll);
+                const doc = win.document;
+                const url = win.location.href;
+
+                /* STEP 1 — Fill unit */
+                if (!attacked) {
+                    const unitInput = doc.querySelector(`#unit_input_${selectedUnit}`);
+                    if (!unitInput) return;
+
+                    unitInput.value = 1;
+                    unitInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+                    const attackBtn =
+                        doc.querySelector('#target_attack') ||
+                        doc.querySelector('input.attack');
+
+                    if (!attackBtn) return;
+
+                    setTimeout(() => attackBtn.click(), rand());
+                    attacked = true;
+                    return;
+                }
+
+                /* STEP 2 — Wait for CONFIRM PAGE */
+                if (attacked && !confirmed && url.includes('try=confirm')) {
+                    const confirmBtn =
+                        doc.querySelector('#troop_confirm_go') ||
+                        doc.querySelector('input.btn-confirm-yes') ||
+                        doc.querySelector('button.btn-confirm-yes');
+
+                    if (!confirmBtn) return;
+
+                    setTimeout(() => confirmBtn.click(), rand(150, 400));
+                    confirmed = true;
+
+                    /* STEP 3 — Close window */
+                    setTimeout(() => {
+                        if (!win.closed) win.close();
+                    }, rand(300, 600));
+
+                    clearInterval(poll);
+                }
+
+            } catch {
+                /* waiting for navigation */
+            }
+        }, 150);
+    });
+};
+
 
     /* ================= INIT ================= */
     (async function(){
