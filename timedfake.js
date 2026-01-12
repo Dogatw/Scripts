@@ -1,4 +1,4 @@
-//2.8 
+//2.9
 
 (function () {
     'use strict';
@@ -10,6 +10,10 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
+    let autoLaunched = new Set();
+let rallyQueue = [];
+let rallyBusy = false;
+
     let autoLaunched = new Set(); // prevent double auto-rally
     let unitSpeeds = {};
     let selectedUnit = 'ram';
@@ -181,6 +185,30 @@
         startTimers();
     }
 
+
+
+    function processRallyQueue() {
+    if (rallyBusy) return;
+    if (!rallyQueue.length) return;
+
+    rallyBusy = true;
+    const index = rallyQueue.shift();
+
+    // extra safety: row may already be gone
+    if (!document.getElementById(`tf-row-${index}`)) {
+        rallyBusy = false;
+        return;
+    }
+
+    openRally(index);
+
+    // spacing between rally opens (ANTI-BLOCK)
+    setTimeout(() => {
+        rallyBusy = false;
+        processRallyQueue();
+    }, rand(200, 300)); // 👈 CRITICAL
+}
+
     /* ================= TIMERS ================= */
     function startTimers(){
     setInterval(()=>{
@@ -193,9 +221,17 @@
 
             const index = Number(row.id.replace('tf-row-',''));
 
-            // === AUTO RALLY AT 7 SECONDS ===
-            if (t <= 7000 && t > 0 && !autoLaunched.has(index)) {
-                autoLaunched.add(index);
+          
+          // === AUTO RALLY AT 7 SECONDS (QUEUED) ===
+if (t <= 7000 && t > 0 && !autoLaunched.has(index)) {
+    autoLaunched.add(index);
+
+    rallyQueue.push(index);
+
+    // small hesitation before queue processing
+    setTimeout(processRallyQueue, rand(80, 120));
+}
+
 
                 // human-like small hesitation
                 setTimeout(() => {
