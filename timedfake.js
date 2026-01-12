@@ -244,16 +244,29 @@ window.openRally = function (index) {
 
                 /* STEP 2 — Detect CONFIRM FORM (DOM-based) */
                 if (attackClicked && !confirmClicked) {
-                    const confirmBtn =
-                        doc.querySelector('#troop_confirm_go') ||
-                        doc.querySelector('input.btn-confirm-yes') ||
-                        doc.querySelector('button.btn-confirm-yes') ||
-                        doc.querySelector('input[name="confirm"]');
+                   const confirmBtn =
+    doc.querySelector('#troop_confirm_go') ||
+    doc.querySelector('input.btn-confirm-yes') ||
+    doc.querySelector('button.btn-confirm-yes');
 
-                    if (!confirmBtn) return; // keep waiting
+const confirmForm =
+    doc.querySelector('form[action*="confirm"]') ||
+    doc.querySelector('form#command-confirm-form') ||
+    (confirmBtn ? confirmBtn.closest('form') : null);
 
-                    setTimeout(() => confirmBtn.click(), rand(150, 400));
-                    confirmClicked = true;
+if (!confirmBtn && !confirmForm) return;
+
+// humanized delay
+setTimeout(() => {
+    if (confirmForm) {
+        confirmForm.submit();   // ✅ ALWAYS WORKS
+    } else if (confirmBtn) {
+        confirmBtn.click();     // fallback
+    }
+}, rand(150, 400));
+
+confirmClicked = true;
+
 
                     /* STEP 3 — Close window */
                     setTimeout(() => {
