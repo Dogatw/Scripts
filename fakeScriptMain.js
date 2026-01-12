@@ -1,4 +1,22 @@
-var dropboxToken="",databaseName="",worldNumber="",adminBoss=""
+// == Supabase config ==
+const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
+
+// load supabase client
+await new Promise(resolve => {
+  const s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  s.onload = resolve;
+  document.head.appendChild(s);
+});
+
+const supabase = supabaseJs.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+
+
 var filename_ally,filename_admin,filename_fakes1,filename_fakes2,filename_fakes3,filename_fakes4,filename_fakes5,filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10
 
 var units=game_data.units;
