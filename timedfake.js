@@ -194,7 +194,6 @@ let rallyBusy = false;
     rallyBusy = true;
     const index = rallyQueue.shift();
 
-    // extra safety: row may already be gone
     if (!document.getElementById(`tf-row-${index}`)) {
         rallyBusy = false;
         return;
@@ -202,12 +201,12 @@ let rallyBusy = false;
 
     openRally(index);
 
-    // spacing between rally opens (ANTI-BLOCK)
     setTimeout(() => {
         rallyBusy = false;
         processRallyQueue();
-    }, rand(200, 300)); // 👈 CRITICAL
+    }, rand(320, 520));
 }
+
 
     /* ================= TIMERS ================= */
     function startTimers(){
@@ -222,26 +221,17 @@ let rallyBusy = false;
             const index = Number(row.id.replace('tf-row-',''));
 
           
-          // === AUTO RALLY AT 7 SECONDS (QUEUED) ===
+  // === AUTO RALLY AT 7 SECONDS (QUEUED) ===
 if (t <= 7000 && t > 0 && !autoLaunched.has(index)) {
     autoLaunched.add(index);
-
     rallyQueue.push(index);
 
-    // small hesitation before queue processing
-    setTimeout(processRallyQueue, rand(80, 120));
+    setTimeout(processRallyQueue, rand(80, 140));
 }
 
 
-                // human-like small hesitation
-                setTimeout(() => {
-                    if (document.getElementById(`tf-row-${index}`)) {
-                        openRally(index);
-                    }
-                }, rand(200, 600));
-            }
 
-            if (t <= 0) {
+                if (t <= 0) {
                 el.textContent = 'NOW';
                 el.style.color = COLORS.danger;
                 return;
