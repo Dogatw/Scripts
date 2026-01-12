@@ -819,186 +819,201 @@ if(document.getElementById("incomings_table")!=null){
  * - Splits into chunks (avoids payload limits)
  * - Uses ON CONFLICT index
  */
-async function upsertBatch(
-    table,
-    rows,
-    conflictCols,
-    chunkSize = 500
-) {
-    if (!rows?.length) return;
-
-    for (let i = 0; i < rows.length; i += chunkSize) {
-        const chunk = rows.slice(i, i + chunkSize);
-
-        const { error } = await sb
-            .from(table)
-            .upsert(chunk, { onConflict: conflictCols });
-
-        if (error) {
-            console.error("Upsert error:", error);
-            throw error;
-        }
-
-        console.log(`✅ ${i + chunk.length}/${rows.length} saved`);
-    }
-}
-  let RATE_LIMIT_UNTIL = 0;
-
-async function safeGet(url) {
-    const now = Date.now();
-
-    if (now < RATE_LIMIT_UNTIL) {
-        const wait = RATE_LIMIT_UNTIL - now;
-        console.warn(`⏸ Rate-limited, waiting ${Math.ceil(wait / 1000)}s`);
-        await new Promise(r => setTimeout(r, wait));
-    }
-
-    try {
-        const res = await $.get(url);
-        await new Promise(r => setTimeout(r, 900)); // human delay
-        return res;
-    } catch (e) {
-        if (e?.status === 429) {
-            RATE_LIMIT_UNTIL = Date.now() + 10 * 60 * 1000; // 10 min cooldown
-            UI.ErrorMessage("Rate limit hit. Pausing 10 minutes.", 5000);
-        }
-        throw e;
-    }
-}
 async function uploadReports() {
 
     const progress = document.getElementById("progress_reports");
     progress.innerText = "Getting data...";
 
+    const world = game_data.world;
+    const tribe = game_data.player.ally;
+
     // ===========================
     // LOAD HISTORY
     // ===========================
-    const map_history_upload = await loadHistoryDB(
-        game_data.world,
-        game_data.player.ally
+    const { data: historyRows = [] } = await sb
+        .from("history_upload")
+        .select("*")
+        .eq("world", world)
+        .eq("tribe", tribe);
+
+    const map_history = new Map(
+        historyRows.map(h => [h.report_id, h])
     );
 
+    // prune > 8 days
     const now = Date.now();
-    for (const [k, v] of map_history_upload) {
-        if (now - new Date(v.date).getTime() > 8 * 864e5) {
-            map_history_upload.delete(k);
+    for (const [id, h] of map_history) {
+        if (now - new Date(h.date).getTime() > 8 * 864e5) {
+            map_history.delete(id);
         }
     }
 
     // ===========================
     // GET LINKS
     // ===========================
-    const [list_href] = await Promise.all([
-        getLinks(true, map_history_upload),
+    let [list_href, mapVillages] = await Promise.all([
+        getLinks(true, map_history),
         getInfoVillages()
     ]);
 
     list_href.reverse();
-    // ⚡ HUGE speed + safety boost
-list_href = list_href.filter(l => {
-    const reportId = l.id || l.href.match(/view=(\d+)/)?.[1];
-    return reportId && !map_history_upload.has(reportId);
-});
 
-// ===========================
-// SAFE SEQUENTIAL SCRAPE
-// ===========================
-  
+    // ===========================
+    // SCRAPE
+    // ===========================
+    const scraped = [];
+    const typeAttacks = [];
 
-const scrapedReports = [];
-
-for (let i = 0; i < list_href.length; i++) {
-    try {
+    for (let i = 0; i < list_href.length; i++) {
         const html = await safeGet(list_href[i].href);
-
         const doc = new DOMParser().parseFromString(html, "text/html");
-        const list = getDataReport(tribemates, doc);
 
-        if (list?.length) {
-            for (const r of list) {
-                scrapedReports.push({
-                    world: game_data.world,
-                    tribe: game_data.player.ally,
-                    coord: r.coord,
-                    data: r.reportInfo,
-                    updated_at: new Date().toISOString()
-                });
-            }
+        const list = getDataReport(tribemates, doc);
+        if (list == null) return;
+
+        for (const r of list) {
+            scraped.push({
+                coord: r.coord,
+                reportInfo: r.reportInfo
+            });
         }
 
+        const type = getDataReportTypeAttack(tribemates, doc);
+        if (type?.length) typeAttacks.push(type.pop());
+
+        const id = Number(list_href[i].href.match(/view=(\d+)/)[1]);
+        map_history.set(id, {
+            report_id: id,
+            date: new Date().toISOString(),
+            player_id: game_data.player.id
+        });
+
         progress.innerText = `Scraped ${i + 1}/${list_href.length}`;
-
-    } catch (err) {
-        console.warn("Skipping report due to error", err);
-        progress.innerText = `Skipped ${i + 1}/${list_href.length}`;
     }
-}
-
-
 
     // ===========================
-    // LOAD EXISTING REPORTS
+    // LOAD REPORTS + INCOMINGS
     // ===========================
-    const existing = await loadReportsDB(
-        game_data.world,
-        game_data.player.ally
+    const { data: reportsDB = [] } = await sb
+        .from("reports")
+        .select("*")
+        .eq("world", world)
+        .eq("tribe", tribe);
+
+    const map_reports = new Map(
+        reportsDB.map(r => [r.coord, r.data])
     );
 
-    const toUpload = scrapedReports.filter(r => {
-        const old = existing.get(r.coord);
-        return !old || old.data?.time_report !== r.data?.time_report;
-    });
+    const { data: incomingsDB = [] } = await sb
+        .from("incomings")
+        .select("*")
+        .eq("world", world)
+        .eq("tribe", tribe);
+
+    const map_incomings = new Map(
+        incomingsDB.map(i => [i.coord_off, i.data])
+    );
 
     // ===========================
-    // UPSERT REPORTS
+    // MERGE REPORTS (UNCHANGED LOGIC)
+    // ===========================
+    let nr_update = 0, nr_write = 0;
+
+    for (const el of scraped) {
+        const old = map_reports.get(el.coord);
+        const r = el.reportInfo;
+
+        if (old) {
+            const tOld = new Date(old.time_report);
+            const tNew = new Date(r.time_report);
+
+            if (tNew >= tOld) {
+                map_reports.set(el.coord, { ...old, ...r });
+                nr_update++;
+            }
+        } else {
+            map_reports.set(el.coord, r);
+            nr_write++;
+        }
+    }
+
+    // ===========================
+    // UPDATE LANDED ATTACK TYPES
+    // ===========================
+    for (const t of typeAttacks) {
+        const list = map_incomings.get(t.coord_off);
+        if (!list) continue;
+
+        for (const inc of list) {
+            if (
+                inc.coord_off === t.coord_off &&
+                inc.id_player_off === t.attackingPlayerId &&
+                inc.date_launch === t.date_launch
+            ) {
+                inc.type_attack_landed = t.typeAttack;
+                break;
+            }
+        }
+    }
+
+    // ===========================
+    // SAVE REPORTS
     // ===========================
     progress.innerText = "Uploading reports...";
 
     await upsertBatch(
         "reports",
-        toUpload,
+        Array.from(map_reports.entries()).map(([coord, data]) => ({
+            world, tribe, coord, data, updated_at: new Date()
+        })),
         "world,tribe,coord"
+    );
+
+    // ===========================
+    // SAVE INCOMINGS
+    // ===========================
+    await upsertBatch(
+        "incomings",
+        Array.from(map_incomings.entries()).map(([coord_off, data]) => ({
+            world, tribe, coord_off, data
+        })),
+        "world,tribe,coord_off"
+    );
+
+    // ===========================
+    // SAVE HISTORY
+    // ===========================
+    await upsertBatch(
+        "history_upload",
+        Array.from(map_history.values()).map(h => ({
+            world, tribe, ...h
+        })),
+        "world,tribe,report_id"
     );
 
     // ===========================
     // STATUS
     // ===========================
-    const serverTime = document.getElementById("serverTime").innerText;
-    const [d, m, y] = document.getElementById("serverDate").innerText.split("/");
-    const date_current = `${m}/${d}/${y} ${serverTime}`;
-
     await upsertBatch(
         "status",
         [{
+            world,
+            tribe,
             player_id: game_data.player.id,
             name: game_data.player.name,
-            report_date: date_current,
-            world: game_data.world,
-            tribe: game_data.player.ally
+            report_date: new Date()
         }],
-        "player_id,world"
-    );
-
-    // ===========================
-    // HISTORY
-    // ===========================
-    await upsertBatch(
-        "history_upload",
-        Array.from(map_history_upload.entries()).map(([id, h]) => ({
-            report_id: id,
-            ...h,
-            world: game_data.world,
-            tribe: game_data.player.ally
-        })),
-        "report_id,world"
+        "world,tribe,player_id"
     );
 
     UI.SuccessMessage(
-        `✅ Upload complete<br>Saved: <b>${toUpload.length}</b> reports`,
-        6000
+        `<b>Upload complete</b><br>
+         Updated: <b>${nr_update}</b><br>
+         Added: <b>${nr_write}</b><br>
+         Total: <b>${map_reports.size}</b>`,
+        8000
     );
 }
-
 
 
 function compress(string, encoding) {
@@ -10527,6 +10542,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
