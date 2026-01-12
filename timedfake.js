@@ -1,31 +1,33 @@
-//V2.5
+//2.6
 (function () {
     'use strict';
 
+    /* ================= CONFIG ================= */
     const STORAGE_KEY = 'tw_timed_fake_settings';
     const MS_PER_MIN = 60000;
     const rand = (min = 100, max = 400) =>
         Math.floor(Math.random() * (max - min + 1)) + min;
 
-    let unitSpeeds = {};
-    let selectedUnit = 'ram';
-    let villages = [];
-    let results = [];
+    /* ================= STATE ================= */
+    let coordListOwn = [];
+    let timedFakeList = [];
+    let ramSpeedMs = 0;
+    let autoConfirm = false;
 
-    /* ---------- LOAD UNIT SPEEDS ---------- */
-    async function loadUnitSpeeds() {
-        const xml = await $.get('/interface.php?func=get_unit_info');
-        $(xml).find('config').children().each((_, u) => {
-            unitSpeeds[u.nodeName] = parseFloat($(u).find('speed').text());
+    /* ================= UNIT SPEED (IDENTICAL) ================= */
+    function getUnitSpeeds() {
+        $.get('/interface.php?func=get_unit_info').done(xml => {
+            const ramSpeed = $(xml).find('ram speed').text();
+            ramSpeedMs = ramSpeed * 60 * 1000; // ❗ IDENTICAL
         });
     }
 
-    /* ---------- STORAGE ---------- */
+    /* ================= STORAGE ================= */
     function saveSettings() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
             targets: $('#tf-targets').val(),
             time: $('#tf-time').val(),
-            unit: selectedUnit
+            auto: $('#tf-auto').prop('checked')
         }));
     }
 
@@ -33,67 +35,64 @@
         return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     }
 
-    /* ---------- UI ---------- */
-    function openUI() {
+    /* ================= UI (PERMANENT & SAFE) ================= */
+    function openUI(defaultDate) {
         Dialog.show('Content', `
         <style>
-            .tf-box{font-family:Arial}
-            .tf-title{background:#1f2226;color:#fff;padding:8px;text-align:center;font-weight:bold}
-            .tf-section{background:#2b2f36;color:#fff;padding:8px}
-            .tf-input,.tf-textarea{width:100%;background:#1c1f24;color:#fff;border:1px solid #555;padding:6px}
-            .tf-actions{text-align:center;background:#202225;padding:8px}
+            .tf-box{font-family:Arial;background:#2b2f36;color:#fff}
+            .tf-title{background:#202225;padding:8px;text-align:center;font-weight:bold}
+            .tf-row{padding:6px}
+            textarea,input{width:100%;background:#1c1f24;color:#fff;border:1px solid #555;padding:5px}
+            .tf-btn{text-align:center;padding:8px}
         </style>
 
         <div class="tf-box">
             <div class="tf-title">Mass Timed Fake Finder</div>
 
-            <div class="tf-section">
-                <label>Target coordinates</label>
-                <textarea id="tf-targets" class="tf-textarea" rows="4"></textarea>
+            <div class="tf-row">
+                Targets
+                <textarea id="tf-targets" rows="4"></textarea>
             </div>
 
-            <div class="tf-section">
-                <label>Hit time</label>
-                <input id="tf-time" class="tf-input">
+            <div class="tf-row">
+                Hit time
+                <input id="tf-time">
             </div>
 
-            <div class="tf-section">
-                <label><input type="radio" name="tf-unit" value="ram" checked> Ram</label>
-                <label><input type="radio" name="tf-unit" value="catapult"> Catapult</label>
+            <div class="tf-row">
+                <label>
+                    <input type="checkbox" id="tf-auto">
+                    Auto confirm attack
+                </label>
             </div>
 
-            <div class="tf-actions">
-                <button id="tf-go" class="btn btn-confirm-yes" disabled>Loading…</button>
+            <div class="tf-btn">
+                <button id="tf-go" class="btn btn-confirm-yes">Go</button>
             </div>
         </div>`);
 
-        const d = new Date();
-        d.setHours(24, 0, 0, 0);
-        $('#tf-time').val(d.toLocaleString());
-
         const saved = loadSettings();
-        if (saved.targets) $('#tf-targets').val(saved.targets);
-        if (saved.time) $('#tf-time').val(saved.time);
-        if (saved.unit) {
-            selectedUnit = saved.unit;
-            $(`input[value="${saved.unit}"]`).prop('checked', true);
-        }
+        $('#tf-targets').val(saved.targets || '');
+        $('#tf-time').val(saved.time || defaultDate);
+        $('#tf-auto').prop('checked', !!saved.auto);
 
-        $('#tf-targets,#tf-time').on('input change', saveSettings);
-        $('input[name="tf-unit"]').on('change', e => {
-            selectedUnit = e.target.value;
-            saveSettings();
-        });
+        $('#tf-targets,#tf-time,#tf-auto').on('input change', saveSettings);
+        $('#tf-go').on('click', calculateTimedAttacks);
     }
 
-    /* ---------- DATA ---------- */
-    function collectVillages() {
+    /* ================= DATA ================= */
+    function grabVillageData() {
+        coordListOwn = [];
         $('#combined_table tr:gt(0)').each(function () {
             const c = this.children;
-            villages.push({
-                id: c[1].firstElementChild.dataset.id,
-                coord: c[1].innerText.match(/\d+\|\d+/)[0],
-                units: Object.fromEntries(game_data.units.map((u, i) => [u, +c[8 + i].innerText]))
+            const units = {};
+            game_data.units.forEach((u, i) => {
+                units[u] = +c[8 + i].innerText;
+            });
+            coordListOwn.push({
+                ID: c[1].firstElementChild.dataset.id,
+                Coord: c[1].innerText.match(/\d+\|\d+/)[0],
+                Units: units
             });
         });
     }
@@ -104,64 +103,72 @@
         return Math.hypot(x1 - x2, y1 - y2);
     };
 
-    function calculate() {
-        results = [];
+    /* ================= CALCULATION (IDENTICAL) ================= */
+    function calculateTimedAttacks() {
+        timedFakeList = [];
+        grabVillageData();
+
         const targets = $('#tf-targets').val().match(/\d+\|\d+/g);
         if (!targets) return alert('No targets');
 
         const landTime = new Date($('#tf-time').val()).getTime();
-        const speedMs = unitSpeeds[selectedUnit] * MS_PER_MIN;
-        const serverTime = Date.parse($('#serverDate').text().replace(/(\d+)\/(\d+)\/(\d+)/, '$2/$1/$3') + ' ' + $('#serverTime').text());
 
-        villages.forEach(v => {
-            if (!v.units[selectedUnit]) return;
+        const st = $('#serverDate').text() + ' ' + $('#serverTime').text();
+        const m = st.match(/(\d+)\/(\d+)\/(\d+)\s+(.*)/);
+        const serverDate = Date.parse(`${m[2]}/${m[1]}/${m[3]} ${m[4]}`);
+
+        coordListOwn.forEach(v => {
+            if (!v.Units.ram && !v.Units.catapult) return;
             targets.forEach(t => {
-                const launch = landTime - dist(v.coord, t) * speedMs;
-                const delta = launch - serverTime;
-                if (delta > 0) results.push({ v, t });
+                const launch = landTime - dist(v.Coord, t) * ramSpeedMs;
+                const delta = launch - serverDate;
+                if (delta > 0) timedFakeList.push({ v, t });
             });
         });
 
         showResults();
     }
 
+    /* ================= RESULTS ================= */
     function showResults() {
         Dialog.show('Content', `
         <table width="100%">
-            ${results.map((r, i) =>
+            ${timedFakeList.map((r, i) =>
                 `<tr>
-                    <td>${r.v.coord}</td>
+                    <td>${r.v.Coord}</td>
                     <td>${r.t}</td>
-                    <td><a onclick="openRally(${i})" style="cursor:pointer;color:#40D0E0">Rally</a></td>
+                    <td style="cursor:pointer;color:#40D0E0"
+                        onclick="openRally(${i})">Rally</td>
                 </tr>`
             ).join('')}
         </table>`);
     }
 
-    /* ---------- RALLY FLOW ---------- */
+    /* ================= RALLY FLOW ================= */
     window.openRally = function (i) {
-        const r = results[i];
+        const r = timedFakeList[i];
         const [x, y] = r.t.split('|');
+        autoConfirm = $('#tf-auto').prop('checked');
 
         $.get('/game.php', {
-            village: r.v.id,
+            village: r.v.ID,
             screen: 'api',
             ajax: 'target_selection',
             input: `${x}|${y}`,
             type: 'coord',
             limit: 1
         }).done(d => {
-            const tid = d?.villages?.[0]?.id;
-            if (!tid) return;
-
-            const win = window.open(`/game.php?village=${r.v.id}&screen=place&target=${tid}`);
+            const tid = d.villages[0].id;
+            const win = window.open(
+                `/game.php?village=${r.v.ID}&screen=place&target=${tid}`
+            );
 
             const poll = setInterval(() => {
                 try {
                     if (!win || win.closed) return clearInterval(poll);
                     const doc = win.document;
 
-                    const unit = doc.querySelector(`#unit_input_${selectedUnit}`);
+                    const unit = doc.querySelector('#unit_input_ram');
                     const attack = doc.querySelector('#target_attack');
                     const confirm = doc.querySelector('#troop_confirm_submit');
 
@@ -170,7 +177,7 @@
                         attack.click();
                     }
 
-                    if (confirm) {
+                    if (confirm && autoConfirm && !confirm.disabled) {
                         win.addEventListener('beforeunload', () => win.close(), { once: true });
                         confirm.click();
                         clearInterval(poll);
@@ -180,12 +187,15 @@
         });
     };
 
-    /* ---------- INIT ---------- */
-    (async function () {
-        openUI();
-        await loadUnitSpeeds();
-        collectVillages();
-        $('#tf-go').prop('disabled', false).text('Go').on('click', calculate);
+    /* ================= INIT ================= */
+    (function init() {
+        getUnitSpeeds();
+
+        const d = new Date();
+        d.setTime(((Math.floor(d.getTime() / (24 * 60 * 60 * 1000)) + 1) * 1440 + d.getTimezoneOffset()) * 60000);
+        const defaultDate = d.toString().replace(/\w+\s*/i, '').replace(/(\d+:\d+:\d+).*/, '$1');
+
+        openUI(defaultDate);
     })();
 
 })();
