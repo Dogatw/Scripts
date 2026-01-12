@@ -1,4 +1,4 @@
-//3.1
+//2.75
 
 (function () {
     'use strict';
@@ -10,13 +10,8 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
-    let secondCounter = new Map(); // launchSecond -> used count
+    let autoLaunched = new Set(); // prevent double auto-rally
 
-    let autoLaunched = new Set();
-let rallyQueue = [];
-let rallyBusy = false;
-
-    
     let unitSpeeds = {};
     let selectedUnit = 'ram';
     let villages = [];
@@ -187,34 +182,8 @@ let rallyBusy = false;
         startTimers();
     }
 
-
-
-    function processRallyQueue() {
-    if (rallyBusy) return;
-    if (!rallyQueue.length) return;
-
-    rallyBusy = true;
-    const index = rallyQueue.shift();
-
-    if (!document.getElementById(`tf-row-${index}`)) {
-        rallyBusy = false;
-        return;
-    }
-
-    openRally(index);
-
-    setTimeout(() => {
-        rallyBusy = false;
-        processRallyQueue();
-    }, rand(50, 100));
-}
-
-function getLaunchSecond(index) {
-    return Math.floor(results[index].launch / 1000);
-}
-
     /* ================= TIMERS ================= */
-    function startTimers(){
+   function startTimers(){
     setInterval(()=>{
         document.querySelectorAll('.tf-timer').forEach(el=>{
             let t = +el.dataset.time - 1000;
@@ -225,26 +194,19 @@ function getLaunchSecond(index) {
 
             const index = Number(row.id.replace('tf-row-',''));
 
-          
-  // === AUTO RALLY AT 7 SECONDS (QUEUED) ===
-if (t <= 7000 && t > 0 && !autoLaunched.has(index)) {
-    const sec = getLaunchSecond(index);
-    const used = secondCounter.get(sec) || 0;
+            // === AUTO RALLY AT 6 SECONDS ===
+            if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
+                autoLaunched.add(index);
 
-    // 🚫 allow only FIRST TWO per second
-    if (used >= 2) return;
+                // human-like small hesitation
+                setTimeout(() => {
+                    if (document.getElementById(`tf-row-${index}`)) {
+                        openRally(index);
+                    }
+                }, rand(200, 600));
+            }
 
-    secondCounter.set(sec, used + 1);
-    autoLaunched.add(index);
-    rallyQueue.push(index);
-
-    setTimeout(processRallyQueue, rand(80, 140));
-}
-
-
-
-
-                if (t <= 0) {
+            if (t <= 0) {
                 el.textContent = 'NOW';
                 el.style.color = COLORS.danger;
                 return;
