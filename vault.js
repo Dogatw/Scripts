@@ -842,7 +842,29 @@ async function upsertBatch(
         console.log(`✅ ${i + chunk.length}/${rows.length} saved`);
     }
 }
+  let RATE_LIMIT_UNTIL = 0;
 
+async function safeGet(url) {
+    const now = Date.now();
+
+    if (now < RATE_LIMIT_UNTIL) {
+        const wait = RATE_LIMIT_UNTIL - now;
+        console.warn(`⏸ Rate-limited, waiting ${Math.ceil(wait / 1000)}s`);
+        await new Promise(r => setTimeout(r, wait));
+    }
+
+    try {
+        const res = await $.get(url);
+        await new Promise(r => setTimeout(r, 900)); // human delay
+        return res;
+    } catch (e) {
+        if (e?.status === 429) {
+            RATE_LIMIT_UNTIL = Date.now() + 10 * 60 * 1000; // 10 min cooldown
+            UI.ErrorMessage("Rate limit hit. Pausing 10 minutes.", 5000);
+        }
+        throw e;
+    }
+}
 async function uploadReports() {
 
     const progress = document.getElementById("progress_reports");
@@ -872,26 +894,27 @@ async function uploadReports() {
     ]);
 
     list_href.reverse();
+    // ⚡ HUGE speed + safety boost
+list_href = list_href.filter(l => {
+    const reportId = l.id || l.href.match(/view=(\d+)/)?.[1];
+    return reportId && !map_history_upload.has(reportId);
+});
 
-    // ===========================
-    // SCRAPE IN PARALLEL
-    // ===========================
-    const scrapedReports = [];
-    const PARALLEL = 5;
+// ===========================
+// SAFE SEQUENTIAL SCRAPE
+// ===========================
+  
 
-    for (let i = 0; i < list_href.length; i += PARALLEL) {
-        const batch = list_href.slice(i, i + PARALLEL);
+const scrapedReports = [];
 
-        const pages = await Promise.all(
-            batch.map(l => $.get(l.href))
-        );
+for (let i = 0; i < list_href.length; i++) {
+    try {
+        const html = await safeGet(list_href[i].href);
 
-        for (const html of pages) {
-            const doc = new DOMParser().parseFromString(html, "text/html");
-            const list = getDataReport(tribemates, doc);
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        const list = getDataReport(tribemates, doc);
 
-            if (!list?.length) continue;
-
+        if (list?.length) {
             for (const r of list) {
                 scrapedReports.push({
                     world: game_data.world,
@@ -903,9 +926,15 @@ async function uploadReports() {
             }
         }
 
-        progress.innerText =
-            `Scraped ${Math.min(i + PARALLEL, list_href.length)}/${list_href.length}`;
+        progress.innerText = `Scraped ${i + 1}/${list_href.length}`;
+
+    } catch (err) {
+        console.warn("Skipping report due to error", err);
+        progress.innerText = `Skipped ${i + 1}/${list_href.length}`;
     }
+}
+
+
 
     // ===========================
     // LOAD EXISTING REPORTS
@@ -10498,6 +10527,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
