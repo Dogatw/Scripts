@@ -49,7 +49,7 @@
     if (openSeconds <= 0) return 0;
     const half = Math.floor(openSeconds / 2);
     const randomDelay = Math.floor(10 + Math.random() * 11); // 10–20 sec
-    return half + randomDelay;
+    return half - randomDelay;
 }
 
 
