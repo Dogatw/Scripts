@@ -1,7 +1,17 @@
+// ==UserScript==
+// @name         Tribal Wars – Mass Timed Fake Finder (FINAL UI+SAVE)
+// @namespace    sam.tw.timedfake
+// @version      2.5
+// @description  Timed fake finder with persistent UI, humanized auto-attack & confirm
+// @include      https://*/game.php?*&screen=overview_villages&mode=combined*
+// @grant        none
+// ==/UserScript==
+
 (function () {
     'use strict';
 
-    /* ================= UTIL ================= */
+    /* ================= CONFIG ================= */
+    const STORAGE_KEY = 'tw_timed_fake_settings';
     const MS_PER_MIN = 60000;
     const COLORS = { ok:'#40D0E0', warn:'#FFD700', danger:'#FF5555' };
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
@@ -20,45 +30,91 @@
         });
     }
 
+    /* ================= SAVE / LOAD ================= */
+    function saveSettings() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            targets: $('#tf-targets').val(),
+            time: $('#tf-time').val(),
+            unit: selectedUnit
+        }));
+    }
+
+    function loadSettings() {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    }
+
     /* ================= UI ================= */
     function openUI() {
         Dialog.show('Content', `
         <style>
-            .tf-h{background:#202225;color:#fff;font-weight:bold}
-            .tf-a{background:#32353b;color:#fff}
-            .tf-b{background:#36393f;color:#fff}
-            .tf-timer{font-weight:bold}
+            .tf-box { font-family: Arial; }
+            .tf-title {
+                background:#1f2226;color:#fff;font-weight:bold;
+                padding:8px;text-align:center;font-size:14px;
+            }
+            .tf-section { padding:8px;background:#2b2f36;color:#fff }
+            .tf-section label { font-weight:bold; display:block; margin-bottom:4px }
+            .tf-input, .tf-textarea {
+                width:100%; box-sizing:border-box;
+                padding:6px; background:#1c1f24;
+                border:1px solid #555;color:#fff;
+            }
+            .tf-actions {
+                text-align:center;background:#202225;padding:8px;
+            }
+            .tf-btn {
+                padding:6px 16px;font-weight:bold;
+            }
+            .tf-timer { font-weight:bold }
         </style>
-        <table width="100%">
-            <tr class="tf-h"><td colspan="2">Mass Timed Fake Finder</td></tr>
-            <tr class="tf-a">
-                <td>Targets</td>
-                <td><textarea id="tf-targets" rows="5" style="width:100%"></textarea></td>
-            </tr>
-            <tr class="tf-b">
-                <td>Hit time</td>
-                <td><input id="tf-time" size="22"></td>
-            </tr>
-            <tr class="tf-a">
-                <td>Unit</td>
-                <td>
-                    <label><input type="radio" name="tf-unit" value="ram" checked> Ram</label>
-                    <label style="margin-left:10px">
-                        <input type="radio" name="tf-unit" value="catapult"> Catapult
-                    </label>
-                </td>
-            </tr>
-            <tr class="tf-b">
-                <td colspan="2" style="text-align:center">
-                    <button id="tf-go" class="btn btn-confirm-yes" disabled>Loading…</button>
-                </td>
-            </tr>
-        </table>`);
 
-        const d=new Date(); d.setHours(24,0,0,0);
+        <div class="tf-box">
+            <div class="tf-title">Mass Timed Fake Finder</div>
+
+            <div class="tf-section">
+                <label>Target coordinates</label>
+                <textarea id="tf-targets" class="tf-textarea" rows="5"
+                    placeholder="500|500 501|499 ..."></textarea>
+            </div>
+
+            <div class="tf-section">
+                <label>Hit time</label>
+                <input id="tf-time" class="tf-input" size="22">
+            </div>
+
+            <div class="tf-section">
+                <label>Unit type</label>
+                <label><input type="radio" name="tf-unit" value="ram" checked> Ram</label>
+                <label><input type="radio" name="tf-unit" value="catapult"> Catapult</label>
+            </div>
+
+            <div class="tf-actions">
+                <button id="tf-go" class="btn btn-confirm-yes tf-btn" disabled>
+                    Loading…
+                </button>
+            </div>
+        </div>`);
+
+        /* defaults */
+        const d = new Date(); d.setHours(24,0,0,0);
         $('#tf-time').val(d.toLocaleString());
 
-        $('input[name="tf-unit"]').on('change',e=>selectedUnit=e.target.value);
+        /* restore saved */
+        const saved = loadSettings();
+        if (saved.targets) $('#tf-targets').val(saved.targets);
+        if (saved.time) $('#tf-time').val(saved.time);
+        if (saved.unit) {
+            selectedUnit = saved.unit;
+            $(`input[name="tf-unit"][value="${saved.unit}"]`).prop('checked', true);
+        }
+
+        /* listeners */
+        $('#tf-targets').on('input', saveSettings);
+        $('#tf-time').on('change', saveSettings);
+        $('input[name="tf-unit"]').on('change', e=>{
+            selectedUnit = e.target.value;
+            saveSettings();
+        });
     }
 
     /* ================= VILLAGES ================= */
@@ -87,7 +143,7 @@
     function calculate(){
         results=[];
         const targets=$('#tf-targets').val().match(/\d+\|\d+/g);
-        if(!targets) return alert('No targets');
+        if(!targets) return alert('No target coordinates');
 
         const landTime=new Date($('#tf-time').val()).getTime();
         const speedMs=unitSpeeds[selectedUnit]*MS_PER_MIN;
@@ -111,13 +167,13 @@
     /* ================= RESULTS ================= */
     function showResults(){
         let html=`<table width="100%">
-        <tr class="tf-h">
+        <tr style="background:#1f2226;color:#fff;font-weight:bold">
             <td>Source</td><td>Target</td><td>Dist</td>
             <td>Launch in</td><td>Local</td><td></td>
         </tr>`;
         results.forEach((r,i)=>{
             html+=`
-            <tr id="tf-row-${i}" class="${i%2?'tf-a':'tf-b'}">
+            <tr id="tf-row-${i}" style="background:${i%2?'#32353b':'#36393f'};color:#fff">
                 <td>${r.v.coord}</td>
                 <td>${r.t}</td>
                 <td>${r.d.toFixed(2)}</td>
@@ -147,25 +203,20 @@
         },1000);
     }
 
-    /* ================= RALLY + AUTO FLOW ================= */
+    /* ================= RALLY AUTO FLOW ================= */
     window.openRally=function(index){
         const r=results[index];
         const [x,y]=r.t.split('|');
 
         $.get('/game.php',{
-            village:r.v.id,
-            screen:'api',
-            ajax:'target_selection',
-            input:`${x}|${y}`,
-            type:'coord',
-            limit:1
+            village:r.v.id,screen:'api',ajax:'target_selection',
+            input:`${x}|${y}`,type:'coord',limit:1
         }).done(data=>{
             const targetId=data?.villages?.[0]?.id;
             if(!targetId) return alert('Target not found');
 
             const win=window.open(
-                `/game.php?village=${r.v.id}&screen=place&target=${targetId}`,
-                '_blank'
+                `/game.php?village=${r.v.id}&screen=place&target=${targetId}`,'_blank'
             );
             document.getElementById(`tf-row-${index}`)?.remove();
 
@@ -180,22 +231,22 @@
                         if(!u) return;
                         u.value=1;
                         u.dispatchEvent(new Event('input',{bubbles:true}));
-                        step++; setTimeout(()=>{},rand()); return;
+                        step++; return;
                     }
                     if(step===1){
                         const a=d.querySelector('#target_attack')||d.querySelector('input.attack');
                         if(!a) return;
-                        setTimeout(()=>a.click(),rand());
-                        step++; return;
+                        setTimeout(()=>a.click(),rand()); step++; return;
                     }
                     if(step===2){
-                        const c=d.querySelector('#troop_confirm_go')||d.querySelector('input.btn-confirm-yes');
+                        const c=d.querySelector('#troop_confirm_go')||
+                                d.querySelector('input.btn-confirm-yes')||
+                                d.querySelector('button.btn-confirm-yes');
                         if(!c) return;
-                        setTimeout(()=>c.click(),rand());
-                        step++; return;
+                        setTimeout(()=>c.click(),rand()); step++; return;
                     }
                     if(step===3){
-                        setTimeout(()=>{if(!win.closed)win.close();},rand(150,500));
+                        setTimeout(()=>{if(!win.closed)win.close();},rand(200,500));
                         clearInterval(iv);
                     }
                 }catch{}
