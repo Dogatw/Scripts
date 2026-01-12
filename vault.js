@@ -151,6 +151,40 @@ async function saveIncomingsDB(coord, incomingsData, world, tribe) {
 }
 
 // ===============================
+// === COMMANDS ATTACK via Supabase
+// ===============================
+async function loadCommandsAttackDB(world, tribe) {
+    const { data, error } = await sb
+        .from("commands_attack")
+        .select("coord, data")
+        .eq("world", world)
+        .eq("tribe", tribe);
+
+    if (error) {
+        console.error("loadCommandsAttackDB failed", error);
+        return new Map();
+    }
+
+    return new Map(data.map(r => [r.coord, r.data]));
+}
+
+async function saveCommandsAttackDB(coord, commandData, world, tribe) {
+    const { error } = await sb
+        .from("commands_attack")
+        .upsert({
+            coord,
+            data: commandData,
+            world,
+            tribe,
+            updated_at: new Date().toISOString()
+        });
+
+    if (error) {
+        console.error("saveCommandsAttackDB failed", error);
+    }
+}
+
+// ===============================
 // === SUPPORT via Supabase     ===
 // ===============================
 
@@ -10814,6 +10848,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
