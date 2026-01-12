@@ -329,6 +329,8 @@ async function saveHistoryDB(reportId, data, world, tribe) {
 // ===================================================
 // === INITIAL SETUP (SUPABASE ERA, CLEAN VERSION) ===
 // ===================================================
+let timeDownloadStart;
+let timeDownloadStop;
 
 var allUsers, tribemates, permissions;
 
@@ -6916,7 +6918,7 @@ async function viewSupport(){
 // ===============================
 // DOWNLOAD DATA (SUPABASE ONLY)
 // ===============================
-let timeDownloadStart = Date.now();
+ timeDownloadStart = Date.now();
 
 const [
     mapVillages,
@@ -6997,13 +6999,13 @@ let map_home = map_troops_home;
 console.log("Villages:", mapVillages);
 console.log("Troops home:", map_troops_home);
 
-let timeDownloadStop = Date.now();
+ timeDownloadStop = Date.now();
 console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
 
 
 
-    let timeDownloadStop = new Date().getTime()
+     timeDownloadStop = new Date().getTime()
     console.log("time download DB: " + (timeDownloadStop - timeDownloadStart))
 
 
@@ -10491,6 +10493,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
