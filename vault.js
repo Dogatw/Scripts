@@ -843,10 +843,10 @@ async function upsertBatch(
     }
 }
 
-
 async function uploadReports() {
 
-    document.getElementById("progress_reports").innerText = "Getting data...";
+    const progress = document.getElementById("progress_reports");
+    progress.innerText = "Getting data...";
 
     // ===========================
     // LOAD HISTORY
@@ -864,7 +864,7 @@ async function uploadReports() {
     }
 
     // ===========================
-    // SCRAPE REPORTS (same logic, unchanged)
+    // GET LINKS
     // ===========================
     const [list_href] = await Promise.all([
         getLinks(true, map_history_upload),
@@ -873,31 +873,42 @@ async function uploadReports() {
 
     list_href.reverse();
 
+    // ===========================
+    // SCRAPE IN PARALLEL
+    // ===========================
     const scrapedReports = [];
+    const PARALLEL = 5;
 
-    for (let i = 0; i < list_href.length; i++) {
-        const html = await $.get(list_href[i].href);
-        const doc = new DOMParser().parseFromString(html, "text/html");
+    for (let i = 0; i < list_href.length; i += PARALLEL) {
+        const batch = list_href.slice(i, i + PARALLEL);
 
-        const list = getDataReport(tribemates, doc);
-        if (list?.length) {
+        const pages = await Promise.all(
+            batch.map(l => $.get(l.href))
+        );
+
+        for (const html of pages) {
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const list = getDataReport(tribemates, doc);
+
+            if (!list?.length) continue;
+
             for (const r of list) {
                 scrapedReports.push({
-                    coord: r.coord,
-                    ...r.reportInfo,
                     world: game_data.world,
-                    tribe: game_data.player.ally
-
+                    tribe: game_data.player.ally,
+                    coord: r.coord,
+                    data: r.reportInfo,
+                    updated_at: new Date().toISOString()
                 });
             }
         }
 
-        document.getElementById("progress_reports").innerText =
-            `Scraped ${i + 1}/${list_href.length}`;
+        progress.innerText =
+            `Scraped ${Math.min(i + PARALLEL, list_href.length)}/${list_href.length}`;
     }
 
     // ===========================
-    // FILTER ONLY NEW REPORTS
+    // LOAD EXISTING REPORTS
     // ===========================
     const existing = await loadReportsDB(
         game_data.world,
@@ -906,12 +917,14 @@ async function uploadReports() {
 
     const toUpload = scrapedReports.filter(r => {
         const old = existing.get(r.coord);
-        return !old || old.time_report !== r.time_report;
+        return !old || old.data?.time_report !== r.data?.time_report;
     });
 
     // ===========================
-    // UPLOAD REPORTS (BATCHED)
+    // UPSERT REPORTS
     // ===========================
+    progress.innerText = "Uploading reports...";
+
     await upsertBatch(
         "reports",
         toUpload,
@@ -919,7 +932,7 @@ async function uploadReports() {
     );
 
     // ===========================
-    // STATUS UPDATE (BATCH)
+    // STATUS
     // ===========================
     const serverTime = document.getElementById("serverTime").innerText;
     const [d, m, y] = document.getElementById("serverDate").innerText.split("/");
@@ -932,13 +945,13 @@ async function uploadReports() {
             name: game_data.player.name,
             report_date: date_current,
             world: game_data.world,
-            ally: game_data.player.ally
+            tribe: game_data.player.ally
         }],
         "player_id,world"
     );
 
     // ===========================
-    // HISTORY (BATCH)
+    // HISTORY
     // ===========================
     await upsertBatch(
         "history",
@@ -946,18 +959,16 @@ async function uploadReports() {
             report_id: id,
             ...h,
             world: game_data.world,
-            ally: game_data.player.ally
+            tribe: game_data.player.ally
         })),
         "report_id,world"
     );
 
     UI.SuccessMessage(
-        `<b>Upload complete</b><br>
-         Added/Updated: <b>${toUpload.length}</b>`,
+        `✅ Upload complete<br>Saved: <b>${toUpload.length}</b> reports`,
         6000
     );
 }
-
 
 
 
@@ -10487,6 +10498,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
