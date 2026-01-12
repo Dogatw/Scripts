@@ -6913,73 +6913,93 @@ async function viewSupport(){
 
     UI.SuccessMessage("Loading data..", 5000)
 
+// ===============================
+// DOWNLOAD DATA (SUPABASE ONLY)
+// ===============================
+let timeDownloadStart = Date.now();
 
-    let timeDownloadStart = new Date().getTime()
-    var [mapVillages, map_reports, map_incomings,data_support, map_attacks,map_status, map_history_upload, map_troops_home ,status_chart]=await Promise.all([
-            getInfoVillages(), 
-            readFileDropbox(filename_reports),
-            readFileDropbox(filename_incomings),
-            readFileDropbox(filename_support),
-            readFileDropbox(filename_commands_attack),
-            readFileDropbox(filename_status_upload),
-            readFileDropbox(filename_history_upload),
-            readFileDropbox(filename_troops_home),
-            insertChartLibrary()])
-        .catch(err=>{alert(err)})
+const [
+    mapVillages,
+    reportsRes,
+    incomingsRes,
+    supportRes,
+    attacksRes,
+    statusRes,
+    troopsHomeRes,
+    status_chart
+] = await Promise.all([
+    getInfoVillages(),
 
-        
-        var [map_reports, map_incomings, map_attacks, map_status, map_history_upload, data_support, map_troops_home] = await Promise.all([
-            decompress(await map_reports.arrayBuffer(), 'gzip'),
-            decompress(await map_incomings.arrayBuffer(), 'gzip'),
-            decompress(await map_attacks.arrayBuffer(), 'gzip'),
-            decompress(await map_status.arrayBuffer(), 'gzip'),
-            decompress(await map_history_upload.arrayBuffer(), 'gzip'),
-            decompress(await data_support.arrayBuffer(), 'gzip'),
-            decompress(await map_troops_home.arrayBuffer(), 'gzip'),
-        ]).catch(err=>{alert(err)})    
+    sb.from("reports")
+        .select("coord, data")
+        .eq("world", game_data.world)
+        .eq("tribe", game_data.player.ally),
 
+    sb.from("incomings")
+        .select("coord, data")
+        .eq("world", game_data.world)
+        .eq("tribe", game_data.player.ally),
 
-        map_reports=new Map(JSON.parse(map_reports))
-        map_incomings=new Map(JSON.parse(map_incomings))
-        map_attacks=new Map(JSON.parse(map_attacks))
-        map_status=new Map(JSON.parse(map_status))
-        map_history_upload=new Map(JSON.parse(map_history_upload))
+    sb.from("support")
+        .select("coord, data")
+        .eq("world", game_data.world)
+        .eq("tribe", game_data.player.ally),
 
-        map_troops_home=new Map(JSON.parse(map_troops_home))
+    sb.from("commands_attack")
+        .select("command_id, data")
+        .eq("world", game_data.world)
+        .eq("tribe", game_data.player.ally),
 
-        let map_coming=new Map(JSON.parse(data_support)[0])
-        let map_home=new Map(JSON.parse(data_support)[1])
+    sb.from("status")
+        .select("player_id, data")
+        .eq("world", game_data.world)
+        .eq("tribe", game_data.player.ally),
 
-        console.log(mapVillages)
-        console.log(map_troops_home)
+    sb.from("troops_home")
+        .select("coord, data")
+        .eq("world", game_data.world)
+        .eq("tribe", game_data.player.ally),
 
-    let map_playerId=new Map()
-    // console.log("first",map_home);
-    let commandAttacksBatch = await Promise.all(commandsAttacksPromises).catch(err=>{alert(err)})
-    let supportBatch = await Promise.all(supportPromises).catch(err=>{alert(err)})
+    insertChartLibrary()
+]);
 
-    const run = async () => {
-        console.log("Starting...");
-        for (let i = 0; i < commandAttacksBatch.length; i++) {
-            let [decompressedAttackBatch, decompressedSupportBatch]=await Promise.all([
-                    decompress(await commandAttacksBatch[i].arrayBuffer(), 'gzip'),
-                    decompress(await supportBatch[i].arrayBuffer(), 'gzip'),
-                ]).catch(err=>{alert(err)})
+// ===============================
+// CONVERT TO MAPS (SAME SHAPE)
+// ===============================
+let map_reports = new Map(
+    (reportsRes.data || []).map(r => [r.coord, r.data])
+);
 
-            let map_attacks_batch = new Map(JSON.parse(decompressedAttackBatch))
-            map_attacks = new Map([...map_attacks, ...map_attacks_batch])
+let map_incomings = new Map(
+    (incomingsRes.data || []).map(r => [r.coord, r.data])
+);
 
-            let map_support_batch = new Map(JSON.parse(decompressedSupportBatch)[0])
-            let map_troops_home_batch = new Map(JSON.parse(decompressedSupportBatch)[1])
-    
+let map_attacks = new Map(
+    (attacksRes.data || []).map(r => [r.command_id, r.data])
+);
 
-            map_coming = new Map([...map_coming, ...map_support_batch])
-            map_home = new Map([...map_home, ...map_troops_home_batch])
+let map_status = new Map(
+    (statusRes.data || []).map(r => [r.player_id, r.data])
+);
 
+let map_troops_home = new Map(
+    (troopsHomeRes.data || []).map(r => [r.coord, r.data])
+);
 
-        }  
-    }
-    await run();
+// replaces old data_support blob
+let map_coming = new Map(
+    (supportRes.data || []).map(r => [r.coord, r.data])
+);
+
+// alias kept for compatibility
+let map_home = map_troops_home;
+
+console.log("Villages:", mapVillages);
+console.log("Troops home:", map_troops_home);
+
+let timeDownloadStop = Date.now();
+console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
+
 
 
 
@@ -10471,6 +10491,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
