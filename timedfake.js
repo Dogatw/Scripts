@@ -1,4 +1,4 @@
-//2.75
+//2.8
 
 (function () {
     'use strict';
@@ -10,6 +10,8 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
+    let secondCounter = new Map(); // launchSecond -> count
+
     let autoLaunched = new Set(); // prevent double auto-rally
 
     let unitSpeeds = {};
@@ -181,6 +183,9 @@
         Dialog.show('Content',html);
         startTimers();
     }
+function getLaunchSecond(index) {
+    return Math.floor(results[index].launch / 1000);
+}
 
     /* ================= TIMERS ================= */
    function startTimers(){
@@ -194,17 +199,27 @@
 
             const index = Number(row.id.replace('tf-row-',''));
 
-            // === AUTO RALLY AT 6 SECONDS ===
-            if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
-                autoLaunched.add(index);
+           // === AUTO RALLY AT 7 SECONDS ===
+// === AUTO RALLY AT 6 SECONDS (MAX 2 PER SECOND) ===
+if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
 
-                // human-like small hesitation
-                setTimeout(() => {
-                    if (document.getElementById(`tf-row-${index}`)) {
-                        openRally(index);
-                    }
-                }, rand(200, 600));
-            }
+    const sec = getLaunchSecond(index);
+    const used = secondCounter.get(sec) || 0;
+
+    // 🚫 only first 2 attacks of the same second
+    if (used >= 2) return;
+
+    secondCounter.set(sec, used + 1);
+    autoLaunched.add(index);
+
+    setTimeout(() => {
+        if (document.getElementById(`tf-row-${index}`)) {
+            openRally(index);
+        }
+    }, rand(200, 600));
+}
+
+
 
             if (t <= 0) {
                 el.textContent = 'NOW';
