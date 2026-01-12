@@ -2203,24 +2203,46 @@ function uploadFile(data,filename,dropboxToken){
     })
 }
 
-function readFileDropbox(filename){
-    return new Promise(async(resolve,reject)=>{
-        const rawResponse = await fetch('https://content.dropboxapi.com/2/files/download', {
-            method: 'POST',
-            headers: { 
-                'Authorization': 'Bearer ' + dropboxToken,
-                'Dropbox-API-Arg': JSON.stringify({path: "/"+filename}),
-            },
-          });
-        if(rawResponse.ok == true){
-            const content = rawResponse.blob();
-            resolve(content)
+async function readFileDropbox(filename) {
+    switch (filename) {
+
+        case "SUPABASE_SUPPORT": {
+            const map = await loadSupportDB(game_data.world, game_data.player.ally);
+            return new Blob(
+                [JSON.stringify([Array.from(map.entries()), []])],
+                { type: "application/json" }
+            );
         }
-        else{
-            reject("error-> file doesnt exists")
+
+        case "SUPABASE_COMMANDS_ATTACK": {
+            const map = await loadCommandsAttackDB(game_data.world, game_data.player.ally);
+            return new Blob(
+                [JSON.stringify(Array.from(map.entries()))],
+                { type: "application/json" }
+            );
         }
-    })
+
+        case "SUPABASE_INCOMINGS": {
+            const map = await loadIncomingsDB(game_data.world, game_data.player.ally);
+            return new Blob(
+                [JSON.stringify(Array.from(map.entries()))],
+                { type: "application/json" }
+            );
+        }
+
+        case "SUPABASE_STATUS": {
+            const map = await loadStatusDB(game_data.world, game_data.player.ally);
+            return new Blob(
+                [JSON.stringify(Array.from(map.entries()))],
+                { type: "application/json" }
+            );
+        }
+
+        default:
+            throw new Error("Unknown virtual file: " + filename);
+    }
 }
+
 
 
 
@@ -10792,6 +10814,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
