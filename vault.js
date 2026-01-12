@@ -814,6 +814,36 @@ if(document.getElementById("incomings_table")!=null){
 
 
 /////////////////////////////////////////////////get all reports info//////////////////////////////////////////////////////////////////
+/**
+ * Supabase batch upsert helper
+ * - Splits into chunks (avoids payload limits)
+ * - Uses ON CONFLICT index
+ */
+async function upsertBatch(
+    table,
+    rows,
+    conflictCols,
+    chunkSize = 500
+) {
+    if (!rows?.length) return;
+
+    for (let i = 0; i < rows.length; i += chunkSize) {
+        const chunk = rows.slice(i, i + chunkSize);
+
+        const { error } = await sb
+            .from(table)
+            .upsert(chunk, { onConflict: conflictCols });
+
+        if (error) {
+            console.error("Upsert error:", error);
+            throw error;
+        }
+
+        console.log(`✅ ${i + chunk.length}/${rows.length} saved`);
+    }
+}
+
+
 async function uploadReports() {
 
     document.getElementById("progress_reports").innerText = "Getting data...";
@@ -856,7 +886,8 @@ async function uploadReports() {
                     coord: r.coord,
                     ...r.reportInfo,
                     world: game_data.world,
-                    ally: game_data.player.ally
+                    tribe: game_data.player.ally
+
                 });
             }
         }
@@ -10456,6 +10487,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
