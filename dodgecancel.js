@@ -248,11 +248,14 @@ tw_save.onclick = () => {
             return;
         }
 
-        if (!isArmed()) return;
-        if (openAt <= 0) return;
+  if (!isArmed()) return;
+if (openAt <= 0) return;
 
-        if (soonest <= openAt) openRally();
-    }
+// 🎯 Open rally exactly at UI time
+if (Math.abs(soonest - openAt) <= 1) {
+    openRally();
+}
+
 
     /* ========== INIT ========== */
 
