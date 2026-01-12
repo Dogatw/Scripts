@@ -852,6 +852,59 @@ async function safeGet(url) {
     }
 }
 
+// ===============================
+// HELPERS – REPORT SCRAPING
+// ===============================
+
+async function getLinks(onlyNew = true, map_history_upload = new Map()) {
+    const links = [];
+    const seen = new Set();
+
+    let page = 0;
+    let stop = false;
+
+    while (!stop) {
+        const url = TribalWars.buildURL("GET", "report", {
+            mode: "all",
+            group_id: -1,
+            page
+        });
+
+        const html = await $.get(url);
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        const rows = doc.querySelectorAll("tr[id^='report_']");
+        if (!rows.length) break;
+
+        for (const row of rows) {
+            const a = row.querySelector("a[href*='view=']");
+            if (!a) continue;
+
+            const href = a.href;
+            const idMatch = href.match(/view=(\d+)/);
+            if (!idMatch) continue;
+
+            const reportId = idMatch[1];
+
+            // STOP at first known report
+            if (onlyNew && map_history_upload.has(reportId)) {
+                stop = true;
+                break;
+            }
+
+            if (!seen.has(reportId)) {
+                seen.add(reportId);
+                links.push({ href, id: reportId });
+            }
+        }
+
+        page++;
+        await new Promise(r => setTimeout(r, 300));
+    }
+
+    console.log(`🔗 getLinks(): ${links.length} new reports`);
+    return links;
+}
 
 async function uploadReports() {
 
@@ -10576,6 +10629,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
