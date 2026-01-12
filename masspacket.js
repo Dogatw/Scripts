@@ -999,20 +999,6 @@ table.forEach(row => {
     totalPop += obj.archer || 0
     totalPop += (obj.heavy || 0) * heavyCav
 
-    saveSupportToSupabase({
-        world: game_data.world,
-        player_id: game_data.player.id,
-        player_name: game_data.player.name,
-        from_village: fromVillage,
-        to_village: toVillage,
-        spear: obj.spear || 0,
-        sword: obj.sword || 0,
-        archer: obj.archer || 0,
-        spy: obj.spy || 0,
-        heavy: obj.heavy || 0,
-        total_pop: totalPop,
-        sent_at: new Date().toISOString()
-    })
 })
 
 
@@ -1122,3 +1108,64 @@ function getSpeedConstant() { //Get speed constant (world speed * unit speed) fo
         return obj
     }
 }
+
+(function hookSupportSend() {
+    const form = document.querySelector("#place_call_form");
+    if (!form) return;
+
+    form.addEventListener("submit", () => {
+        try {
+            const coordDestination =
+                game_data.device === "desktop"
+                    ? $(".village-name").text().match(/\d+\|\d+/)[0]
+                    : $("#inputx").val() + "|" + $("#inputy").val();
+
+            document
+                .querySelectorAll(".overview_table .selected")
+                .forEach(row => {
+                    const fromVillage =
+                        row.children[0].innerText.match(/\d+\|\d+/)?.[0];
+                    if (!fromVillage) return;
+
+                    const getVal = unit =>
+                        parseInt(
+                            $(row).find(`.call-unit-box-${unit}`).val()
+                        ) || 0;
+
+                    const spear = getVal("spear");
+                    const sword = getVal("sword");
+                    const archer = getVal("archer");
+                    const spy = getVal("spy");
+                    const heavy = getVal("heavy");
+
+                    const totalPop =
+                        spear +
+                        sword +
+                        archer +
+                        heavy * heavyCav;
+
+                    if (totalPop <= 0) return;
+
+                    saveSupportToSupabase({
+                        world: game_data.world,
+                        player_id: game_data.player.id,
+                        player_name: game_data.player.name,
+                        from_village: fromVillage,
+                        to_village: coordDestination,
+                        spear,
+                        sword,
+                        archer,
+                        spy,
+                        heavy,
+                        total_pop: totalPop,
+                        sent_at: new Date().toISOString()
+                    });
+                });
+        } catch (e) {
+            console.error("Support logging failed", e);
+        }
+    });
+
+    console.log("✅ Supabase support logging hooked to SEND");
+})();
+
