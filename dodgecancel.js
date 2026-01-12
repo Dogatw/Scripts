@@ -255,7 +255,7 @@ if (openAt <= 0) return;
 if (Math.abs(soonest - openAt) <= 1) {
     openRally();
 }
-
+    }
 
     /* ========== INIT ========== */
 
