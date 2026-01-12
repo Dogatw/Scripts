@@ -1,12 +1,3 @@
-// ==UserScript==
-// @name         Tribal Wars – Mass Timed Fake Finder (FINAL UI+SAVE)
-// @namespace    sam.tw.timedfake
-// @version      2.5
-// @description  Timed fake finder with persistent UI, humanized auto-attack & confirm
-// @include      https://*/game.php?*&screen=overview_villages&mode=combined*
-// @grant        none
-// ==/UserScript==
-
 (function () {
     'use strict';
 
