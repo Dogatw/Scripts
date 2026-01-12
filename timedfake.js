@@ -1,4 +1,4 @@
-//2.8
+//2.9 out of sync
 
 (function () {
     'use strict';
@@ -186,40 +186,41 @@
 function getLaunchSecond(index) {
     return Math.floor(results[index].launch / 1000);
 }
+function getServerNow() {
+    const s = $('#serverDate').text() + ' ' + $('#serverTime').text();
+    return Date.parse(s.replace(/(\d+)\/(\d+)\/(\d+)/,'$2/$1/$3'));
+}
 
     /* ================= TIMERS ================= */
-   function startTimers(){
+ function startTimers(){
     setInterval(()=>{
-        document.querySelectorAll('.tf-timer').forEach(el=>{
-            let t = +el.dataset.time - 1000;
-            el.dataset.time = t;
+        const serverNow = getServerNow();
 
+        document.querySelectorAll('.tf-timer').forEach(el=>{
             const row = el.closest('tr');
             if (!row) return;
 
             const index = Number(row.id.replace('tf-row-',''));
+            const launchTime = results[index].launch;
 
-           // === AUTO RALLY AT 7 SECONDS ===
-// === AUTO RALLY AT 6 SECONDS (MAX 2 PER SECOND) ===
-if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
+            const t = launchTime - serverNow;
 
-    const sec = getLaunchSecond(index);
-    const used = secondCounter.get(sec) || 0;
+            // === AUTO RALLY AT 6 SECONDS (MAX 2 PER SECOND) ===
+            if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
 
-    // 🚫 only first 2 attacks of the same second
-    if (used >= 2) return;
+                const sec = Math.floor(launchTime / 1000);
+                const used = secondCounter.get(sec) || 0;
+                if (used >= 2) return;
 
-    secondCounter.set(sec, used + 1);
-    autoLaunched.add(index);
+                secondCounter.set(sec, used + 1);
+                autoLaunched.add(index);
 
-    setTimeout(() => {
-        if (document.getElementById(`tf-row-${index}`)) {
-            openRally(index);
-        }
-    }, rand(200, 600));
-}
-
-
+                setTimeout(() => {
+                    if (document.getElementById(`tf-row-${index}`)) {
+                        openRally(index);
+                    }
+                }, rand(200, 600));
+            }
 
             if (t <= 0) {
                 el.textContent = 'NOW';
@@ -239,8 +240,9 @@ if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
                 t < 15 * 60000 ? COLORS.warn :
                 COLORS.ok;
         });
-    }, 1000);
+    }, 250); // faster refresh, no drift
 }
+
 
 
     /* ================= RALLY AUTO FLOW ================= */
