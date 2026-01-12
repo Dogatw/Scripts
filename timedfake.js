@@ -204,7 +204,7 @@ let rallyBusy = false;
     setTimeout(() => {
         rallyBusy = false;
         processRallyQueue();
-    }, rand(320, 520));
+    }, rand(50, 100));
 }
 
 
