@@ -7827,47 +7827,83 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
     //add troops home for own villages that don't have incomings
    // vault.js ~8120 (PATCH START)
+    function normalizeTroopsHome(troopsHomeDetails) {
+    if (!troopsHomeDetails) return null;
+
+    // Already correct format
+    if (troopsHomeDetails.troopInVillage && troopsHomeDetails.troopsOwn) {
+        return troopsHomeDetails;
+    }
+
+    // Supabase flat format → convert
+    const troopInVillage = {};
+    const troopsOwn = {};
+
+    Object.keys(troopsPop).forEach(troop => {
+        const val = troopsHomeDetails[troop];
+        if (typeof val === "number") {
+            troopInVillage[troop] = val;
+            troopsOwn[troop] = val;
+        }
+    });
+
+    if (Object.keys(troopInVillage).length === 0) return null;
+
+    return {
+        troopInVillage,
+        troopsOwn,
+        wallLvl: troopsHomeDetails.wallLvl || 0,
+        farmLvl: troopsHomeDetails.farmLvl || 0
+    };
+}
+
 Array.from(map_troops_home.keys()).forEach(coord => {
 
     const villageDetails = mapVillages.get(coord);
     if (!villageDetails || villageDetails.villageId === undefined) {
-        console.warn("Skipped coord (missing villageDetails):", coord);
         return;
     }
 
-    const troopsHomeDetails = map_troops_home.get(coord);
-    if (!troopsHomeDetails || !troopsHomeDetails.troopInVillage || !troopsHomeDetails.troopsOwn) {
-        console.warn("Skipped coord (invalid troopsHomeDetails):", coord);
+    // ✅ NORMALIZE HERE
+    let troopsHomeDetails = normalizeTroopsHome(map_troops_home.get(coord));
+    if (!troopsHomeDetails) {
         return;
     }
 
-    let totalPop = 0, totalPopOff = 0, totalPopDef = 0;
+    let totalPop = 0;
+    let totalPopOff = 0;
+    let totalPopDef = 0;
 
     Object.keys(troopsHomeDetails.troopInVillage).forEach(troopName => {
 
+        const countVillage = troopsHomeDetails.troopInVillage[troopName] || 0;
+        const countOwn = troopsHomeDetails.troopsOwn[troopName] || 0;
+
         if (["spear", "sword", "archer", "heavy"].includes(troopName)) {
-            totalPop += troopsHomeDetails.troopInVillage[troopName] * troopsPop[troopName];
-            totalPopDef += (troopsHomeDetails.troopsOwn[troopName] || 0) * troopsPop[troopName];
+            totalPop += countVillage * troopsPop[troopName];
+            totalPopDef += countOwn * troopsPop[troopName];
         }
 
         if (["axe", "light", "marcher", "ram", "catapult"].includes(troopName)) {
-            totalPopOff += (troopsHomeDetails.troopsOwn[troopName] || 0) * troopsPop[troopName];
+            totalPopOff += countOwn * troopsPop[troopName];
         }
     });
 
-    let typeVillage = (totalPopDef > totalPopOff) ? "def" : "off";
-    typeVillage = ((troopsHomeDetails.troopsOwn['spy'] || 0) > 4000) ? "spy" : typeVillage;
-
-    let hasNoble = ((troopsHomeDetails.troopsOwn['snob'] || 0) > 0);
+    let typeVillage = totalPopDef > totalPopOff ? "def" : "off";
+    if ((troopsHomeDetails.troopsOwn.snob || 0) > 0) {
+        typeVillage = "noble";
+    }
+    if ((troopsHomeDetails.troopsOwn.spy || 0) > 4000) {
+        typeVillage = "spy";
+    }
 
     totalPop = Math.round(totalPop / 1000);
     totalPopOff = Math.round(totalPopOff / 1000);
     totalPopDef = Math.round(totalPopDef / 1000);
 
-    const villageIdKey = villageDetails.villageId + "";
+    const villageIdKey = String(villageDetails.villageId);
 
     if (!mapVillageById.has(villageIdKey)) {
-
         mapVillageById.set(villageIdKey, {
             villageId: villageDetails.villageId,
             playerId: villageDetails.playerId,
@@ -7878,25 +7914,23 @@ Array.from(map_troops_home.keys()).forEach(coord => {
             nrRecaps: 0,
             nrRecaped: 0,
             pop: totalPop,
-            typeVillage: typeVillage,
+            typeVillage,
             wallLevel: troopsHomeDetails.wallLvl || 0,
             farmLevel: troopsHomeDetails.farmLvl || 0,
-            totalPopOff: totalPopOff,
-            totalPopDef: totalPopDef,
-            hasNoble: hasNoble
+            totalPopOff,
+            totalPopDef,
+            hasNoble: (troopsHomeDetails.troopsOwn.snob || 0) > 0
         });
-
     } else {
-
-        let updateObj = mapVillageById.get(villageIdKey);
+        const updateObj = mapVillageById.get(villageIdKey);
         updateObj.typeVillage = typeVillage;
         updateObj.totalPopOff = totalPopOff;
         updateObj.totalPopDef = totalPopDef;
-        updateObj.hasNoble = hasNoble;
+        updateObj.hasNoble = (troopsHomeDetails.troopsOwn.snob || 0) > 0;
         mapVillageById.set(villageIdKey, updateObj);
     }
-
 });
+
 // PATCH END
 
     console.log("mapVillageByIdAfter",mapVillageById)
@@ -10507,6 +10541,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
