@@ -946,38 +946,56 @@ async function uploadReports() {
 
     list_href.reverse();
 
-    // ===========================
-    // SCRAPE
-    // ===========================
-    const scraped = [];
-    const typeAttacks = [];
+// ===========================
+// SCRAPE (SAFE + FAST)
+// ===========================
+const scraped = [];
+const typeAttacks = [];
 
-    for (let i = 0; i < list_href.length; i++) {
-        const html = await safeGet(list_href[i].href);
-        const doc = new DOMParser().parseFromString(html, "text/html");
+for (let i = 0; i < list_href.length; i++) {
+    const html = await safeGet(list_href[i].href);
+    const doc = new DOMParser().parseFromString(html, "text/html");
 
-        const list = getDataReport(tribemates, doc);
-        if (list == null) return;
+    const list = getDataReport(tribemates, doc);
 
-        for (const r of list) {
-            scraped.push({
-                coord: r.coord,
-                reportInfo: r.reportInfo
-            });
-        }
+    // ⛔ Recaptcha → STOP everything
+    if (list === null) {
+        UI.ErrorMessage("⚠️ Recaptcha detected. Stopping scrape.", 5000);
+        break;
+    }
 
-        const type = getDataReportTypeAttack(tribemates, doc);
-        if (type?.length) typeAttacks.push(type.pop());
+    // ⛔ Deleted / invalid report → SKIP
+    if (!Array.isArray(list) || list.length === 0) {
+        continue;
+    }
 
-        const id = Number(list_href[i].href.match(/view=(\d+)/)[1]);
+    // ✅ Valid reports
+    for (const r of list) {
+        scraped.push({
+            coord: r.coord,
+            reportInfo: r.reportInfo
+        });
+    }
+
+    // ===== Type attack (safe) =====
+    const type = getDataReportTypeAttack(tribemates, doc);
+    if (Array.isArray(type) && type.length) {
+        typeAttacks.push(type.pop());
+    }
+
+    // ===== History =====
+    const idMatch = list_href[i].href.match(/view=(\d+)/);
+    if (idMatch) {
+        const id = Number(idMatch[1]);
         map_history.set(id, {
             report_id: id,
             date: new Date().toISOString(),
             player_id: game_data.player.id
         });
-
-        progress.innerText = `Scraped ${i + 1}/${list_href.length}`;
     }
+
+    progress.innerText = `Scraped ${i + 1}/${list_href.length}`;
+}
 
     // ===========================
     // LOAD REPORTS + INCOMINGS
@@ -10630,6 +10648,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
