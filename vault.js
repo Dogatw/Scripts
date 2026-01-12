@@ -818,7 +818,41 @@ if(document.getElementById("incomings_table")!=null){
  * Supabase batch upsert helper
  * - Splits into chunks (avoids payload limits)
  * - Uses ON CONFLICT index
- */
+ */// ===========================
+// SAFE GET (ANTI-429)
+// ===========================
+let RATE_LIMIT_UNTIL = 0;
+
+async function safeGet(url) {
+    const now = Date.now();
+
+    // If we are in cooldown, wait
+    if (now < RATE_LIMIT_UNTIL) {
+        const wait = RATE_LIMIT_UNTIL - now;
+        console.warn(`⏸ Rate-limited, waiting ${Math.ceil(wait / 1000)}s`);
+        await new Promise(r => setTimeout(r, wait));
+    }
+
+    try {
+        const res = await $.get(url);
+
+        // human-like delay (VERY IMPORTANT for TW)
+        await new Promise(r => setTimeout(r, 900));
+
+        return res;
+    } catch (e) {
+        if (e?.status === 429) {
+            RATE_LIMIT_UNTIL = Date.now() + 10 * 60 * 1000; // 10 min cooldown
+            UI.ErrorMessage(
+                "⚠️ Too many requests. Pausing 10 minutes.",
+                5000
+            );
+        }
+        throw e;
+    }
+}
+
+
 async function uploadReports() {
 
     const progress = document.getElementById("progress_reports");
@@ -10542,6 +10576,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
