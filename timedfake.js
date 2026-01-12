@@ -195,7 +195,7 @@
     }
 
     /* ================= RALLY AUTO FLOW ================= */
- window.openRally = function (index) {
+window.openRally = function (index) {
     const r = results[index];
     const [x, y] = r.t.split('|');
 
@@ -217,45 +217,43 @@
 
         document.getElementById(`tf-row-${index}`)?.remove();
 
-        let attacked = false;
-        let confirmed = false;
+        let attackClicked = false;
+        let confirmClicked = false;
 
         const poll = setInterval(() => {
             try {
                 if (!win || win.closed) return clearInterval(poll);
                 const doc = win.document;
-                const url = win.location.href;
 
-                /* STEP 1 — Fill unit */
-                if (!attacked) {
+                /* STEP 1 — Fill unit + click Attack */
+                if (!attackClicked) {
                     const unitInput = doc.querySelector(`#unit_input_${selectedUnit}`);
-                    if (!unitInput) return;
-
-                    unitInput.value = 1;
-                    unitInput.dispatchEvent(new Event('input', { bubbles: true }));
-
                     const attackBtn =
                         doc.querySelector('#target_attack') ||
                         doc.querySelector('input.attack');
 
-                    if (!attackBtn) return;
+                    if (!unitInput || !attackBtn) return;
+
+                    unitInput.value = 1;
+                    unitInput.dispatchEvent(new Event('input', { bubbles: true }));
 
                     setTimeout(() => attackBtn.click(), rand());
-                    attacked = true;
+                    attackClicked = true;
                     return;
                 }
 
-                /* STEP 2 — Wait for CONFIRM PAGE */
-                if (attacked && !confirmed && url.includes('try=confirm')) {
+                /* STEP 2 — Detect CONFIRM FORM (DOM-based) */
+                if (attackClicked && !confirmClicked) {
                     const confirmBtn =
                         doc.querySelector('#troop_confirm_go') ||
                         doc.querySelector('input.btn-confirm-yes') ||
-                        doc.querySelector('button.btn-confirm-yes');
+                        doc.querySelector('button.btn-confirm-yes') ||
+                        doc.querySelector('input[name="confirm"]');
 
-                    if (!confirmBtn) return;
+                    if (!confirmBtn) return; // keep waiting
 
                     setTimeout(() => confirmBtn.click(), rand(150, 400));
-                    confirmed = true;
+                    confirmClicked = true;
 
                     /* STEP 3 — Close window */
                     setTimeout(() => {
@@ -266,11 +264,12 @@
                 }
 
             } catch {
-                /* waiting for navigation */
+                /* page still loading */
             }
-        }, 150);
+        }, 120);
     });
 };
+
 
 
     /* ================= INIT ================= */
