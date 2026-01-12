@@ -331,6 +331,8 @@ async function saveHistoryDB(reportId, data, world, tribe) {
 // ===================================================
 let timeDownloadStart;
 let timeDownloadStop;
+let mapVillageById;
+
 
 var allUsers, tribemates, permissions;
 
@@ -6967,7 +6969,7 @@ const [
     insertChartLibrary()
 ]);
     // 👇 ADD HERE
-let mapVillageById = new Map();
+ mapVillageById = new Map();
 Array.from(mapVillages.values()).forEach(v => {
     if (v && v.villageId != null) {
         mapVillageById.set(v.villageId, v);
@@ -7451,7 +7453,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
     //this part is for Enemy Info
     
     
-    let mapVillageByIdFinal=new Map()
+     mapVillageByIdFinal=new Map()
     let mapAttacksPlayersIdFinal=new Map()
 
     Array.from(map_reports.keys()).forEach(key=>{
@@ -7751,7 +7753,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
 
     //this part is for Ally Info
-    let mapVillageById=new Map()
+     mapVillageById=new Map()
     Array.from(map_playerId.keys()).forEach(key=>{
         let list_coords = map_playerId.get(key).list_coords
 
@@ -10505,6 +10507,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
