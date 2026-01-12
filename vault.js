@@ -6966,6 +6966,16 @@ const [
 
     insertChartLibrary()
 ]);
+    // 👇 ADD HERE
+let mapVillageById = new Map();
+Array.from(mapVillages.values()).forEach(v => {
+    if (v && v.villageId != null) {
+        mapVillageById.set(v.villageId, v);
+    }
+
+});
+        console.log("mapVillageById size:", mapVillageById.size);
+
 
 // ===============================
 // CONVERT TO MAPS (SAME SHAPE)
@@ -10495,6 +10505,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
