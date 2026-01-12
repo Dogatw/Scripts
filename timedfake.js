@@ -204,7 +204,7 @@ let rallyBusy = false;
     setTimeout(() => {
         rallyBusy = false;
         processRallyQueue();
-    }, rand(50, 100));
+    }, rand(20, 50));
 }
 
 
@@ -226,7 +226,7 @@ if (t <= 7000 && t > 0 && !autoLaunched.has(index)) {
     autoLaunched.add(index);
     rallyQueue.push(index);
 
-    setTimeout(processRallyQueue, rand(80, 140));
+    setTimeout(processRallyQueue, rand(20, 50));
 }
 
 
