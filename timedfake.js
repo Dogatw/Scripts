@@ -250,14 +250,39 @@ window.openRally = function (index) {
                 }
 
                 /* STEP 2 — WAIT for CONFIRM PAGE DOM */
-                if (attackClicked && !confirmDone) {
-                    // confirm page ALWAYS has a form posting to "confirm"
-              const confirmBtn =
-    doc.querySelector('#troop_confirm_submit') ||      // ✅ THIS PAGE
-    doc.querySelector('.troop_confirm_go') ||          // class fallback
-    doc.querySelector('#troop_confirm_go') ||          // older worlds
-    do(function () {
-    'use strict';
+               if (attackClicked && !confirmDone) {
+
+    const confirmBtn =
+        doc.querySelector('#troop_confirm_submit') ||      // NEW worlds
+        doc.querySelector('.troop_confirm_go') ||          // class fallback
+        doc.querySelector('#troop_confirm_go') ||          // old worlds
+        doc.querySelector('input[name="submit_confirm"]'); // safest
+
+    if (!confirmBtn) return;
+
+    confirmDone = true;
+
+    // close ONLY after navigation starts
+    const closeOnUnload = () => {
+        try { win.close(); } catch {}
+    };
+
+    win.addEventListener('beforeunload', closeOnUnload, { once: true });
+
+    // click confirm
+    setTimeout(() => {
+        confirmBtn.focus();
+        confirmBtn.click();
+    }, rand(150, 400));
+
+    // fallback close
+    setTimeout(() => {
+        if (!win.closed) win.close();
+    }, 3000);
+
+    clearInterval(poll);
+}
+
 
     /* ================= CONFIG ================= */
     const STORAGE_KEY = 'tw_timed_fake_settings';
