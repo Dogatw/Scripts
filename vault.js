@@ -884,7 +884,7 @@ async function uploadReports() {
     await upsertBatch(
         "reports",
         toUpload,
-        "world,ally,coord"
+        "world,tribe,coord"
     );
 
     // ===========================
@@ -10456,6 +10456,7 @@ async function uploadOwnTroops() {
 
     return { status: "success" };
 }
+
 
 
 
