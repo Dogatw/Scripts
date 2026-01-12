@@ -255,7 +255,9 @@ window.openRally = function (index) {
                    const confirmBtn =
     doc.querySelector('#troop_confirm_go') ||
     doc.querySelector('input.btn-confirm-yes') ||
-    doc.querySelector('button.btn-confirm-yes');
+    doc.querySelector('button.btn-confirm-yes') ||
+    doc.querySelector('form[action*="confirm"] input[type="submit"]');
+
 
 if (!confirmBtn) return;
 
@@ -265,9 +267,11 @@ confirmDone = true;
 setTimeout(() => {
     const evtOpts = { bubbles: true, cancelable: true, view: win };
 
-    confirmBtn.dispatchEvent(new MouseEvent('mousedown', evtOpts));
-    confirmBtn.dispatchEvent(new MouseEvent('mouseup', evtOpts));
-    confirmBtn.dispatchEvent(new MouseEvent('click', evtOpts));
+    confirmBtn.focus();
+confirmBtn.dispatchEvent(new MouseEvent('mousedown', evtOpts));
+confirmBtn.dispatchEvent(new MouseEvent('mouseup', evtOpts));
+confirmBtn.dispatchEvent(new MouseEvent('click', evtOpts));
+
 }, rand(150, 400));
 
 
