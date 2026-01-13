@@ -246,24 +246,26 @@ async function main(){
     
     
 
-    if(((loginAdmin.includes(game_data.player.id.toString())==true || game_data.player.id.toString()==adminBoss) &&  game_data.world.match(/\d+/)[0]==runWorld)){
-        $("#div_ally").show()
-        $("#div_ally").on("mouseup",()=>{
-            adminInterfaceAlly()
-            $("#div_ally").off("mouseup")
-        })
+const myPlayerId = Number(game_data.player.id);
+const isAdmin =
+    loginAdmin.includes(myPlayerId) ||
+    (typeof adminBoss !== "undefined" && myPlayerId === Number(adminBoss));
 
-        $("#div_admin").show()
-        $("#div_admin").on("mouseup",()=>{
-            adminInterface()
-            $("#div_admin").off("mouseup")
-        })
-    }
-    if(((loginAdmin.includes(game_data.player.id.toString())==true || game_data.player.id.toString()==adminBoss) &&  game_data.world.match(/\d+/)[0]==runWorld)){
-        saveCoordDropbox();
-    }
+const worldOk = game_data.world.match(/\d+/)?.[0] === runWorld;
 
+if (isAdmin && worldOk) {
+
+    $("#div_ally").show().one("mouseup", () => {
+        adminInterfaceAlly();
+    });
+
+    $("#div_admin").show().one("mouseup", () => {
+        adminInterface();
+    });
+
+    saveCoordDropbox();
 }
+
 
 
 
