@@ -182,21 +182,8 @@ console.log("RAW ally file:", dropbox_ally);
 
 loginAdmin = [];
 loginAlly  = [];
-function isAdminUser() {
-    const myPlayerId = Number(game_data.player.id);
-    const myAllyId   = game_data.player.ally_id;
 
-    return (
-        Array.isArray(loginAdmin) &&
-        (
-            loginAdmin.includes(myPlayerId) ||
-            (myAllyId && Array.isArray(loginAlly) && loginAlly.includes(myAllyId))
-        )
-    );
-}
 
-// 🔓 expose to console
-window.isAdminUser = isAdminUser;
 
 try {
     loginAdmin = JSON.parse(dropbox_admin || "[]").map(e => Number(e.adminId));
@@ -224,6 +211,7 @@ function isAdminUser() {
         )
     );
 }
+window.isAdminUser = isAdminUser;
 
 console.log("Supabase admin path:", filename_admin);
 console.log("Supabase ally path:", filename_ally);
@@ -254,12 +242,8 @@ console.log("loginAlly:", loginAlly);
 console.log("myPlayerId:", myPlayerId);
 console.log("myAllyId:", myAllyId);
 
-if (
-    !(
-        loginAdmin.includes(myPlayerId) ||
-        (myAllyId && loginAlly.includes(myAllyId))
-    )
-) {
+
+if (!isAdminUser()) {
     UI.ErrorMessage("you don't have access");
     throw new Error("you don't have access");
 }
@@ -297,9 +281,8 @@ async function main(){
 const CURRENT_WORLD = game_data.world.match(/\d+/)?.[0]; // e.g. "150"
 const TARGET_WORLD  = worldNumber.replace(/\D/g, "");    // e.g. "150"
 
-const isAdmin =
-    Array.isArray(loginAdmin) &&
-    loginAdmin.includes(MY_PLAYER_ID);
+const isAdmin = isAdminUser();
+
 
 const worldOk = CURRENT_WORLD === TARGET_WORLD;
 
@@ -365,9 +348,18 @@ function httpGet(theUrl)
 
 
 //////////////////////////////////////////////////////////// interface /////////////////////////////////////////////////////////
-async function createMainInterface(){
-    let fakeLimit=getFakeLimit()
-    console.log("createInterface")
+
+
+async function createMainInterface() {
+
+    // ✅ SAFETY GUARD (CORRECT PLACE)
+    if (!Array.isArray(loginAdmin)) {
+        console.warn("Admin data not ready, skipping UI admin buttons");
+        return; // ⛔ stop building admin UI
+    }
+
+    let fakeLimit = getFakeLimit();
+    console.log("createInterface");
 
     html = `
     <div id="div_container" class="scriptContainer" >
