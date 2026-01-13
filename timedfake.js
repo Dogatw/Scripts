@@ -429,3 +429,5 @@ setInterval(syncServerTime, 5 * 60 * 1000);
 
      $('#tf-go').prop('disabled',false).text('Go').on('click',calculate);
 })();
+
+ })();
