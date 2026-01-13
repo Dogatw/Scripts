@@ -1,4 +1,4 @@
-//3.3 out of sync
+//2.9 out of sync
 
 (function () {
     'use strict';
@@ -10,8 +10,6 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
-    let timerHandle = null;
-
     let triggerArmed = new Set(); // index -> armed once
 
    let serverBase = 0;
@@ -62,21 +60,6 @@ function syncServerTime() {
 
     serverBase += diff;
     perfBase = nowPerf;
-}
-
-function cleanupIndex(index) {
-    triggerArmed.delete(index);
-    autoLaunched.delete(index);
-
-    const sec = Math.floor(results[index]?.launch / 1000);
-    if (secondCounter.has(sec)) {
-        const left = secondCounter.get(sec) - 1;
-        if (left <= 0) {
-            secondCounter.delete(sec);
-        } else {
-            secondCounter.set(sec, left);
-        }
-    }
 }
 
 
@@ -235,19 +218,9 @@ function getServerNow() {
 
 
     /* ================= TIMERS ================= */
-function startTimers(){
-    if (timerHandle) clearInterval(timerHandle);
-
-    timerHandle = setInterval(() => {
+ function startTimers(){
+    setInterval(()=>{
         const serverNow = getServerNow();
-        const currentSec = Math.floor(serverNow / 1000);
-
-        // clean old second limits
-        for (const sec of secondCounter.keys()) {
-            if (sec < currentSec - 2) {
-                secondCounter.delete(sec);
-            }
-        }
 
         document.querySelectorAll('.tf-timer').forEach(el=>{
             const row = el.closest('tr');
@@ -255,39 +228,36 @@ function startTimers(){
 
             const index = Number(row.id.replace('tf-row-',''));
             const launchTime = results[index].launch;
+
             const t = launchTime - serverNow;
 
-            // expire cleanup
-            if (t <= -1000) {
-                cleanupIndex(index);
-                return;
-            }
+            // === AUTO RALLY AT 6 SECONDS (MAX 2 PER SECOND) ===
+          // arm when safely above threshold
+if (t > 6200 && !triggerArmed.has(index)) {
+    triggerArmed.add(index);
+}
 
-            // arm
-            if (t > 6200 && !triggerArmed.has(index)) {
-                triggerArmed.add(index);
-            }
+// fire ONLY on downward crossing
+if (
+    triggerArmed.has(index) &&
+    t <= 6000 &&
+    t > 0 &&
+    !autoLaunched.has(index)
+) {
+    const sec = Math.floor(launchTime / 1000);
+    const used = secondCounter.get(sec) || 0;
+    if (used >= 2) return;
 
-            // fire on crossing
-            if (
-                triggerArmed.has(index) &&
-                t <= 6000 &&
-                t > 0 &&
-                !autoLaunched.has(index)
-            ) {
-                const sec = Math.floor(launchTime / 1000);
-                const used = secondCounter.get(sec) || 0;
-                if (used >= 2) return;
+    secondCounter.set(sec, used + 1);
+    autoLaunched.add(index);
 
-                secondCounter.set(sec, used + 1);
-                autoLaunched.add(index);
+    setTimeout(() => {
+        if (document.getElementById(`tf-row-${index}`)) {
+            openRally(index);
+        }
+    }, rand(200, 600));
+}
 
-                setTimeout(() => {
-                    if (document.getElementById(`tf-row-${index}`)) {
-                        openRally(index);
-                    }
-                }, rand(200, 600));
-            }
 
             if (t <= 0) {
                 el.textContent = 'NOW';
@@ -307,9 +277,8 @@ function startTimers(){
                 t < 15 * 60000 ? COLORS.warn :
                 COLORS.ok;
         });
-    }, 250);
+    }, 250); // faster refresh, no drift
 }
-
 
 
 
@@ -334,8 +303,7 @@ window.openRally = function (index) {
             '_blank'
         );
 
-document.getElementById(`tf-row-${index}`)?.remove();
-cleanupIndex(index);
+        document.getElementById(`tf-row-${index}`)?.remove();
 
         let attackClicked = false;
         let confirmDone = false;
@@ -427,7 +395,5 @@ clearInterval(poll);
     // optional periodic resync
 setInterval(syncServerTime, 5 * 60 * 1000);
 
-     $('#tf-go').prop('disabled',false).text('Go').on('click',calculate);
+    $('#tf-go').prop('disabled',false).text('Go').on('click',calculate);
 })();
-
- })();
