@@ -21,9 +21,8 @@ async function initSupabase() {
         SUPABASE_URL,
         SUPABASE_KEY
     );
-    window.supabaseClient = supabaseClient; // ✅ ADD THIS LINE
+    window.supabaseClient = supabaseClient; // ✅ expose client
 }
-
 
 async function readFileSupabase(filename) {
     const { data, error } = await supabaseClient
@@ -40,10 +39,9 @@ async function getAdmin() {
         return await readFileSupabase(filename_admin);
     } catch (e) {
         console.warn("admin.txt missing or unreadable", e);
-        return "[]"; // ❌ DO NOT upload here
+        return "[]";
     }
 }
-
 
 async function getAlly() {
     try {
@@ -54,10 +52,19 @@ async function getAlly() {
     }
 }
 
+// 🔓 expose helpers
+window.readFileSupabase = readFileSupabase;
+window.getAdmin = getAdmin;
+window.getAlly = getAlly;
+window.initSupabase = initSupabase;
 
 
-var databaseName = game_data.world;   // ✅ REQUIRED
+// ===== CONFIG =====
+var databaseName = game_data.world;
 var worldNumber = "en150";
+
+var filename_admin, filename_ally;
+
 
 
 var filename_ally,filename_admin,filename_fakes1,filename_fakes2,filename_fakes3,filename_fakes4,filename_fakes5,filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10
@@ -1532,59 +1539,54 @@ function saveCoordDropbox() {
 
     for (let i = 0; i < tabs_tribe.length; i++) {
         const panelId = tabs_tribe[i].getAttribute("rel");
-        const panel   = document.getElementById(panelId);
+        const panel = document.getElementById(panelId);
         if (!panel) continue;
 
-const saveBtn = panel.querySelector('input[value="Save"]');
+        const saveBtn = panel.querySelector('input[value="Save"]');
         if (!saveBtn) continue;
 
-        $(saveBtn)
-            .off("click")
-            .on("click", async () => {
+        $(saveBtn).off("click").on("click", async () => {
+            const textarea = panel.querySelector("textarea");
+            if (!textarea) return;
 
-                const textarea = panel.querySelector("textarea");
-                if (!textarea) return;
+            const coords = (textarea.value.match(/\d+\|\d+/g) || []).join(" ");
 
-                const coords = (textarea.value.match(/\d+\|\d+/g) || []).join(" ");
+            const obj = {
+                coords: coords,
+                playerId: game_data.player.id.toString(),
+                playerName: game_data.player.name,
+                data:
+                    document.getElementById("serverDate").innerText +
+                    " " +
+                    document.getElementById("serverTime").innerText,
+                nameTab: tabs_tribe[i].innerText.trim(),
+                sourceCoord:
+                    panel.querySelector(".select_get_coord")?.value || "manual",
+                list_input: Array.from(
+                    document.querySelectorAll(
+                        "#table_get_coords input[type=number], #table_get_coords input[type=text]"
+                    )
+                ).map(el => el.value)
+            };
 
-                const obj = {
-                    coords: coords,
-                    playerId: game_data.player.id.toString(),
-                    playerName: game_data.player.name,
-                    data:
-                        document.getElementById("serverDate").innerText +
-                        " " +
-                        document.getElementById("serverTime").innerText,
-const index = i;
+            console.log("✅ saved object:", obj);
 
-$(saveBtn).off("click").on("click", async () => {
-    ...
-    nameTab: tabs_tribe[index].innerText.trim(),
-    ...
-    await uploadFile(JSON.stringify(obj), list_filename_fakes[index]);
-});
-                    sourceCoord: panel.querySelector(".select_get_coord")?.value || "manual",
-                    list_input: Array.from(
-                        document.querySelectorAll(
-                            "#table_get_coords input[type=number], #table_get_coords input[type=text]"
-                        )
-                    ).map(el => el.value)
-                };
-
-                console.log("✅ saved object:", obj);
-
-                if (typeof list_filename_fakes[i] === "string") {
-                    try {
-                        await uploadFile(JSON.stringify(obj), list_filename_fakes[i]);
-                        UI.SuccessMessage("Saved successfully", 1000);
-                    } catch (err) {
-                        console.error("Upload failed:", err);
-                        UI.ErrorMessage("Upload failed", 1000);
-                    }
+            if (typeof list_filename_fakes[i] === "string") {
+                try {
+                    await uploadFile(
+                        JSON.stringify(obj),
+                        list_filename_fakes[i]
+                    );
+                    UI.SuccessMessage("Saved successfully", 1000);
+                } catch (err) {
+                    console.error("Upload failed:", err);
+                    UI.ErrorMessage("Upload failed", 1000);
                 }
-            });
+            }
+        });
     }
 }
+
 
 
 
