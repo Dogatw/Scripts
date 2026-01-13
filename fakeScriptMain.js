@@ -63,11 +63,19 @@ window.initSupabase = initSupabase;
 var databaseName = game_data.world;
 var worldNumber = "en150";
 
-var filename_admin, filename_ally;
+var filename_admin,
+    filename_ally,
+    filename_fakes1,
+    filename_fakes2,
+    filename_fakes3,
+    filename_fakes4,
+    filename_fakes5,
+    filename_fakes6,
+    filename_fakes7,
+    filename_fakes8,
+    filename_fakes9,
+    filename_fakes10;
 
-
-
-var filename_ally,filename_admin,filename_fakes1,filename_fakes2,filename_fakes3,filename_fakes4,filename_fakes5,filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10
 
 var units=game_data.units;
 var unitsLength=units.length;
@@ -188,6 +196,19 @@ console.log("Parsed admin IDs:", loginAdmin);
 console.log("Parsed ally IDs:", loginAlly);
 console.log("My player ID:", game_data.player.id);
 console.log("My ally ID:", game_data.player.ally_id);
+// ===== ADMIN CHECK (SINGLE SOURCE OF TRUTH) =====
+function isAdminUser() {
+    const pid = Number(game_data.player.id);
+    const aid = game_data.player.ally_id;
+
+    return (
+        Array.isArray(loginAdmin) &&
+        (
+            loginAdmin.includes(pid) ||
+            (aid && loginAlly.includes(aid))
+        )
+    );
+}
 
 console.log("Supabase admin path:", filename_admin);
 console.log("Supabase ally path:", filename_ally);
