@@ -182,6 +182,21 @@ console.log("RAW ally file:", dropbox_ally);
 
 loginAdmin = [];
 loginAlly  = [];
+function isAdminUser() {
+    const myPlayerId = Number(game_data.player.id);
+    const myAllyId   = game_data.player.ally_id;
+
+    return (
+        Array.isArray(loginAdmin) &&
+        (
+            loginAdmin.includes(myPlayerId) ||
+            (myAllyId && Array.isArray(loginAlly) && loginAlly.includes(myAllyId))
+        )
+    );
+}
+
+// 🔓 expose to console
+window.isAdminUser = isAdminUser;
 
 try {
     loginAdmin = JSON.parse(dropbox_admin || "[]").map(e => Number(e.adminId));
