@@ -3367,9 +3367,10 @@ function getCoordsGrabber(mapVillage){
     })
     
     // console.log("result_coords",result_coords)
-    return result_coords.join(" ")
-}
+    return result_coords.join(" ");
+} // ✅ end getCoordsGrabber
 
+// =========================
 
 // javascript:$.getScript('https://dl.dropboxusercontent.com/s/2q29vaqbibe6tph/fakeScriptMain.js?dl=0');void(0)
 
