@@ -55,7 +55,7 @@ async function getAlly() {
 
 var databaseName = game_data.world;   // ✅ REQUIRED
 var worldNumber = "en150";
-var adminBoss   = "cousin";
+
 
 var filename_ally,filename_admin,filename_fakes1,filename_fakes2,filename_fakes3,filename_fakes4,filename_fakes5,filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10
 
@@ -158,6 +158,18 @@ filename_admin = `${databaseName}/admin.txt`;
 
 dropbox_admin = await getAdmin();
 dropbox_ally  = await getAlly();
+
+console.log("RAW admin file:", dropbox_admin);
+console.log("RAW ally file:", dropbox_ally);
+
+loginAdmin = JSON.parse(dropbox_admin || "[]").map(e => e.adminId);
+loginAlly  = JSON.parse(dropbox_ally  || "[]").map(e => e.allyId);
+
+console.log("Parsed admin IDs:", loginAdmin);
+console.log("Parsed ally IDs:", loginAlly);
+console.log("My player ID:", game_data.player.id);
+console.log("My ally ID:", game_data.player.ally_id);
+
 console.log("Supabase admin path:", filename_admin);
 console.log("Supabase ally path:", filename_ally);
 
@@ -181,10 +193,25 @@ console.log("Supabase ally path:", filename_ally);
     loginAlly=JSON.parse((dropbox_ally=="")?"[]":dropbox_ally ).map(e=>{return e.allyId})
     loginAdmin=JSON.parse((dropbox_admin=="")?"[]":dropbox_admin ).map(e=>{return e.adminId})
 
-    if(!((loginAlly.includes(game_data.player.ally)==true || game_data.player.id.toString()==adminBoss ) && game_data.world.match(/\d+/)[0]==runWorld)){
-        UI.ErrorMessage("you don't have access")
-        throw new Error("you don't have access");
-    }
+ const myPlayerId = game_data.player.id;
+const myAllyId   = game_data.player.ally_id; // ✅ correct field
+
+console.log("Access check:");
+console.log("loginAdmin:", loginAdmin);
+console.log("loginAlly:", loginAlly);
+console.log("myPlayerId:", myPlayerId);
+console.log("myAllyId:", myAllyId);
+
+if (
+    !(
+        loginAdmin.includes(myPlayerId) ||
+        (myAllyId && loginAlly.includes(myAllyId))
+    )
+) {
+    UI.ErrorMessage("you don't have access");
+    throw new Error("you don't have access");
+}
+
     
     
     checkPageRun()
