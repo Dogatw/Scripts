@@ -1,4 +1,4 @@
-//3.2 out of sync
+//3.3 out of sync
 
 (function () {
     'use strict';
@@ -10,6 +10,8 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
+    let timerHandle = null;
+
     let triggerArmed = new Set(); // index -> armed once
 
    let serverBase = 0;
@@ -233,8 +235,10 @@ function getServerNow() {
 
 
     /* ================= TIMERS ================= */
- function startTimers(){
-    setInterval(()=>{
+function startTimers(){
+    if (timerHandle) clearInterval(timerHandle);
+
+    timerHandle = setInterval(() => {
         const serverNow = getServerNow();
         const currentSec = Math.floor(serverNow / 1000);
 
@@ -305,6 +309,7 @@ function getServerNow() {
         });
     }, 250);
 }
+
 
 
 
@@ -422,6 +427,5 @@ clearInterval(poll);
     // optional periodic resync
 setInterval(syncServerTime, 5 * 60 * 1000);
 
-    $('#tf-go').prop('disabled',false).text('Go').on('click',calculate);
+     $('#tf-go').prop('disabled',false).text('Go').on('click',calculate);
 })();
-
