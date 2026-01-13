@@ -21,9 +21,7 @@ async function initSupabase() {
         SUPABASE_URL,
         SUPABASE_KEY
     );
-
-    // 🔥 TEMP DEBUG: expose to console
-    window.supabaseClient = supabaseClient;
+    window.supabaseClient = supabaseClient; // ✅ ADD THIS LINE
 }
 
 
