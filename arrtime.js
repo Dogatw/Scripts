@@ -1,4 +1,13 @@
-//V3.3
+// ==UserScript==
+// @name         Set Arrival Time (Reload + Visible)
+// @description  Shows arrival time, reloads before arrival, resumes automatically
+// @author       FunnyPocketBook + patched
+// @version      3.3.1
+// @license      MIT
+// @namespace    FunnyPocketBook
+// @include      https://*/game.php?*&screen=place&try=confirm
+// @grant        none
+// ==/UserScript==
 
 (function () {
     'use strict';
