@@ -19,7 +19,11 @@ async function initSupabase() {
         SUPABASE_URL,
         SUPABASE_KEY
     );
+
+    // 🔥 TEMP DEBUG: expose to console
+    window.supabaseClient = supabaseClient;
 }
+
 
 async function readFileSupabase(filename) {
     const { data, error } = await supabaseClient
