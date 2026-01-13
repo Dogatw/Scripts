@@ -1082,7 +1082,7 @@ function adminInterfaceAlly(){
                         allyId:map_tribe.get(ally[i].innerText)
                     })
                 }
-         // uploadFile(JSON.stringify(list_ally), filename_ally)
+         uploadFile(JSON.stringify(list_ally), filename_ally)
                 console.log(list_ally)
             })
 
