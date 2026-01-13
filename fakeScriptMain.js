@@ -165,8 +165,17 @@ dropbox_ally  = await getAlly();
 console.log("RAW admin file:", dropbox_admin);
 console.log("RAW ally file:", dropbox_ally);
 
-loginAdmin = JSON.parse(dropbox_admin || "[]").map(e => e.adminId);
-loginAlly  = JSON.parse(dropbox_ally  || "[]").map(e => e.allyId);
+loginAdmin = [];
+loginAlly  = [];
+
+try {
+    loginAdmin = JSON.parse(dropbox_admin || "[]").map(e => Number(e.adminId));
+} catch {}
+
+try {
+    loginAlly = JSON.parse(dropbox_ally || "[]").map(e => Number(e.allyId));
+} catch {}
+
 
 console.log("Parsed admin IDs:", loginAdmin);
 console.log("Parsed ally IDs:", loginAlly);
@@ -177,9 +186,7 @@ console.log("Supabase admin path:", filename_admin);
 console.log("Supabase ally path:", filename_ally);
 
 
-    filename_ally=`${databaseName}/ally.txt`
-    filename_admin=`${databaseName}/admin.txt`
-
+   
     filename_fakes1=`${databaseName}/fakes1.txt`
     filename_fakes2=`${databaseName}/fakes2.txt`
     filename_fakes3=`${databaseName}/fakes3.txt`
@@ -193,8 +200,7 @@ console.log("Supabase ally path:", filename_ally);
     list_filename_fakes=[filename_fakes1, filename_fakes2, filename_fakes3, filename_fakes4, filename_fakes5, filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10]
     // console.log("adminBOss: "+adminBoss + " == "+game_data.player.id.toString())
     // console.log("runWorld: "+runWorld)
-    loginAlly=JSON.parse((dropbox_ally=="")?"[]":dropbox_ally ).map(e=>{return e.allyId})
-    loginAdmin=JSON.parse((dropbox_admin=="")?"[]":dropbox_admin ).map(e=>{return e.adminId})
+    
 
  const myPlayerId = game_data.player.id;
 const myAllyId   = game_data.player.ally_id; // ✅ correct field
@@ -244,27 +250,36 @@ async function main(){
     getCoordDropbox()
     getFakeLimit()
     
-    
+    const MY_PLAYER_ID = Number(game_data.player.id);
+const CURRENT_WORLD = game_data.world.match(/\d+/)?.[0]; // e.g. "150"
+const TARGET_WORLD  = worldNumber.replace(/\D/g, "");    // e.g. "150"
 
-const myPlayerId = Number(game_data.player.id);
 const isAdmin =
-    loginAdmin.includes(myPlayerId) ||
-    (typeof adminBoss !== "undefined" && myPlayerId === Number(adminBoss));
+    Array.isArray(loginAdmin) &&
+    loginAdmin.includes(MY_PLAYER_ID);
 
-const worldOk = game_data.world.match(/\d+/)?.[0] === runWorld;
+const worldOk = CURRENT_WORLD === TARGET_WORLD;
 
 if (isAdmin && worldOk) {
 
-    $("#div_ally").show().one("mouseup", () => {
-        adminInterfaceAlly();
-    });
+    $("#div_ally")
+        .show()
+        .off("mouseup")
+        .one("mouseup", () => {
+            adminInterfaceAlly();
+        });
 
-    $("#div_admin").show().one("mouseup", () => {
-        adminInterface();
-    });
+    $("#div_admin")
+        .show()
+        .off("mouseup")
+        .one("mouseup", () => {
+            adminInterface();
+        });
 
+    // only admins may upload/save coords
     saveCoordDropbox();
 }
+
 
 
 
@@ -498,60 +513,83 @@ async function createMainInterface(){
     <br>
 
     `
+const MY_PLAYER_ID = Number(game_data.player.id);
+const CURRENT_WORLD = game_data.world.match(/\d+/)?.[0]; // "150"
+const TARGET_WORLD  = worldNumber.replace(/\D/g, "");    // "150"
 
 
 
-        
-    //create panels
-    html+=`   
+// create panels
+html += `   
+<div class="tab-panels" id="tabs_coord">
+    <ul class="tabs">
+        <li class="update_tab own active" rel="panel${nrTabs}">
+            <font>panel${nrTabs}</font>
+            <img class="remove_tab" src="https://img.icons8.com/doodle/16/000000/delete-sign.png"/>
+        </li>
+        <li id="add_tab">
+            <img src="https://img.icons8.com/color/16/000000/add-tab.png"/>
+        </li>
+    </ul>
 
-        <div class="tab-panels" id="tabs_coord" >
-            <ul class="tabs">
-                <li class="update_tab own active" rel="panel${nrTabs}" ><font >panel${nrTabs} </font > <img class="remove_tab" src="https://img.icons8.com/doodle/16/000000/delete-sign.png"/>  </li>
-                <li id="add_tab"><img src="https://img.icons8.com/color/16/000000/add-tab.png"/> </li>
-            </ul>
-        
-            <div id="all_tabs">`
-    for(let i=0;i<nrTabs;i++){
-        html+=`
-        <div id="panel${i}" class="panel">
-            <p style="color:${textColor};font-weight: bold;">saved by player on date</p>
-            <p style="color:${textColor};font-weight: bold;">nr coords:</p>
-            <center style="margin:5px"><textarea class="scriptInput" rows="10">panelTribe${i}</textarea></center>`
-            // console.log("adminBoss: "+adminBoss + " == "+ game_data.player.id.toString())
-            // console.log("nr: "+ game_data.world+ " == " + runWorld)
-            if(((loginAdmin.includes(game_data.player.id.toString())==true || game_data.player.id.toString()==adminBoss) && game_data.world.match(/\d+/)[0]==runWorld)){
-                
-                html+=`<center style="margin:5px">
-                        <input class="btn evt-confirm-btn btn-confirm-yes" type="button"  value="Save">
-                        <input class="btn evt-confirm-btn btn-confirm-yes coord_grabber" type="button"   value="Coord grabber">
-                        <select class="select_get_coord">
-                            <option value="dropbox">dropbox</option>
-                            <option value="coordGrabber">coordGrabber</option>
-                        </select>
-                    </center>`
-            }
-            else{
-                html+=`<center style="margin:5px" hidden>
-                <input class="btn evt-confirm-btn btn-confirm-yes" type="button"  value="Save">
-                <input class="btn evt-confirm-btn btn-confirm-yes coord_grabber" type="button"   value="Coord grabber">
-                <select class="select_get_coord">
-                    <option value="dropbox">dropbox</option>
-                    <option value="coordGrabber">coordGrabber</option>
-                </select>
-            </center>`
-            }
-        html+='</div>'
+    <div id="all_tabs">
+`;
+
+for (let i = 0; i < nrTabs; i++) {
+    html += `
+    <div id="panel${i}" class="panel">
+        <p style="color:${textColor};font-weight:bold;">saved by player on date</p>
+        <p style="color:${textColor};font-weight:bold;">nr coords:</p>
+        <center style="margin:5px">
+            <textarea class="scriptInput" rows="10">panelTribe${i}</textarea>
+        </center>
+    `;
+
+    const isAdminHere =
+        loginAdmin.includes(MY_PLAYER_ID) &&
+        CURRENT_WORLD === TARGET_WORLD;
+
+    if (isAdminHere) {
+        html += `
+        <center style="margin:5px">
+            <input class="btn evt-confirm-btn btn-confirm-yes" type="button" value="Save">
+            <input class="btn evt-confirm-btn btn-confirm-yes coord_grabber" type="button" value="Coord grabber">
+            <select class="select_get_coord">
+                <option value="dropbox">dropbox</option>
+                <option value="coordGrabber">coordGrabber</option>
+            </select>
+        </center>
+        `;
+    } else {
+        html += `
+        <center style="margin:5px" hidden>
+            <input class="btn evt-confirm-btn btn-confirm-yes" type="button" value="Save">
+            <input class="btn evt-confirm-btn btn-confirm-yes coord_grabber" type="button" value="Coord grabber">
+            <select class="select_get_coord">
+                <option value="dropbox">dropbox</option>
+                <option value="coordGrabber">coordGrabber</option>
+            </select>
+        </center>
+        `;
     }
-    html+=`    <div id="div_get_coords" style="margin:10px" hidden> </div>`
-    html+=`
-        <div id="panel${nrTabs}" class="panel own active">
-            <p style="color:${textColor};font-weight: bold;">nr coords:</p>
-            <center style="margin:5px"><textarea class="scriptInput" rows="10">panel${nrTabs}</textarea><center>
-        </div>
-        </div>
 
-        <ul class="tabs">`
+    html += `</div>`;
+}
+
+html += `
+    <div id="div_get_coords" style="margin:10px" hidden></div>
+
+    <div id="panel${nrTabs}" class="panel own active">
+        <p style="color:${textColor};font-weight:bold;">nr coords:</p>
+        <center style="margin:5px">
+            <textarea class="scriptInput" rows="10">panel${nrTabs}</textarea>
+        </center>
+    </div>
+    </div>
+
+    <ul class="tabs">
+`;
+
 
     for(let i=0;i<nrTabs;i++){
         html+=`<li class="li_tribe" rel="panel${i}" ><font>panelTribe${i}</font></li>`
@@ -1495,39 +1533,22 @@ function saveCoordDropbox(){
     // console.log(tabs_tribe)
     for(let i=0;i<tabs_tribe.length;i++){
         let idDivParent=tabs_tribe[i].getAttribute("rel");
-        document.getElementById(idDivParent).getElementsByClassName("btn")[0].addEventListener("click",()=>{
-            let coords=document.getElementById(idDivParent).getElementsByTagName("textarea")[0].value
-            let sourceCoord = document.getElementById(idDivParent).getElementsByClassName("select_get_coord")[0].value
+  $(document.getElementById(idDivParent)
+    .getElementsByClassName("btn")[0])
+    .off("click")
+    .on("click", () => {
 
-            let list_input=[]
-            $('#table_get_coords input[type=number], #table_get_coords input[type=text]').each(function () {
-                var value=this.value
-                list_input.push(value)
-            });
-    
-            
-            let obj={
-                coords:coords,
-                playerId:game_data.player.id.toString(),
-                playerName:game_data.player.name,
-                data:document.getElementById("serverDate").innerText+" "+document.getElementById("serverTime").innerText,
-                nameTab:tabs_tribe[i].innerText,
-                sourceCoord:sourceCoord,
-                list_input:list_input,
-            }
-            console.log("saved")
-            console.log(obj)
+        console.log("saved object:", obj);
+
+        // ✅ only upload if allowed & filename exists
+        if (typeof list_filename_fakes[i] === "string") {
             uploadFile(JSON.stringify(obj), list_filename_fakes[i])
-        })
-    }
+                .catch(err => console.error("Upload failed:", err));
+        }
 
+    }); // ✅ CLOSE .on("click")
+}        // ✅ CLOSE for-loop / parent block
 
-    
- 
-
-
-    
-}
 
 
 
@@ -2098,10 +2119,11 @@ function intervalHour(time_start,time_end,time_target){//check if attack lands o
 
 
 async function uploadFile(data, filename) {
-    if (SAFE_MODE_NO_UPLOAD && (filename.includes("admin") || filename.includes("ally"))) {
-        console.warn("🚫 Upload blocked for", filename);
-        return;
-    }
+if (SAFE_MODE_NO_UPLOAD) {
+    console.warn("🚫 Upload blocked (SAFE MODE):", filename);
+    return;
+}
+
 
     const blob = new Blob([data], { type: "text/plain" });
 
