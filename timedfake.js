@@ -1,4 +1,4 @@
-//2.9 out of sync
+//3.2 out of sync
 
 (function () {
     'use strict';
@@ -10,6 +10,12 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
+    let triggerArmed = new Set(); // index -> armed once
+
+   let serverBase = 0;
+let perfBase = 0;
+
+
     let secondCounter = new Map(); // launchSecond -> count
 
     let autoLaunched = new Set(); // prevent double auto-rally
@@ -40,6 +46,40 @@
         return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     }
 
+function syncServerTime() {
+    const s = $('#serverDate').text() + ' ' + $('#serverTime').text();
+    const realServer = Date.parse(
+        s.replace(/(\d+)\/(\d+)\/(\d+)/,'$2/$1/$3')
+    );
+
+    const nowPerf = performance.now();
+    const estimated = serverBase + (nowPerf - perfBase);
+
+    // smooth correction (no jump)
+    const diff = realServer - estimated;
+
+    serverBase += diff;
+    perfBase = nowPerf;
+}
+
+function cleanupIndex(index) {
+    triggerArmed.delete(index);
+    autoLaunched.delete(index);
+
+    const sec = Math.floor(results[index]?.launch / 1000);
+    if (secondCounter.has(sec)) {
+        const left = secondCounter.get(sec) - 1;
+        if (left <= 0) {
+            secondCounter.delete(sec);
+        } else {
+            secondCounter.set(sec, left);
+        }
+    }
+}
+
+
+
+    
     /* ================= UI ================= */
     function openUI() {
         Dialog.show('Content', `
@@ -187,14 +227,23 @@ function getLaunchSecond(index) {
     return Math.floor(results[index].launch / 1000);
 }
 function getServerNow() {
-    const s = $('#serverDate').text() + ' ' + $('#serverTime').text();
-    return Date.parse(s.replace(/(\d+)\/(\d+)\/(\d+)/,'$2/$1/$3'));
+    return serverBase + (performance.now() - perfBase);
 }
+
+
 
     /* ================= TIMERS ================= */
  function startTimers(){
     setInterval(()=>{
         const serverNow = getServerNow();
+        const currentSec = Math.floor(serverNow / 1000);
+
+        // clean old second limits
+        for (const sec of secondCounter.keys()) {
+            if (sec < currentSec - 2) {
+                secondCounter.delete(sec);
+            }
+        }
 
         document.querySelectorAll('.tf-timer').forEach(el=>{
             const row = el.closest('tr');
@@ -202,12 +251,26 @@ function getServerNow() {
 
             const index = Number(row.id.replace('tf-row-',''));
             const launchTime = results[index].launch;
-
             const t = launchTime - serverNow;
 
-            // === AUTO RALLY AT 6 SECONDS (MAX 2 PER SECOND) ===
-            if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
+            // expire cleanup
+            if (t <= -1000) {
+                cleanupIndex(index);
+                return;
+            }
 
+            // arm
+            if (t > 6200 && !triggerArmed.has(index)) {
+                triggerArmed.add(index);
+            }
+
+            // fire on crossing
+            if (
+                triggerArmed.has(index) &&
+                t <= 6000 &&
+                t > 0 &&
+                !autoLaunched.has(index)
+            ) {
                 const sec = Math.floor(launchTime / 1000);
                 const used = secondCounter.get(sec) || 0;
                 if (used >= 2) return;
@@ -240,7 +303,7 @@ function getServerNow() {
                 t < 15 * 60000 ? COLORS.warn :
                 COLORS.ok;
         });
-    }, 250); // faster refresh, no drift
+    }, 250);
 }
 
 
@@ -266,7 +329,8 @@ window.openRally = function (index) {
             '_blank'
         );
 
-        document.getElementById(`tf-row-${index}`)?.remove();
+document.getElementById(`tf-row-${index}`)?.remove();
+cleanupIndex(index);
 
         let attackClicked = false;
         let confirmDone = false;
@@ -348,11 +412,16 @@ clearInterval(poll);
 
 
     /* ================= INIT ================= */
-    (async function(){
-        openUI();
-        await loadUnitSpeeds();
-        collectVillages();
-        $('#tf-go').prop('disabled',false).text('Go').on('click',calculate);
-    })();
+   (async function(){
+    openUI();
+    await loadUnitSpeeds();
+    collectVillages();
 
+    syncServerTime(); // ✅ HERE (server clock is stable)
+
+    // optional periodic resync
+setInterval(syncServerTime, 5 * 60 * 1000);
+
+    $('#tf-go').prop('disabled',false).text('Go').on('click',calculate);
 })();
+
