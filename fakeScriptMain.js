@@ -1,22 +1,28 @@
 // == Supabase config ==
 const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
+const SUPABASE_BUCKET = "tw-scripts";
+let supabaseClient;
+async function loadSupabase() {
+    if (window.supabase) return;
+    await new Promise(res => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+        s.onload = res;
+        document.head.appendChild(s);
+    });
+}
 
-// load supabase client
-await new Promise(resolve => {
-  const s = document.createElement("script");
-  s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-  s.onload = resolve;
-  document.head.appendChild(s);
-});
-
-const supabase = supabaseJs.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+async function initSupabase() {
+    await loadSupabase();
+    supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+}
 
 
-
+ var databaseName="",worldNumber="",adminBoss=""
 var filename_ally,filename_admin,filename_fakes1,filename_fakes2,filename_fakes3,filename_fakes4,filename_fakes5,filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10
 
 var units=game_data.units;
@@ -109,9 +115,13 @@ var list_filename_fakes
 var dropbox_admin,dropbox_ally
 var loginAlly,loginAdmin
 (async () => {
-    dropbox_admin= await getAdmin()
-    dropbox_ally= await getAlly()
+    await initSupabase();   // ← THIS LINE IS REQUIRED
 
+    filename_ally = `${databaseName}/ally.txt`;
+    filename_admin = `${databaseName}/admin.txt`;
+
+    dropbox_admin = await getAdmin();
+    dropbox_ally  = await getAlly();
 
     filename_ally=`${databaseName}/ally.txt`
     filename_admin=`${databaseName}/admin.txt`
@@ -792,80 +802,10 @@ function hitCountApi(){
 
 
 ///////////////////////////////////////////////////////////get admins from dropbox////////////////////////////////////
-async function getAdmin(){
-    await insertCryptoLibrary();
-    var decrypted = CryptoJS.AES.decrypt(encryptedData, "automateThisAnnoyingPart");
-    decrypted =decrypted.toString(CryptoJS.enc.Utf8);
-    // console.log(decrypted)
-    new Function(decrypted)()
-
-    var filename_admin=`${databaseName}/admin.txt`;
-
-
-    return new Promise((solve,reject)=>{
-        $.ajax({
-            url: "https://content.dropboxapi.com/2/files/download",
-            method: 'POST',
-            dataType: "text",
-            async: false,
-            headers: { 'Authorization': 'Bearer ' + dropboxToken,
-                        'Dropbox-API-Arg': JSON.stringify({path: "/"+filename_admin})},
-            
-            success: (data) => {
-                data = data.replace(/</g, "").replace(/>/g, "")
-                solve(data)
-                
-            },error:(err)=>{
-                alert(err)
-                reject(err)
-            }
-        })
-    })
-}
-
-
-
-function insertCryptoLibrary(){
-    return new Promise((resolve,reject)=>{
-
-        let start=new Date().getTime()
-        let script = document.createElement('script');
-        script.type="text/javascript"
-        script.src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"
-        script.onload = function () {
-            let stop=new Date().getTime()
-            console.log(`insert crypto-js library in ${stop-start} ms`)
-            resolve("done")
-        };
-        document.head.appendChild(script);
-    })
-}
 
 
 
 ///////////////////////////////////////////////////////////get ally from dropbox////////////////////////////////////
-function getAlly(){
-    let filename_ally =`${databaseName}/ally.txt`
-    return new Promise((solve,reject)=>{
-        $.ajax({
-            url: "https://content.dropboxapi.com/2/files/download",
-            method: 'POST',
-            dataType: "text",
-            async: false,
-            headers: { 'Authorization': 'Bearer ' + dropboxToken,
-                        'Dropbox-API-Arg': JSON.stringify({path: "/"+filename_ally})},
-            
-            success: (data) => {
-                data = data.replace(/</g, "").replace(/>/g, "")
-                solve(data)
-                
-            },error:(err)=>{
-                alert(err)
-                reject(err)
-            }
-        })
-    })
-}
 
 
 
@@ -2086,66 +2026,22 @@ function intervalHour(time_start,time_end,time_target){//check if attack lands o
 }
 
 
-function uploadFile(data,filename,dropboxToken){ // upload file into dropbox
-    return new Promise((resolve,reject)=>{
-        var file = new Blob([data], {type: "plain/text"});
-        var nr_start1=new Date().getTime();
-        file.name=filename;
+async function uploadFile(data, filename) {
+    const blob = new Blob([data], { type: "text/plain" });
 
-        //stop refreshing the page
-        $(document).bind("keydown", disableF5);
-        window.onbeforeunload = function (e) {
-            console.log("is uploading");
-            return "are you sure?";
-        };
+    const { error } = await supabaseClient
+        .storage
+        .from("tw-scripts")
+        .upload(filename, blob, { upsert: true });
 
-        var xhr = new XMLHttpRequest();
-        xhr.upload.onprogress = function(evt) {
-            console.log(evt)
-            var percentComplete = parseInt(100.0 * evt.loaded / evt.total);
-            console.log(percentComplete)
-            UI.SuccessMessage("progress upload: "+percentComplete+"%")
-        };
+    if (error) {
+        UI.ErrorMessage("Supabase upload failed");
+        throw error;
+    }
 
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var fileInfo = JSON.parse(xhr.response);
-                // Upload succeeded. Do something here with the file info.
-                UI.SuccessMessage("upload succes")
-                var nr_stop1=new Date().getTime();
-                console.log("time upload: "+(nr_stop1-nr_start1))
-
-                //enable refresh page
-                window.onbeforeunload = function (e) {
-                    console.log("done");
-                };
-                $(document).unbind("keydown", disableF5);
-
-                resolve("succes")
-
-            }
-            else {
-                var errorMessage = xhr.response || 'Unable to upload file';
-                // Upload failed. Do something here with the error.
-                UI.SuccessMessage("upload failed")
-                reject(errorMessage)
-            }
-        };
-
-        xhr.open('POST', 'https://content.dropboxapi.com/2/files/upload');
-        xhr.setRequestHeader('Authorization', 'Bearer ' + dropboxToken);
-        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-        xhr.setRequestHeader('Dropbox-API-Arg', JSON.stringify({
-            path: '/' +  file.name,
-            mode: 'add',
-            autorename: true,
-            mode:'overwrite',
-            mute: false
-        }));
-
-        xhr.send(file)
-    })
+    UI.SuccessMessage("Upload success", 1000);
 }
+
 
 function disableF5(e) { if ((e.which || e.keyCode) == 116 || (e.which || e.keyCode) == 82) e.preventDefault(); };
 
