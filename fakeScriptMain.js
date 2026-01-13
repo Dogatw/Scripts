@@ -1606,7 +1606,7 @@ async function getCoordDropbox(){
                     data_coord = data_coord.replace(/</g, "").replace(/>/g, "")
                     let obj=JSON.parse(data_coord)
                     obj.coords = obj.coords.replace(/"/g, "").replace(/'/g, "").replace(/`/g, "")
-                    obj.dat = obj.data.replace(/"/g, "").replace(/'/g, "").replace(/`/g, "")
+                   obj.data = obj.data.replace(/"/g, "").replace(/'/g, "").replace(/`/g, "")
 
                     textarea.value=obj.coords
                     obj.playerName = obj.playerName.replace(/"/g, "").replace(/'/g, "").replace(/`/g, "")
