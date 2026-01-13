@@ -956,7 +956,7 @@ function adminInterfaceAlly(){
                         allyId:map_tribe.get(ally[i].innerText)
                     })
                 }
-          uploadFile(JSON.stringify(list_ally), filename_ally)
+         // uploadFile(JSON.stringify(list_ally), filename_ally)
                 console.log(list_ally)
             })
 
@@ -1080,7 +1080,7 @@ $(document).ready(async function() {
                     adminId:map_tribe.get(admin[i].innerText)
                 })
             }
-            uploadFile(JSON.stringify(list_admin), filename_admin)
+            //uploadFile(JSON.stringify(list_admin), filename_admin)
             console.log(list_admin)
         })
 
