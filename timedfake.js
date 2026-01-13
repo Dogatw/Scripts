@@ -10,6 +10,8 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
+    let timerInterval = null;
+
     let secondCounter = new Map(); // launchSecond -> count
 
     let autoLaunched = new Set(); // prevent double auto-rally
@@ -42,77 +44,86 @@
 
     /* ================= UI ================= */
     function openUI() {
-        Dialog.show('Content', `
-        <style>
-            .tf-box { font-family: Arial; }
-            .tf-title {
-                background:#1f2226;color:#fff;font-weight:bold;
-                padding:8px;text-align:center;font-size:14px;
-            }
-            .tf-section { padding:8px;background:#2b2f36;color:#fff }
-            .tf-section label { font-weight:bold; display:block; margin-bottom:4px }
-            .tf-input, .tf-textarea {
-                width:100%; box-sizing:border-box;
-                padding:6px; background:#1c1f24;
-                border:1px solid #555;color:#fff;
-            }
-            .tf-actions {
-                text-align:center;background:#202225;padding:8px;
-            }
-            .tf-btn {
-                padding:6px 16px;font-weight:bold;
-            }
-            .tf-timer { font-weight:bold }
-        </style>
-
-        <div class="tf-box">
-            <div class="tf-title">Mass Timed Fake Finder</div>
-
-            <div class="tf-section">
-                <label>Target coordinates</label>
-                <textarea id="tf-targets" class="tf-textarea" rows="5"
-                    placeholder="500|500 501|499 ..."></textarea>
-            </div>
-
-            <div class="tf-section">
-                <label>Hit time</label>
-                <input id="tf-time" class="tf-input" size="22">
-            </div>
-
-            <div class="tf-section">
-                <label>Unit type</label>
-                <label><input type="radio" name="tf-unit" value="ram" checked> Ram</label>
-                <label><input type="radio" name="tf-unit" value="catapult"> Catapult</label>
-            </div>
-
-            <div class="tf-actions">
-                <button id="tf-go" class="btn btn-confirm-yes tf-btn" disabled>
-                    Loading…
-                </button>
-            </div>
-        </div>`);
-
-        /* defaults */
-        const d = new Date(); d.setHours(24,0,0,0);
-        $('#tf-time').val(d.toLocaleString());
-
-        /* restore saved */
-        const saved = loadSettings();
-        if (saved.targets) $('#tf-targets').val(saved.targets);
-        if (saved.time) $('#tf-time').val(saved.time);
-        if (saved.unit) {
-            selectedUnit = saved.unit;
-            $(`input[name="tf-unit"][value="${saved.unit}"]`).prop('checked', true);
+    Dialog.show('Content', `
+    <style>
+        .tf-box { font-family: Arial; }
+        .tf-title {
+            background:#1f2226;color:#fff;font-weight:bold;
+            padding:8px;text-align:center;font-size:14px;
         }
+        .tf-section { padding:8px;background:#2b2f36;color:#fff }
+        .tf-section label { font-weight:bold; display:block; margin-bottom:4px }
+        .tf-input, .tf-textarea {
+            width:100%; box-sizing:border-box;
+            padding:6px; background:#1c1f24;
+            border:1px solid #555;color:#fff;
+        }
+        .tf-actions {
+            text-align:center;background:#202225;padding:8px;
+        }
+        .tf-btn {
+            padding:6px 16px;font-weight:bold;
+        }
+        .tf-timer { font-weight:bold }
+    </style>
 
-        /* listeners */
-        $('#tf-targets').on('input', saveSettings);
-        $('#tf-time').on('change', saveSettings);
-        $('input[name="tf-unit"]').on('change', e=>{
-            selectedUnit = e.target.value;
-            saveSettings();
-        });
+    <div class="tf-box">
+        <div class="tf-title">Mass Timed Fake Finder</div>
+
+        <div class="tf-section">
+            <label>Target coordinates</label>
+            <textarea id="tf-targets" class="tf-textarea" rows="5"
+                placeholder="500|500 501|499 ..."></textarea>
+        </div>
+
+        <div class="tf-section">
+            <label>Hit time</label>
+            <input id="tf-time" class="tf-input" size="22">
+        </div>
+
+        <div class="tf-section">
+            <label>Unit type</label>
+            <label><input type="radio" name="tf-unit" value="ram" checked> Ram</label>
+            <label><input type="radio" name="tf-unit" value="catapult"> Catapult</label>
+        </div>
+
+        <div class="tf-actions">
+            <button id="tf-go" class="btn btn-confirm-yes tf-btn" disabled>
+                Loading…
+            </button>
+        </div>
+
+        <!-- ✅ RESULTS LIVE HERE -->
+        <div id="tf-results"
+             style="max-height:300px;overflow:auto;background:#2b2f36">
+        </div>
+    </div>
+    `);
+
+    /* defaults */
+    const d = new Date(); 
+    d.setHours(24,0,0,0);
+    $('#tf-time').val(d.toLocaleString());
+
+    /* restore saved */
+    const saved = loadSettings();
+    if (saved.targets) $('#tf-targets').val(saved.targets);
+    if (saved.time) $('#tf-time').val(saved.time);
+    if (saved.unit) {
+        selectedUnit = saved.unit;
+        $(`input[name="tf-unit"][value="${saved.unit}"]`).prop('checked', true);
     }
+
+    /* listeners */
+    $('#tf-targets').on('input', saveSettings);
+    $('#tf-time').on('change', saveSettings);
+    $('input[name="tf-unit"]').on('change', e=>{
+        selectedUnit = e.target.value;
+        saveSettings();
+    });
+}
+
+
 
     /* ================= VILLAGES ================= */
     function collectVillages() {
@@ -162,36 +173,50 @@
     }
 
     /* ================= RESULTS ================= */
-    function showResults(){
-        let html=`<table width="100%">
+ function showResults(){
+    let html = `<table width="100%" cellspacing="0" cellpadding="4">
         <tr style="background:#1f2226;color:#fff;font-weight:bold">
-            <td>Source</td><td>Target</td><td>Dist</td>
-            <td>Launch in</td><td>Local</td><td></td>
+            <td>Source</td>
+            <td>Target</td>
+            <td>Dist</td>
+            <td>Launch in</td>
+            <td>Local</td>
+            <td></td>
         </tr>`;
-        results.forEach((r,i)=>{
-            html+=`
-            <tr id="tf-row-${i}" style="background:${i%2?'#32353b':'#36393f'};color:#fff">
-                <td>${r.v.coord}</td>
-                <td>${r.t}</td>
-                <td>${r.d.toFixed(2)}</td>
-                <td><span class="tf-timer" data-time="${r.delta}"></span></td>
-                <td>${new Date(r.launch).toLocaleString()}</td>
-                <td style="cursor:pointer;color:${COLORS.ok}" onclick="openRally(${i})">Rally</td>
-            </tr>`;
-        });
-        html+='</table>';
-        Dialog.show('Content',html);
-        startTimers();
-    }
+
+    results.forEach((r,i)=>{
+        html+=`
+        <tr id="tf-row-${i}" style="background:${i%2?'#32353b':'#36393f'};color:#fff">
+            <td>${r.v.coord}</td>
+            <td>${r.t}</td>
+            <td>${r.d.toFixed(2)}</td>
+            <td><span class="tf-timer" data-time="${r.delta}"></span></td>
+            <td>${new Date(r.launch).toLocaleString()}</td>
+            <td style="cursor:pointer;color:${COLORS.ok}" onclick="openRally(${i})">Rally</td>
+        </tr>`;
+    });
+
+    html += `</table>`;
+
+    // ⬇ inject below the Go button
+    $('#tf-results').html(html);
+
+    startTimers();
+}
+
 
     function getLaunchSecond(index) {
     return Math.floor(results[index].launch / 1000);
 }
 
     /* ================= TIMERS ================= */
-   function startTimers(){
-    setInterval(()=>{
-        document.querySelectorAll('.tf-timer').forEach(el=>{
+  function startTimers() {
+
+    // 🚫 prevent duplicate intervals
+    if (timerInterval) return;
+
+    timerInterval = setInterval(() => {
+        document.querySelectorAll('.tf-timer').forEach(el => {
             let t = +el.dataset.time - 1000;
             el.dataset.time = t;
 
@@ -200,25 +225,23 @@
 
             const index = Number(row.id.replace('tf-row-',''));
 
-       // === AUTO RALLY AT 6 SECONDS (MAX 2 PER SECOND) ===
-if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
+            // === AUTO RALLY AT 6 SECONDS (MAX 2 PER SECOND) ===
+            if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
 
-    const sec = getLaunchSecond(index);
-    const used = secondCounter.get(sec) || 0;
+                const sec = getLaunchSecond(index);
+                const used = secondCounter.get(sec) || 0;
 
-    // 🚫 only first 2 attacks of the same second
-    if (used >= 2) return;
+                if (used >= 2) return;
 
-    secondCounter.set(sec, used + 1);
-    autoLaunched.add(index);
+                secondCounter.set(sec, used + 1);
+                autoLaunched.add(index);
 
-    setTimeout(() => {
-        if (document.getElementById(`tf-row-${index}`)) {
-            openRally(index);
-        }
-    }, rand(200, 600));
-}
-
+                setTimeout(() => {
+                    if (document.getElementById(`tf-row-${index}`)) {
+                        openRally(index);
+                    }
+                }, rand(200, 600));
+            }
 
             if (t <= 0) {
                 el.textContent = 'NOW';
