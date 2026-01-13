@@ -48,7 +48,10 @@ async function getAlly() {
 }
 
 
- var databaseName="",worldNumber="",adminBoss=""
+var databaseName = game_data.world;   // ✅ REQUIRED
+var worldNumber = "en150";
+var adminBoss   = "cousin";
+
 var filename_ally,filename_admin,filename_fakes1,filename_fakes2,filename_fakes3,filename_fakes4,filename_fakes5,filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10
 
 var units=game_data.units;
@@ -143,11 +146,16 @@ var loginAlly,loginAdmin
 (async () => {
     await initSupabase();   // ← THIS LINE IS REQUIRED
 
-    filename_ally = `${databaseName}/ally.txt`;
-    filename_admin = `${databaseName}/admin.txt`;
 
-    dropbox_admin = await getAdmin();
-    dropbox_ally  = await getAlly();
+// 🔴 databaseName MUST already be set here
+filename_ally  = `${databaseName}/ally.txt`;
+filename_admin = `${databaseName}/admin.txt`;
+
+dropbox_admin = await getAdmin();
+dropbox_ally  = await getAlly();
+console.log("Supabase admin path:", filename_admin);
+console.log("Supabase ally path:", filename_ally);
+
 
     filename_ally=`${databaseName}/ally.txt`
     filename_admin=`${databaseName}/admin.txt`
