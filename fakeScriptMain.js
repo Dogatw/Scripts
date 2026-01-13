@@ -34,19 +34,18 @@ async function readFileSupabase(filename) {
 async function getAdmin() {
     try {
         return await readFileSupabase(filename_admin);
-    } catch {
-        // create empty admin file on first run
-        await uploadFile("[]", filename_admin);
-        return "[]";
+    } catch (e) {
+        console.warn("admin.txt missing or unreadable", e);
+        return "[]"; // ❌ DO NOT upload here
     }
 }
+
 
 async function getAlly() {
     try {
         return await readFileSupabase(filename_ally);
-    } catch {
-        // create empty ally file on first run
-        await uploadFile("[]", filename_ally);
+    } catch (e) {
+        console.warn("ally.txt missing or unreadable", e);
         return "[]";
     }
 }
