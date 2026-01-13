@@ -35,7 +35,9 @@ async function getAdmin() {
     try {
         return await readFileSupabase(filename_admin);
     } catch {
-        return "";
+        // create empty admin file on first run
+        await uploadFile("[]", filename_admin);
+        return "[]";
     }
 }
 
@@ -43,9 +45,12 @@ async function getAlly() {
     try {
         return await readFileSupabase(filename_ally);
     } catch {
-        return "";
+        // create empty ally file on first run
+        await uploadFile("[]", filename_ally);
+        return "[]";
     }
 }
+
 
 
 var databaseName = game_data.world;   // ✅ REQUIRED
