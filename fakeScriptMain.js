@@ -3374,3 +3374,4 @@ function getCoordsGrabber(mapVillage){
 
 // javascript:$.getScript('https://dl.dropboxusercontent.com/s/2q29vaqbibe6tph/fakeScriptMain.js?dl=0');void(0)
 
+}
