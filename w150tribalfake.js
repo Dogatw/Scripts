@@ -927,50 +927,80 @@ function changeTheme(){
 
 }
 
-function initializationTheme(){
-    if(localStorage.getItem(localStorageThemeName) != undefined){
-        let mapTheme = new Map(JSON.parse(localStorage.getItem(localStorageThemeName)))
-        let currentTheme=mapTheme.get("currentTheme")
-        let colours=mapTheme.get(currentTheme)
+function initializationTheme() {
+    try {
+        let raw = localStorage.getItem(localStorageThemeName);
 
-        textColor=colours[0]
-        backgroundInput=colours[1]
+        // 🔒 HARD GUARD: missing or invalid storage
+        if (!raw) {
+            localStorage.setItem(localStorageThemeName, defaultTheme);
+            raw = localStorage.getItem(localStorageThemeName);
+        }
 
-        borderColor = colours[2]
-        backgroundContainer=colours[3]
-        backgroundHeader=colours[4]
-        backgroundMainTable=colours[5]
-        backgroundInnerTable=colours[6]
-        widthInterface=colours[7]
+        let parsed;
+        try {
+            parsed = JSON.parse(raw);
+        } catch (e) {
+            console.warn("⚠️ Theme JSON corrupted, resetting");
+            localStorage.setItem(localStorageThemeName, defaultTheme);
+            parsed = JSON.parse(localStorage.getItem(localStorageThemeName));
+        }
 
-        backgroundAlternateTableEven=backgroundContainer;
-        backgroundAlternateTableOdd=getColorDarker(backgroundContainer,headerColorAlternateTable);
-        console.log("textColor: "+textColor)
-        console.log("backgroundContainer: "+backgroundContainer)
+        const mapTheme = new Map(parsed);
+
+        const currentTheme = mapTheme.get("currentTheme");
+        const colours = mapTheme.get(currentTheme);
+
+        // 🔒 HARD GUARD: theme missing or malformed
+        if (!Array.isArray(colours) || colours.length < 8) {
+            throw new Error("Invalid theme structure");
+        }
+
+        // ✅ SAFE ASSIGNMENTS
+       window.textColor               = colours[0];
+window.backgroundInput         = colours[1];
+window.borderColor             = colours[2];
+window.backgroundContainer     = colours[3];
+window.backgroundHeader        = colours[4];
+window.backgroundMainTable     = colours[5];
+window.backgroundInnerTable    = colours[6];
+window.widthInterface          = colours[7];
+
+       window.backgroundAlternateTableEven = backgroundContainer;
+window.backgroundAlternateTableOdd =
+    getColorDarker(backgroundContainer, headerColorAlternateTable);
+
+
+        console.log("🎨 Theme loaded:", currentTheme);
+        console.log("textColor:", textColor);
+        console.log("backgroundContainer:", backgroundContainer);
+
+    } catch (err) {
+        console.error("❌ Theme init failed, forcing default", err);
+
+        // 🧯 LAST-RESORT FALLBACK
+        localStorage.setItem(localStorageThemeName, defaultTheme);
+
+        const mapTheme = new Map(JSON.parse(defaultTheme));
+        const currentTheme = mapTheme.get("currentTheme");
+        const colours = mapTheme.get(currentTheme);
+
+        window.textColor               = colours[0];
+window.backgroundInput         = colours[1];
+window.borderColor             = colours[2];
+window.backgroundContainer     = colours[3];
+window.backgroundHeader        = colours[4];
+window.backgroundMainTable     = colours[5];
+window.backgroundInnerTable    = colours[6];
+window.widthInterface          = colours[7];
+
+       window.backgroundAlternateTableEven = backgroundContainer;
+window.backgroundAlternateTableOdd =
+    getColorDarker(backgroundContainer, headerColorAlternateTable);
 
     }
-    else{
-        localStorage.setItem(localStorageThemeName, defaultTheme)
-
-        let mapTheme = new Map(JSON.parse(localStorage.getItem(localStorageThemeName)))
-        let currentTheme=mapTheme.get("currentTheme")
-        let colours=mapTheme.get(currentTheme)
-
-        textColor=colours[0]
-        backgroundInput=colours[1]
-
-        borderColor = colours[2]
-        backgroundContainer=colours[3]
-        backgroundHeader=colours[4]
-        backgroundMainTable=colours[5]
-        backgroundInnerTable=colours[6]
-        widthInterface=colours[7]
-
-        backgroundAlternateTableEven=backgroundContainer;
-        backgroundAlternateTableOdd=getColorDarker(backgroundContainer,headerColorAlternateTable);
-    }
-
 }
+
 
 
 
