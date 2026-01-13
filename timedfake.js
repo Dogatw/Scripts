@@ -1,4 +1,4 @@
-//2.9 out of sync
+//2.75
 
 (function () {
     'use strict';
@@ -10,12 +10,6 @@
     const rand = (min=100,max=400)=>Math.floor(Math.random()*(max-min+1))+min;
 
     /* ================= STATE ================= */
-    let triggerArmed = new Set(); // index -> armed once
-
-   let serverBase = 0;
-let perfBase = 0;
-
-
     let secondCounter = new Map(); // launchSecond -> count
 
     let autoLaunched = new Set(); // prevent double auto-rally
@@ -46,25 +40,6 @@ let perfBase = 0;
         return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     }
 
-function syncServerTime() {
-    const s = $('#serverDate').text() + ' ' + $('#serverTime').text();
-    const realServer = Date.parse(
-        s.replace(/(\d+)\/(\d+)\/(\d+)/,'$2/$1/$3')
-    );
-
-    const nowPerf = performance.now();
-    const estimated = serverBase + (nowPerf - perfBase);
-
-    // smooth correction (no jump)
-    const diff = realServer - estimated;
-
-    serverBase += diff;
-    perfBase = nowPerf;
-}
-
-
-
-    
     /* ================= UI ================= */
     function openUI() {
         Dialog.show('Content', `
@@ -208,44 +183,30 @@ function syncServerTime() {
         Dialog.show('Content',html);
         startTimers();
     }
-function getLaunchSecond(index) {
+
+    function getLaunchSecond(index) {
     return Math.floor(results[index].launch / 1000);
 }
-function getServerNow() {
-    return serverBase + (performance.now() - perfBase);
-}
-
-
 
     /* ================= TIMERS ================= */
- function startTimers(){
+   function startTimers(){
     setInterval(()=>{
-        const serverNow = getServerNow();
-
         document.querySelectorAll('.tf-timer').forEach(el=>{
+            let t = +el.dataset.time - 1000;
+            el.dataset.time = t;
+
             const row = el.closest('tr');
             if (!row) return;
 
             const index = Number(row.id.replace('tf-row-',''));
-            const launchTime = results[index].launch;
 
-            const t = launchTime - serverNow;
+       // === AUTO RALLY AT 6 SECONDS (MAX 2 PER SECOND) ===
+if (t <= 6000 && t > 0 && !autoLaunched.has(index)) {
 
-            // === AUTO RALLY AT 6 SECONDS (MAX 2 PER SECOND) ===
-          // arm when safely above threshold
-if (t > 6200 && !triggerArmed.has(index)) {
-    triggerArmed.add(index);
-}
-
-// fire ONLY on downward crossing
-if (
-    triggerArmed.has(index) &&
-    t <= 6000 &&
-    t > 0 &&
-    !autoLaunched.has(index)
-) {
-    const sec = Math.floor(launchTime / 1000);
+    const sec = getLaunchSecond(index);
     const used = secondCounter.get(sec) || 0;
+
+    // 🚫 only first 2 attacks of the same second
     if (used >= 2) return;
 
     secondCounter.set(sec, used + 1);
@@ -277,9 +238,8 @@ if (
                 t < 15 * 60000 ? COLORS.warn :
                 COLORS.ok;
         });
-    }, 250); // faster refresh, no drift
+    }, 1000);
 }
-
 
 
     /* ================= RALLY AUTO FLOW ================= */
@@ -385,15 +345,11 @@ clearInterval(poll);
 
 
     /* ================= INIT ================= */
-   (async function(){
-    openUI();
-    await loadUnitSpeeds();
-    collectVillages();
+    (async function(){
+        openUI();
+        await loadUnitSpeeds();
+        collectVillages();
+        $('#tf-go').prop('disabled',false).text('Go').on('click',calculate);
+    })();
 
-    syncServerTime(); // ✅ HERE (server clock is stable)
-
-    // optional periodic resync
-setInterval(syncServerTime, 5 * 60 * 1000);
-
-    $('#tf-go').prop('disabled',false).text('Go').on('click',calculate);
 })();
