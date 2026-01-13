@@ -1,4 +1,4 @@
-const SAFE_MODE_NO_UPLOAD = true;
+const SAFE_MODE_NO_UPLOAD = false;
 
 // == Supabase config ==
 const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
@@ -1535,7 +1535,7 @@ function saveCoordDropbox() {
         const panel   = document.getElementById(panelId);
         if (!panel) continue;
 
-        const saveBtn = panel.querySelector(".btn");
+const saveBtn = panel.querySelector('input[value="Save"]');
         if (!saveBtn) continue;
 
         $(saveBtn)
@@ -1555,7 +1555,14 @@ function saveCoordDropbox() {
                         document.getElementById("serverDate").innerText +
                         " " +
                         document.getElementById("serverTime").innerText,
-                    nameTab: tabs_tribe[i].innerText.trim(),
+const index = i;
+
+$(saveBtn).off("click").on("click", async () => {
+    ...
+    nameTab: tabs_tribe[index].innerText.trim(),
+    ...
+    await uploadFile(JSON.stringify(obj), list_filename_fakes[index]);
+});
                     sourceCoord: panel.querySelector(".select_get_coord")?.value || "manual",
                     list_input: Array.from(
                         document.querySelectorAll(
