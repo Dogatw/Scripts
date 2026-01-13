@@ -21,6 +21,32 @@ async function initSupabase() {
     );
 }
 
+async function readFileSupabase(filename) {
+    const { data, error } = await supabaseClient
+        .storage
+        .from(SUPABASE_BUCKET)
+        .download(filename);
+
+    if (error) throw error;
+    return await data.text();
+}
+
+async function getAdmin() {
+    try {
+        return await readFileSupabase(filename_admin);
+    } catch {
+        return "";
+    }
+}
+
+async function getAlly() {
+    try {
+        return await readFileSupabase(filename_ally);
+    } catch {
+        return "";
+    }
+}
+
 
  var databaseName="",worldNumber="",adminBoss=""
 var filename_ally,filename_admin,filename_fakes1,filename_fakes2,filename_fakes3,filename_fakes4,filename_fakes5,filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10
@@ -887,7 +913,7 @@ function adminInterfaceAlly(){
                         allyId:map_tribe.get(ally[i].innerText)
                     })
                 }
-                uploadFile(JSON.stringify(list_ally),filename_ally,dropboxToken)
+          uploadFile(JSON.stringify(list_ally), filename_ally)
                 console.log(list_ally)
             })
 
@@ -1011,7 +1037,7 @@ $(document).ready(async function() {
                     adminId:map_tribe.get(admin[i].innerText)
                 })
             }
-            uploadFile(JSON.stringify(list_admin),filename_admin,dropboxToken)
+            uploadFile(JSON.stringify(list_admin), filename_admin)
             console.log(list_admin)
         })
 
@@ -1446,7 +1472,7 @@ function saveCoordDropbox(){
             }
             console.log("saved")
             console.log(obj)
-            uploadFile(JSON.stringify(obj),list_filename_fakes[i],dropboxToken)
+            uploadFile(JSON.stringify(obj), list_filename_fakes[i])
         })
     }
 
@@ -1464,7 +1490,7 @@ async function getCoordDropbox(){
     console.log(filename_fakes1)
     let tabs_tribe=document.getElementsByClassName("li_tribe")
     let [file_fakes1, file_fakes2, file_fakes3, file_fakes4, file_fakes5, file_fakes6,file_fakes7,file_fakes8,file_fakes9,file_fakes10,mapVillage]=await Promise.all(
-        [readFileDropbox(filename_fakes1),readFileDropbox(filename_fakes2),readFileDropbox(filename_fakes3),readFileDropbox(filename_fakes4),readFileDropbox(filename_fakes5),readFileDropbox(filename_fakes6),readFileDropbox(filename_fakes7),readFileDropbox(filename_fakes8),readFileDropbox(filename_fakes9),readFileDropbox(filename_fakes10),getInfoVIllages()])
+        [readFileSupabase(filename_fakes1),readFileSupabase(filename_fakes2),readFileSupabase(filename_fakes3),readFileSupabase(filename_fakes4),readFileSupabase(filename_fakes5),readFileSupabase(filename_fakes6),readFileSupabase(filename_fakes7),readFileSupabase(filename_fakes8),readFileSupabase(filename_fakes9),readFileSupabase(filename_fakes10),getInfoVIllages()])
     
     let list_files=[file_fakes1, file_fakes2, file_fakes3, file_fakes4, file_fakes5, file_fakes6,file_fakes7,file_fakes8,file_fakes9,file_fakes10]
 
@@ -1480,7 +1506,7 @@ async function getCoordDropbox(){
         tabs_tribe[i].addEventListener("mouseup",async function(){
             if(tabs_tribe[i].classList.contains("active")==false){
                 try{
-                    let data_coord=await readFileDropbox(list_filename_fakes[i])
+                    let data_coord=await readFileSupabase(list_filename_fakes[i])
                     data_coord = data_coord.replace(/</g, "").replace(/>/g, "")
                     let obj=JSON.parse(data_coord)
                     obj.coords = obj.coords.replace(/"/g, "").replace(/'/g, "").replace(/`/g, "")
@@ -2046,25 +2072,7 @@ async function uploadFile(data, filename) {
 function disableF5(e) { if ((e.which || e.keyCode) == 116 || (e.which || e.keyCode) == 82) e.preventDefault(); };
 
 
-function readFileDropbox(filename){// read file from dropbox
-    return new Promise((resolve,reject)=>{
-        $.ajax({
-            url: "https://content.dropboxapi.com/2/files/download",
-            method: 'POST',
-            dataType: "text",
-            headers: { 'Authorization': 'Bearer ' + dropboxToken,
-                        'Dropbox-API-Arg': JSON.stringify({path: "/"+filename})},
-            
-            success: (data) => {
-                data = data.replace(/</g, "").replace(/>/g, "");
-                resolve(data)
-            },error: (err)=>{
-                console.log(err)
-                reject(err)
-            }
-        })
-    })
-}
+
 
 
 function lzw_encode (s) {//data compression
