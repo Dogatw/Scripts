@@ -1527,27 +1527,57 @@ function initializationOptionAttack(){
     })
 }
 
+function saveCoordDropbox() {
+    const tabs_tribe = document.getElementsByClassName("li_tribe");
 
-function saveCoordDropbox(){
-    let tabs_tribe=document.getElementsByClassName("li_tribe")
-    // console.log(tabs_tribe)
-    for(let i=0;i<tabs_tribe.length;i++){
-        let idDivParent=tabs_tribe[i].getAttribute("rel");
-  $(document.getElementById(idDivParent)
-    .getElementsByClassName("btn")[0])
-    .off("click")
-    .on("click", () => {
+    for (let i = 0; i < tabs_tribe.length; i++) {
+        const panelId = tabs_tribe[i].getAttribute("rel");
+        const panel   = document.getElementById(panelId);
+        if (!panel) continue;
 
-        console.log("saved object:", obj);
+        const saveBtn = panel.querySelector(".btn");
+        if (!saveBtn) continue;
 
-        // ✅ only upload if allowed & filename exists
-        if (typeof list_filename_fakes[i] === "string") {
-            uploadFile(JSON.stringify(obj), list_filename_fakes[i])
-                .catch(err => console.error("Upload failed:", err));
-        }
+        $(saveBtn)
+            .off("click")
+            .on("click", async () => {
 
-    }); // ✅ CLOSE .on("click")
-}        // ✅ CLOSE for-loop / parent block
+                const textarea = panel.querySelector("textarea");
+                if (!textarea) return;
+
+                const coords = (textarea.value.match(/\d+\|\d+/g) || []).join(" ");
+
+                const obj = {
+                    coords: coords,
+                    playerId: game_data.player.id.toString(),
+                    playerName: game_data.player.name,
+                    data:
+                        document.getElementById("serverDate").innerText +
+                        " " +
+                        document.getElementById("serverTime").innerText,
+                    nameTab: tabs_tribe[i].innerText.trim(),
+                    sourceCoord: panel.querySelector(".select_get_coord")?.value || "manual",
+                    list_input: Array.from(
+                        document.querySelectorAll(
+                            "#table_get_coords input[type=number], #table_get_coords input[type=text]"
+                        )
+                    ).map(el => el.value)
+                };
+
+                console.log("✅ saved object:", obj);
+
+                if (typeof list_filename_fakes[i] === "string") {
+                    try {
+                        await uploadFile(JSON.stringify(obj), list_filename_fakes[i]);
+                        UI.SuccessMessage("Saved successfully", 1000);
+                    } catch (err) {
+                        console.error("Upload failed:", err);
+                        UI.ErrorMessage("Upload failed", 1000);
+                    }
+                }
+            });
+    }
+}
 
 
 
