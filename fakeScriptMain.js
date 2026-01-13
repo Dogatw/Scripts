@@ -1,3 +1,5 @@
+const SAFE_MODE_NO_UPLOAD = true;
+
 // == Supabase config ==
 const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
@@ -2096,6 +2098,11 @@ function intervalHour(time_start,time_end,time_target){//check if attack lands o
 
 
 async function uploadFile(data, filename) {
+    if (SAFE_MODE_NO_UPLOAD && (filename.includes("admin") || filename.includes("ally"))) {
+        console.warn("🚫 Upload blocked for", filename);
+        return;
+    }
+
     const blob = new Blob([data], { type: "text/plain" });
 
     const { error } = await supabaseClient
@@ -2103,13 +2110,9 @@ async function uploadFile(data, filename) {
         .from("tw-scripts")
         .upload(filename, blob, { upsert: true });
 
-    if (error) {
-        UI.ErrorMessage("Supabase upload failed");
-        throw error;
-    }
-
-    UI.SuccessMessage("Upload success", 1000);
+    if (error) throw error;
 }
+
 
 
 function disableF5(e) { if ((e.which || e.keyCode) == 116 || (e.which || e.keyCode) == 82) e.preventDefault(); };
