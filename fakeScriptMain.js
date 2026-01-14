@@ -63,6 +63,7 @@ window.initSupabase = initSupabase;
 var databaseName = game_data.world;
 var worldNumber = "en150";
 
+
 var filename_admin,
     filename_ally,
     filename_fakes1,
@@ -85,9 +86,9 @@ if(units.includes("militia"))
     unitsLength--;
 if(units.includes("knight"))
     unitsLength--;
-  
+
 var nrTabs=10;
- 
+
 var troupesPop = {
     spear : 1,
     sword : 1,
@@ -102,16 +103,147 @@ var troupesPop = {
     knight : 10,
     snob : 100
 };
- 
+// ===== LOW-LEVEL HELPERS (MUST BE FIRST) =====
+function getMyAllyId() {
+    if (!window.game_data || !game_data.player) return null;
 
-var speedWorld=getSpeedConstant().worldSpeed;
-var speedTroupes=getSpeedConstant().unitSpeed;
-var nobleSpeed=2100*1000/(speedWorld*speedTroupes)//ms
-var ramSpeed=1800*1000/(speedWorld*speedTroupes)//ms
-var swordSpeed=1320*1000/(speedWorld*speedTroupes)//ms
-var axeSpeed=1080*1000/(speedWorld*speedTroupes)//ms
-var lightSpeed=600*1000/(speedWorld*speedTroupes)//ms
-var scoutSpeed=540*1000/(speedWorld*speedTroupes)//ms
+    // Most common (newer worlds)
+    if (Number.isFinite(Number(game_data.player.ally_id)))
+        return Number(game_data.player.ally_id);
+
+    // Older worlds
+    if (Number.isFinite(Number(game_data.player.ally)))
+        return Number(game_data.player.ally);
+
+    // Some worlds store it nested
+    if (
+        game_data.player.ally &&
+        Number.isFinite(Number(game_data.player.ally.id))
+    )
+        return Number(game_data.player.ally.id);
+
+    return null;
+}
+
+function httpGet(theUrl)
+{
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+    xmlHttp.send( null );
+    return xmlHttp.responseText;
+}
+
+function getColorDarker(hexInput, percent) {
+    let hex = hexInput;
+
+    // strip the leading # if it's there
+    hex = hex.replace(/^\s*#|\s*$/g, "");
+
+    // convert 3 char codes --> 6, e.g. `E0F` --> `EE00FF`
+    if (hex.length === 3) {
+        hex = hex.replace(/(.)/g, "$1$1");
+    }
+
+    let r = parseInt(hex.substr(0, 2), 16);
+    let g = parseInt(hex.substr(2, 2), 16);
+    let b = parseInt(hex.substr(4, 2), 16);
+
+    const calculatedPercent = (100 + percent) / 100;
+
+    r = Math.round(Math.min(255, Math.max(0, r * calculatedPercent)));
+    g = Math.round(Math.min(255, Math.max(0, g * calculatedPercent)));
+    b = Math.round(Math.min(255, Math.max(0, b * calculatedPercent)));
+
+    return `#${("00"+r.toString(16)).slice(-2).toUpperCase()}${("00"+g.toString(16)).slice(-2).toUpperCase()}${("00"+b.toString(16)).slice(-2).toUpperCase()}`
+}
+
+function getSpeedConstant() { //Get speed constant (world speed * unit speed) for world
+    if (localStorage.getItem(game_data.world+"speedWorld") !== null) {
+        let obj=JSON.parse(localStorage.getItem(game_data.world+"speedWorld"))
+        console.log("speed world already exist")
+        return obj
+    }
+    else { //Get data from xml and save it in localStorage to avoid excessive XML requests to server
+            let data=httpGet("/interface.php?func=get_config") //Load world data
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(data, 'text/html');
+            let obj={}
+            let worldSpeed = Number(htmlDoc.getElementsByTagName("speed")[0].innerHTML)
+            let unitSpeed = Number(htmlDoc.getElementsByTagName("unit_speed")[0].innerHTML);
+            obj.unitSpeed=unitSpeed
+            obj.worldSpeed=worldSpeed
+
+            localStorage.setItem(game_data.world+"speedWorld",JSON.stringify(obj));
+            console.log("save speed world")
+        return obj
+    }
+}
+
+function checkPageRun(){//check if the script is run on the right page
+    let href=window.location.href
+    if(href.includes("screen=place")){
+        let list_href=JSON.parse(localStorage.getItem(game_data.world+"launchFakes"));
+        if(list_href.length>0){
+            let current_href=list_href.pop();
+            localStorage.setItem(game_data.world+"launchFakes",JSON.stringify(list_href));
+            UI.SuccessMessage("left "+list_href.length+" fakes",1000);
+
+            window.open(current_href,"_self");
+            throw new Error("fake sent");// i don't like this throw error here
+
+
+        }
+    }
+    else if(document.getElementById("combined_table")==null){
+        alert("the script must be run from overview_villages&mode=combined ")
+        window.location.href=game_data.link_base_pure+"overview_villages&mode=combined"
+        throw new Error("wrong page");
+
+    }
+
+}
+
+function splitCoordSafe(coord) {
+    if (typeof coord !== "string") return null;
+    const m = coord.match(/^(\d+)\|(\d+)$/);
+    return m ? { x: m[1], y: m[2] } : null;
+}
+
+
+// ===== GLOBAL UI VARIABLES (REQUIRED BY styleCSSGlobal.js) =====
+window.widthInterface = 50;
+
+window.headerColorDarken = -50;
+window.headerColorAlternateTable = -30;
+window.headerColorAlternateHover = 30;
+
+window.textColor = "#ffffff";
+window.backgroundInput = "#000000";
+
+window.borderColor = "#C5979D";
+window.backgroundContainer = "#2B193D";
+window.backgroundHeader = "#2C365E";
+window.backgroundMainTable = "#484D6D";
+window.backgroundInnerTable = "#4B8F8C";
+
+window.backgroundAlternateTableEven = window.backgroundContainer;
+window.backgroundAlternateTableOdd =
+    getColorDarker(window.backgroundContainer, window.headerColorAlternateTable);
+
+// ===== RESOURCE COLORS (THE ERROR YOU JUST HIT) =====
+window.headerWood = "#001a33";
+window.headerWoodEven = "#002e5a";
+
+window.headerStone = "#3b3b00";
+window.headerStoneEven = "#626200";
+
+window.headerIron = "#1e003b";
+window.headerIronEven = "#3c0076";
+
+// ===== OTHER REQUIRED GLOBALS =====
+window.nrTroopSelect = 13;
+// ===============================================================
+
 
 
 var countApiKey = "fakeScriptInterface";
@@ -141,31 +273,6 @@ if(localStorage.getItem(localStorageThemeName)!=undefined){
     })
     localStorage.setItem(localStorageThemeName, JSON.stringify(Array.from(mapTheme.entries())))
 }
-var localStorageThemeName = "fakesTheme"
-var textColor="#ffffff"
-var backgroundInput="#000000"
-
-var borderColor = "#C5979D";//#026440
-var backgroundContainer="#2B193D"
-var backgroundHeader="#2C365E"
-var backgroundMainTable="#484D6D"
-var backgroundInnerTable="#4B8F8C"
-
-var widthInterface=50;//percentage
-var headerColorDarken=-50 //percentage( how much the header should be darker) if it's with -(darker) + (lighter)
-var headerColorAlternateTable=-30;
-var headerColorAlternateHover=30;
-
-var backgroundAlternateTableEven=backgroundContainer;
-var backgroundAlternateTableOdd=getColorDarker(backgroundContainer,headerColorAlternateTable);
-
-
-var nrTroopSelect=13
-var list_filename_fakes
-
-
-var dropbox_admin,dropbox_ally
-var loginAlly,loginAdmin
 (async () => {
     await initSupabase();   // ← THIS LINE IS REQUIRED
 
@@ -180,44 +287,65 @@ dropbox_ally  = await getAlly();
 console.log("RAW admin file:", dropbox_admin);
 console.log("RAW ally file:", dropbox_ally);
 
+
+
+//  get admin and ally parsing
+
+
 loginAdmin = [];
-loginAlly  = [];
-
-
 
 try {
-    loginAdmin = JSON.parse(dropbox_admin || "[]").map(e => Number(e.adminId));
-} catch {}
+    loginAdmin = JSON.parse(dropbox_admin || "[]")
+        .map(e => Number(e.adminId))
+        .filter(id => Number.isFinite(id));
+} catch (e) {
+    console.warn("Invalid admin file", e);
+}
+loginAlly = [];
 
 try {
-    loginAlly = JSON.parse(dropbox_ally || "[]").map(e => Number(e.allyId));
-} catch {}
+    loginAlly = JSON.parse(dropbox_ally || "[]")
+        .map(e => Number(e.allyId))
+        .filter(id => Number.isFinite(id));
+} catch (e) {
+    console.warn("Invalid ally file", e);
+}
+
 
 
 console.log("Parsed admin IDs:", loginAdmin);
 console.log("Parsed ally IDs:", loginAlly);
 console.log("My player ID:", game_data.player.id);
-console.log("My ally ID:", game_data.player.ally_id);
+    
 // ===== ADMIN CHECK (SINGLE SOURCE OF TRUTH) =====
+    
 function isAdminUser() {
-    const pid = Number(game_data.player.id);
-    const aid = game_data.player.ally_id;
-
-    return (
-        Array.isArray(loginAdmin) &&
-        (
-            loginAdmin.includes(pid) ||
-            (aid && loginAlly.includes(aid))
-        )
-    );
+    return loginAdmin.includes(Number(game_data.player.id));
 }
+
+    function canUseScript() {
+    const pid = Number(game_data.player.id);
+    const aid =
+        Number(game_data.player.ally_id) ||
+        Number(game_data.player.ally) ||
+        null;
+
+    if (loginAdmin.includes(pid)) return true;
+    if (aid && loginAlly.includes(aid)) return true;
+
+    return false;
+}
+
+
 window.isAdminUser = isAdminUser;
+window.canUseScript = canUseScript;
+
 
 console.log("Supabase admin path:", filename_admin);
 console.log("Supabase ally path:", filename_ally);
 
 
-   
+
     filename_fakes1=`${databaseName}/fakes1.txt`
     filename_fakes2=`${databaseName}/fakes2.txt`
     filename_fakes3=`${databaseName}/fakes3.txt`
@@ -231,10 +359,10 @@ console.log("Supabase ally path:", filename_ally);
     list_filename_fakes=[filename_fakes1, filename_fakes2, filename_fakes3, filename_fakes4, filename_fakes5, filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10]
     // console.log("adminBOss: "+adminBoss + " == "+game_data.player.id.toString())
     // console.log("runWorld: "+runWorld)
-    
+
 
  const myPlayerId = game_data.player.id;
-const myAllyId   = game_data.player.ally_id; // ✅ correct field
+const myAllyId   = getMyAllyId(); // ✅ correct field
 
 console.log("Access check:");
 console.log("loginAdmin:", loginAdmin);
@@ -243,14 +371,15 @@ console.log("myPlayerId:", myPlayerId);
 console.log("myAllyId:", myAllyId);
 
 
-if (!isAdminUser()) {
-    UI.ErrorMessage("you don't have access");
-    throw new Error("you don't have access");
+if (!canUseScript()) {
+    UI.ErrorMessage("you don't have access", 3000);
+    throw new Error("blocked");
 }
 
-    
-    
-    checkPageRun()
+
+
+
+   // checkPageRun()
     main()
 })();
 
@@ -261,10 +390,18 @@ if (!isAdminUser()) {
 async function main(){
     initializationTheme()
     let status = await $.getScript("https://dl.dropboxusercontent.com/s/i5c0so9hwsizogm/styleCSSGlobal.js?dl=0");
-    
+        //let status = await $.getScript("https://raw.githack.com/Dogatw/Scripts/main//styleCSSGlobal.js?dl=0");
 
-    hitCountApi()
+
+
+   // hitCountApi()
     createMainInterface()
+    
+    // 🔐 HIDE ADMIN UI FOR NON-ADMINS (RIGHT HERE)
+    if (!isAdminUser()) {
+        $("#div_admin").hide();
+        $("#div_ally").hide();
+    }
     changeTheme()
     addEventPanel();
     addNewPanel();
@@ -276,7 +413,7 @@ async function main(){
     initializationOptionAttack();
     getCoordDropbox()
     getFakeLimit()
-    
+
     const MY_PLAYER_ID = Number(game_data.player.id);
 const CURRENT_WORLD = game_data.world.match(/\d+/)?.[0]; // e.g. "150"
 const TARGET_WORLD  = worldNumber.replace(/\D/g, "");    // e.g. "150"
@@ -303,48 +440,11 @@ if (isAdmin && worldOk) {
         });
 
     // only admins may upload/save coords
+   if (isAdminUser()) {
     saveCoordDropbox();
 }
 
-
-
-
-
-function getColorDarker(hexInput, percent) {
-    let hex = hexInput;
-
-    // strip the leading # if it's there
-    hex = hex.replace(/^\s*#|\s*$/g, "");
-
-    // convert 3 char codes --> 6, e.g. `E0F` --> `EE00FF`
-    if (hex.length === 3) {
-        hex = hex.replace(/(.)/g, "$1$1");
-    }
-
-    let r = parseInt(hex.substr(0, 2), 16);
-    let g = parseInt(hex.substr(2, 2), 16);
-    let b = parseInt(hex.substr(4, 2), 16);
-
-    const calculatedPercent = (100 + percent) / 100;
-
-    r = Math.round(Math.min(255, Math.max(0, r * calculatedPercent)));
-    g = Math.round(Math.min(255, Math.max(0, g * calculatedPercent)));
-    b = Math.round(Math.min(255, Math.max(0, b * calculatedPercent)));
-
-    return `#${("00"+r.toString(16)).slice(-2).toUpperCase()}${("00"+g.toString(16)).slice(-2).toUpperCase()}${("00"+b.toString(16)).slice(-2).toUpperCase()}`
 }
-
-
-
-
-function httpGet(theUrl)
-{
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
-    xmlHttp.send( null );
-    return xmlHttp.responseText;
-}
- 
 
 
 //////////////////////////////////////////////////////////// interface /////////////////////////////////////////////////////////
@@ -377,7 +477,7 @@ async function createMainInterface() {
                 <div style="background-color:white" id="div_admin" hidden>
                     <b><a href=#><img src="https://img.icons8.com/emoji/16/000000/plus-emoji.png" onclick="$('#table_admin').hide();"/></a></b>
                 </div>
-            </div> 
+            </div>
 
             <div style="margin:0px;position:absolute;top:10px;left: 70px;" class="set_troops">
                 <select  id="select_type_attack">
@@ -385,20 +485,20 @@ async function createMainInterface() {
                     <option value="nukes">nukes</option>
                     <option value="fangs">fangs</option>
                 </select>
-            </div>       
+            </div>
         </div>
         <div id="theme_settings"></div>
 
         <div id="div_body" style="height: 750px; overflow-y: auto">
         <br>
-            <p style="color:#ff4d4d" id="update_message">Generate a new script by the end of this month using the script generator from TW forum , this script may stop working</p>
+            <p style="color:#ff4d4d" id="update_message">SAM>Costache all the way and kurtis is noob</p>
 
             <div id="div_admin_show">
             </div>
             <br>
 
 
-        <table id="table_upload" class="scriptTable"> 
+        <table id="table_upload" class="scriptTable">
         <tr>
             <td></td>`;
     for(let i=0;i<units.length;i++){
@@ -421,10 +521,10 @@ async function createMainInterface() {
                             `
                         }
                     `</select>
-                </td>`       
-              
+                </td>`
+
         }
-    }     
+    }
 
     html+=`
             </tr>
@@ -432,7 +532,7 @@ async function createMainInterface() {
                 <td colspan="6">fakes per village (only if interval time is on)</td>
                 <td colspan="3">
                     <input class="scriptInput" type="number" id="nr_fakes_per_village" placeholder="5" value="5">
-                </td>   
+                </td>
             </tr>
 
 
@@ -443,27 +543,27 @@ async function createMainInterface() {
                 </td>
                 <td colspan="3">
                 <input type="datetime-local" class="start_window" style="text-align:center;" >
-                </td>   
+                </td>
                 <td colspan="3">
                 <input type="datetime-local" class="stop_window" style="text-align:center;" >
-                </td>   
+                </td>
             </tr>
     `
 
-    //create inputs for nukes   
+    //create inputs for nukes
     html+=`<tr hidden> </tr>
             <tr class="set_troops hide_nukes allinputTroops" >
                 <td>send</td>`
-            
+
     for(let i=0;i<units.length;i++){
         if( units[i]!="militia" && units[i]!="snob"){
             html+=`
                 <td  class="hide_${units[i]}">
                     <input class="scriptInput" type="number" placeholder="0" value="0">
                 </td>`
-        
+
         }
-    }        
+    }
     html+=`</tr>
             <tr class="set_troops hide_nukes allinputTroopsRes">
                 <td>reserve</td>`
@@ -473,16 +573,16 @@ async function createMainInterface() {
                 <td class="hide_${units[i]}">
                     <input class="scriptInput" type="number"  placeholder="0" value="0">
                 </td>`
-        
+
         }
-    }   
+    }
     html+=`
             </tr>
                 <tr class="set_troops hide_nukes" >
                 <td colspan="5">min population(nukes/fangs only)</td>
                 <td colspan="4">
                     <input class="scriptInput min_pop" type="number"  placeholder="500" value="500">
-                </td>   
+                </td>
             </tr>
 
             <tr class="set_troops hide_nukes">
@@ -491,18 +591,18 @@ async function createMainInterface() {
                 </td>
                 <td colspan="3">
                 <input type="datetime-local" class="start_window" style="text-align:center;" >
-                </td>   
+                </td>
                 <td colspan="3">
                 <input type="datetime-local" class="stop_window" style="text-align:center;" >
-                </td>   
+                </td>
             </tr>
-    
+
     `
     //create inputs for fangs
     html+=`</tr >
     <tr class="set_troops hide_fangs allinputTroops" >
         <td>send</td>`
-    
+
     for(let i=0;i<units.length;i++){
         if( units[i]!="militia" && units[i]!="snob"){
             html+=`
@@ -510,7 +610,7 @@ async function createMainInterface() {
                 <input class="scriptInput" type="number" placeholder="0" value="0">
             </td>`
         }
-    }        
+    }
     html+=`</tr>
         <tr class="set_troops hide_fangs allinputTroopsRes">
             <td>reserve</td>`
@@ -521,8 +621,8 @@ async function createMainInterface() {
                 <input class="scriptInput" type="number" placeholder="0" value="0">
             </td>`
         }
-    }  
-    
+    }
+
 
 
 
@@ -531,7 +631,7 @@ async function createMainInterface() {
             <td colspan="5">min population(nukes/fangs only)</td>
             <td colspan="4">
                 <input class="scriptInput min_pop" type="number"  placeholder="500" value="500">
-            </td>   
+            </td>
         </tr>
         <tr class="set_troops hide_fangs">
             <td colspan="3">
@@ -539,10 +639,10 @@ async function createMainInterface() {
             </td>
             <td colspan="3">
                <input type="datetime-local" class="start_window" style="text-align:center;" >
-            </td>   
+            </td>
             <td colspan="3">
                <input type="datetime-local" class="stop_window" style="text-align:center;" >
-            </td>   
+            </td>
         </tr>
     </table>
     <br>
@@ -555,7 +655,7 @@ const TARGET_WORLD  = worldNumber.replace(/\D/g, "");    // "150"
 
 
 // create panels
-html += `   
+html += `
 <div class="tab-panels" id="tabs_coord">
     <ul class="tabs">
         <li class="update_tab own active" rel="panel${nrTabs}">
@@ -645,11 +745,11 @@ html += `
                     <tr >
                         <td>split tabs:</td>
                         <td><input class="scriptInput" id="nr_split" type="number" value="20"></td>
-                        <td>                
+                        <td>
                         <select id="select_option_fakes" >
                             <option value="open tabs">open tabs</option>
                             <option value="go to rally">go to rally</option>
-                        </select>  
+                        </select>
                     </td >
                     <td><input class="btn evt-confirm-btn btn-confirm-yes" type="button" id="btn_start" onclick="startFakes()" value="Start"></td>
                     <td class="hide_btn_show" hidden><input class="btn evt-confirm-btn btn-confirm-yes" type="button" id="btn_show" value="Show" ></td>
@@ -682,10 +782,10 @@ html += `
     $("#contentContainer").eq(0).prepend(html);
     $("#mobileContent").eq(0).prepend(html);
 
-    
+
     $("#div_container").css("position","fixed");
     $("#div_container").draggable();
-    
+
 
     $("#div_minimize").on("click",()=>{
         let currentWidthPercentage=Math.ceil($('#div_container').width() / $('body').width() * 100);
@@ -730,7 +830,7 @@ function changeTheme(){
     let html= `
     <h3 style="color:${textColor};padding-left:10px;padding-top:5px">after theme is selected run the script again<h3>
     <table class="scriptTable" >
-        
+
         <tr>
             <td>
                 <select  id="select_theme">
@@ -831,7 +931,7 @@ function changeTheme(){
 
         for(let i=0;i<colours.length-1;i++){
             if(colours[i].match(/#[0-9 A-F]{6}/) == null ){
-                UI.ErrorMessage("wrong colour: "+colours[i])  
+                UI.ErrorMessage("wrong colour: "+colours[i])
                 throw new Error("wrong colour")
             }
         }
@@ -866,96 +966,89 @@ function changeTheme(){
         document.querySelector('#select_theme').value=currentTheme
     }
 
-    
-}
-
-function initializationTheme(){
-    if(localStorage.getItem(localStorageThemeName) != undefined){
-        let mapTheme = new Map(JSON.parse(localStorage.getItem(localStorageThemeName)))
-        let currentTheme=mapTheme.get("currentTheme")
-        let colours=mapTheme.get(currentTheme)
-
-        textColor=colours[0]
-        backgroundInput=colours[1]
-
-        borderColor = colours[2]
-        backgroundContainer=colours[3]
-        backgroundHeader=colours[4]
-        backgroundMainTable=colours[5]
-        backgroundInnerTable=colours[6]
-        widthInterface=colours[7]
-
-        backgroundAlternateTableEven=backgroundContainer;
-        backgroundAlternateTableOdd=getColorDarker(backgroundContainer,headerColorAlternateTable);       
-        console.log("textColor: "+textColor)
-        console.log("backgroundContainer: "+backgroundContainer)
-        
-    }
-    else{
-        localStorage.setItem(localStorageThemeName, defaultTheme)
-
-        let mapTheme = new Map(JSON.parse(localStorage.getItem(localStorageThemeName)))
-        let currentTheme=mapTheme.get("currentTheme")
-        let colours=mapTheme.get(currentTheme)
-
-        textColor=colours[0]
-        backgroundInput=colours[1]
-
-        borderColor = colours[2]
-        backgroundContainer=colours[3]
-        backgroundHeader=colours[4]
-        backgroundMainTable=colours[5]
-        backgroundInnerTable=colours[6]
-        widthInterface=colours[7]
-
-        backgroundAlternateTableEven=backgroundContainer;
-        backgroundAlternateTableOdd=getColorDarker(backgroundContainer,headerColorAlternateTable);  
-    }
 
 }
 
+function initializationTheme() {
+    try {
+        let raw = localStorage.getItem(localStorageThemeName);
 
-function hitCountApi(){
-    $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}/up`, response=>{
-        console.log(`This script has been run: ${response.count} times`);
-    });
-    if(game_data.device !="desktop"){
-        $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_phone/up`, response=>{
-            console.log(`This script has been run on mobile: ${response.count} times`);
-        });
-    }
- 
-    $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_id2${game_data.player.id}/up`, response=>{
-        console.log(response)
-        if(response.count == 1){
-            console.log("here")
-            $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_scriptUsers/up`, response=>{});
+        // 🔒 HARD GUARD: missing or invalid storage
+        if (!raw) {
+            localStorage.setItem(localStorageThemeName, defaultTheme);
+            raw = localStorage.getItem(localStorageThemeName);
         }
 
-    });
+        let parsed;
+        try {
+            parsed = JSON.parse(raw);
+        } catch (e) {
+            console.warn("⚠️ Theme JSON corrupted, resetting");
+            localStorage.setItem(localStorageThemeName, defaultTheme);
+            parsed = JSON.parse(localStorage.getItem(localStorageThemeName));
+        }
 
-    try {
-        $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_scriptUsers`, response=>{
-            console.log(`Total number of users: ${response.count}`);
-        }); 
-      
-    } catch (error) {}
+        const mapTheme = new Map(parsed);
 
+        const currentTheme = mapTheme.get("currentTheme");
+        const colours = mapTheme.get(currentTheme);
+
+        // 🔒 HARD GUARD: theme missing or malformed
+        if (!Array.isArray(colours) || colours.length < 8) {
+            throw new Error("Invalid theme structure");
+        }
+
+        // ✅ SAFE ASSIGNMENTS
+       window.textColor               = colours[0];
+window.backgroundInput         = colours[1];
+window.borderColor             = colours[2];
+window.backgroundContainer     = colours[3];
+window.backgroundHeader        = colours[4];
+window.backgroundMainTable     = colours[5];
+window.backgroundInnerTable    = colours[6];
+window.widthInterface          = colours[7];
+
+       window.backgroundAlternateTableEven = backgroundContainer;
+window.backgroundAlternateTableOdd =
+    getColorDarker(backgroundContainer, headerColorAlternateTable);
+
+
+        console.log("🎨 Theme loaded:", currentTheme);
+        console.log("textColor:", textColor);
+        console.log("backgroundContainer:", backgroundContainer);
+
+    } catch (err) {
+        console.error("❌ Theme init failed, forcing default", err);
+
+        // 🧯 LAST-RESORT FALLBACK
+        localStorage.setItem(localStorageThemeName, defaultTheme);
+
+        const mapTheme = new Map(JSON.parse(defaultTheme));
+        const currentTheme = mapTheme.get("currentTheme");
+        const colours = mapTheme.get(currentTheme);
+
+        window.textColor               = colours[0];
+window.backgroundInput         = colours[1];
+window.borderColor             = colours[2];
+window.backgroundContainer     = colours[3];
+window.backgroundHeader        = colours[4];
+window.backgroundMainTable     = colours[5];
+window.backgroundInnerTable    = colours[6];
+window.widthInterface          = colours[7];
+
+       window.backgroundAlternateTableEven = backgroundContainer;
+window.backgroundAlternateTableOdd =
+    getColorDarker(backgroundContainer, headerColorAlternateTable);
+
+    }
 }
 
-
-
-///////////////////////////////////////////////////////////get admins from dropbox////////////////////////////////////
-
-
-
-///////////////////////////////////////////////////////////get ally from dropbox////////////////////////////////////
 
 
 
 ///////////////////////////////////////////////////events for interface tribes///////////////////////////////////////////////
 function adminInterfaceAlly(){
-    $(document).ready(async function() { 
+    $(document).ready(async function() {
         let infoVillages = await getInfoVIllages();
         let set = new Set()
         let map_tribe = new Map()
@@ -966,47 +1059,46 @@ function adminInterfaceAlly(){
         })
 
 
-        let admin=true;
         let ally_tribe=JSON.parse((dropbox_ally=="")?"[]":dropbox_ally )
         let dataTribes=Array.from(set)
-     
 
-        if(admin){
+
+if (isAdminUser()) {
             let page_admin=document.getElementById("page_admin")
             let htmlTable= `
             <div id="table_admin">
             <table  class="scriptTable" >
                 <tr>
                     <td colspan="2" >ally tribes</td>
-                    <td  colspan="2">remove ally</td> 
+                    <td  colspan="2">remove ally</td>
                 </tr>`
-            
+
             for(let i=0;i<ally_tribe.length;i++){
-                htmlTable+=`        
-                <tr>    
+                htmlTable+=`
+                <tr>
                     <td colspan="2"><font class="all_ally"color="${textColor}">${ally_tribe[i].name} </font></td>
                     <td colspan="2">
                         <input class="btn evt-confirm-btn btn-confirm-yes" type="button" onclick='$(this).closest("tr").remove()' value="remove">
-                    </td>  
+                    </td>
                 </tr>
                 `
             }
             htmlTable+=`
-                <tr>    
+                <tr>
                     <td colspan="2">
                         <input class="scriptInput" type="text" id="name_tribe" placeholder="name tribe" >
                     </td>
-    
+
                     <td colspan="2">
                         <input class="btn evt-confirm-btn btn-confirm-yes" type="button" id="btn_add" value="add">
-                    </td>  
+                    </td>
                 </tr>
-    
-    
+
+
                 </table>
                 <center style="margin:5px"><input class="btn evt-confirm-btn btn-confirm-yes" id='btn_save_ally' type="button"  value="Save"></center>
                 </div>
-            ` 
+            `
 
             $("#div_admin_show").append(htmlTable)
             $("#table_admin").hide();
@@ -1014,13 +1106,13 @@ function adminInterfaceAlly(){
             $("#page_admin").on("click",()=>{
                 $("#table_admin").toggle(300)
             })
-    
+
             autocomplete(document.getElementById("name_tribe"),dataTribes)
 
 
 
 
-            
+
             // upload in dropbox
             document.getElementById("btn_save_ally").addEventListener("click",function(){
                 let ally=document.getElementsByClassName("all_ally")
@@ -1031,7 +1123,7 @@ function adminInterfaceAlly(){
                         allyId:map_tribe.get(ally[i].innerText)
                     })
                 }
-         // uploadFile(JSON.stringify(list_ally), filename_ally)
+         uploadFile(JSON.stringify(list_ally), filename_ally)
                 console.log(list_ally)
             })
 
@@ -1065,18 +1157,18 @@ function adminInterfaceAlly(){
                     UI.ErrorMessage("this tribe doesn't exist2",1000)
                 }
             })
-        
 
-            
+
+
         }
-        
+
     });
 
 }
 /////////////////////////////////////////////////events for interface admin/////////////////////////////////////////////
 function adminInterface(){
 $(document).ready(async function() {
-    
+
     let infoVillages = await getInfoVIllages();
     let set = new Set()
     let map_tribe = new Map()
@@ -1087,51 +1179,50 @@ $(document).ready(async function() {
     })
 
 
-    let admin=true;
     let admin_tribe=JSON.parse((dropbox_admin=="")?"[]":dropbox_admin )
     let dataTribes=Array.from(set)
 
-  
+
     console.log("AICI ba admin")
     console.log(dataTribes)
     console.log(map_tribe)
 
-    if(admin){
+if (isAdminUser()) {
         let page_admin=document.getElementById("page_admin2")
         let htmlTable= `
         <div id="table_admin2">
         <table  class="scriptTable" >
         <tr>
             <td colspan="2" >admins</td>
-            <td  colspan="2">remove admin</td> 
+            <td  colspan="2">remove admin</td>
         </tr>`
-        
+
         for(let i=0;i<admin_tribe.length;i++){
-            htmlTable+=`        
-            <tr>    
+            htmlTable+=`
+            <tr>
                 <td colspan="2"><font class="all_admin"color="${textColor}">${admin_tribe[i].name} </font></td>
 
                 <td colspan="2">
                     <input class="btn evt-confirm-btn btn-confirm-yes" type="button" onclick='$(this).closest("tr").remove()' value="remove">
-                </td>  
+                </td>
             </tr>
             `
         }
         htmlTable+=`
-            <tr>    
+            <tr>
             <td colspan="2" >
                 <input class="scriptInput" id="name_admin" placeholder="name player">
             </td>
             <td colspan="2">
                 <input class="btn evt-confirm-btn btn-confirm-yes" type="button" id="btn_add_admin" value="add">
-            </td>  
+            </td>
             </tr>
 
 
             </table>
             <center style="margin:5px"><input class="btn evt-confirm-btn btn-confirm-yes" id='btn_save_admin' type="button"  value="Save"></center>
             </div>
-        ` 
+        `
 
         $("#div_admin_show").append(htmlTable)
         $("#table_admin2").hide();
@@ -1144,7 +1235,7 @@ $(document).ready(async function() {
 
 
 
-        
+
         // upload in dropbox
         document.getElementById("btn_save_admin").addEventListener("click",function(){
             let admin=document.getElementsByClassName("all_admin")
@@ -1155,7 +1246,7 @@ $(document).ready(async function() {
                     adminId:map_tribe.get(admin[i].innerText)
                 })
             }
-            //uploadFile(JSON.stringify(list_admin), filename_admin)
+            uploadFile(JSON.stringify(list_admin), filename_admin)
             console.log(list_admin)
         })
 
@@ -1189,11 +1280,11 @@ $(document).ready(async function() {
                 UI.ErrorMessage("this player doesn't exist",1000)
             }
         })
-    
 
-        
+
+
     }
-    
+
 });
 
 }
@@ -1217,17 +1308,17 @@ function addEventPanel(){
                 var $panel = $(this).closest('.tab-panels');
                 $panel.find('.tabs li.active').removeClass('active');
                 $(this).addClass('active');
-        
+
                 //figure out which panel to show
                 var panelToShow = $(this).attr('rel');
                 if(panelToShow!=undefined){
                     //hide current panel
                     $panel.find('.panel.active').slideUp(300, showNextPanel);
-            
+
                     //show next panel
                     function showNextPanel() {
                         $(this).removeClass('active');
-            
+
                         $('#'+panelToShow).slideDown(300, function() {
                             $(this).addClass('active');
                         });
@@ -1253,7 +1344,7 @@ function addEventPanel(){
 
 function addNewPanel(){
     $("#add_tab").on("click",function(){
-        
+
         let idNewPanel=parseInt($(".tabs").eq(0).find("li").last().prev().attr("rel").replace("panel",""))+1
         let htmlLI=`<li class="update_tab own" rel="panel${idNewPanel}"> <font> panel${idNewPanel}</font> <img class="remove_tab" src="https://img.icons8.com/doodle/16/000000/delete-sign.png"/> </li>`;
         $("#add_tab").before(htmlLI);
@@ -1280,7 +1371,7 @@ function removePanel(){
             let removePanel=$(this).parent().attr('rel')
             $(this).parent().remove();
             $("#"+removePanel).remove();
-    
+
             if($(".active").length==0){
                 let lastTab=$(".update_tab").last()
                 lastTab.addClass("active");
@@ -1329,48 +1420,80 @@ function saveOwnData(){
 }
 
 function initializationOwnTabs(){
-    var listInfoTabs=JSON.parse(localStorage.getItem(game_data.world+"ownTabs"))
 
-    if(listInfoTabs.length>0){
-    for(let i=0;i<listInfoTabs.length;i++){
-            let idNewPanel=parseInt($(".tabs").eq(0).find("li").last().prev().attr("rel").replace("panel",""))+1
-            let htmlLI=`<li class="update_tab own" rel="panel${idNewPanel}"> <font> ${listInfoTabs[i].name} </font> <img class="remove_tab" src="https://img.icons8.com/doodle/16/000000/delete-sign.png"/> </li>`;
+    let raw = localStorage.getItem(game_data.world + "ownTabs");
+    let listInfoTabs = raw ? JSON.parse(raw) : [];
+
+    if (!Array.isArray(listInfoTabs)) {
+        listInfoTabs = [];
+    }
+
+    if (listInfoTabs.length > 0) {
+        for (let i = 0; i < listInfoTabs.length; i++) {
+
+            let idNewPanel =
+                parseInt(
+                    $(".tabs").eq(0).find("li").last().prev().attr("rel").replace("panel", "")
+                ) + 1;
+
+            let htmlLI = `
+                <li class="update_tab own" rel="panel${idNewPanel}">
+                    <font>${listInfoTabs[i].name}</font>
+                    <img class="remove_tab" src="https://img.icons8.com/doodle/16/000000/delete-sign.png"/>
+                </li>
+            `;
             $("#add_tab").before(htmlLI);
-            let coords=""
 
-            if(listInfoTabs[i].coords!="undefined")
-                coords=listInfoTabs[i].coords
-            let nrCoords=0;
-            if(coords!=undefined)
-                if(coords.split(" ")[0]!="")  
-                    nrCoords=coords.split(" ").length
-            let htmlDIV=`
-            <div id="panel${idNewPanel}" class="panel own">
-                <p style="color:${textColor};font-weight: bold;">nr coords: ${nrCoords}</p>
-                <center style="margin:5px"><textarea class="scriptInput" rows="10">${coords}</textarea><center>
-            </div>`
+            let coords = "";
+            if (typeof listInfoTabs[i].coords === "string") {
+                coords = listInfoTabs[i].coords;
+            }
 
-            $("#all_tabs").append(htmlDIV)
-        } 
-        //remove first own tab
+            let nrCoords = 0;
+            if (coords && coords.trim() !== "") {
+                nrCoords = coords.split(" ").length;
+            }
+
+            let htmlDIV = `
+                <div id="panel${idNewPanel}" class="panel own">
+                    <p style="color:${textColor};font-weight: bold;">
+                        nr coords: ${nrCoords}
+                    </p>
+                    <center style="margin:5px">
+                        <textarea class="scriptInput" rows="10">${coords}</textarea>
+                    </center>
+                </div>
+            `;
+
+            $("#all_tabs").append(htmlDIV);
+        }
+
+        // remove first own tab
         document.getElementsByClassName("tabs")[0].firstElementChild.remove();
         document.getElementById("all_tabs").getElementsByClassName("active")[0].remove();
-        //active last own tab
-        document.getElementsByClassName("tabs")[0].lastElementChild.previousSibling.classList.add("active")
-        document.getElementById("all_tabs").lastElementChild.classList.add("active")
+
+        // activate last own tab
+       const tabsEl = document.getElementsByClassName("tabs")[0];
+const allTabsEl = document.getElementById("all_tabs");
+
+if (tabsEl && allTabsEl) {
+    const lastTab = tabsEl.lastElementChild?.previousElementSibling;
+    const lastPanel = allTabsEl.lastElementChild;
+
+    if (lastTab) lastTab.classList.add("active");
+    if (lastPanel) lastPanel.classList.add("active");
+}
+
     }
-    console.log("initialization!")
+
+    console.log("initialization!");
     addEventPanel();
-    removePanel()
+    removePanel();
     getCoordsEvent();
-    document.querySelectorAll(".scriptInput").forEach(function(box, index){
-        // console.log(box)
+
+    document.querySelectorAll(".scriptInput").forEach(box => {
         box.style.width = "100%";
-    })
-      document.querySelectorAll(".scriptInput").forEach(function(box, index){
-        // console.log(box)
-        box.classList.add()
-    })
+    });
 }
 
 
@@ -1396,7 +1519,7 @@ function saveNrFakes(){
             inputDelay.value=200;
         localStorage.setItem(game_data.world+"delay_tabs",inputDelay.value)
     })
-    
+
 }
 
 function initializationNrFakes(){
@@ -1493,7 +1616,7 @@ function initializationTroupes(){
             // console.log(value)
             list_input.push(value)
         });
-    
+
         //save datetime-local
         $('.set_troops input[type=datetime-local]').each(function () {
             // var checked = this.checked
@@ -1501,10 +1624,10 @@ function initializationTroupes(){
             // console.log(value)
             list_datetime.push(value)
         });
-    
 
-        
-    
+
+
+
         let list_final=[list_checkbox,select_command_value,list_input,list_datetime]
         let data=JSON.stringify(list_final)
         let data_localStorage=localStorage.getItem(game_data.world+"troopTemplatesFakes")
@@ -1542,7 +1665,7 @@ function initializationTroupes(){
             $(".hide_knight").show()
             $(".hide_snob").show()
         }
-        
+
 
     })
 
@@ -1616,114 +1739,145 @@ function saveCoordDropbox() {
 }
 
 
+function safeString(v) {
+    return (typeof v === "string") ? v : "";
+}
+
+function safeCoordsCount(v) {
+    if (typeof v !== "string") return 0;
+    const m = v.match(/\d+\|\d+/g);
+    return m ? m.length : 0;
+}
 
 
+async function getCoordDropbox() {
+    console.log(filename_fakes1);
 
-async function getCoordDropbox(){
-    console.log(filename_fakes1)
-    let tabs_tribe=document.getElementsByClassName("li_tribe")
-    let [file_fakes1, file_fakes2, file_fakes3, file_fakes4, file_fakes5, file_fakes6,file_fakes7,file_fakes8,file_fakes9,file_fakes10,mapVillage]=await Promise.all(
-        [readFileSupabase(filename_fakes1),readFileSupabase(filename_fakes2),readFileSupabase(filename_fakes3),readFileSupabase(filename_fakes4),readFileSupabase(filename_fakes5),readFileSupabase(filename_fakes6),readFileSupabase(filename_fakes7),readFileSupabase(filename_fakes8),readFileSupabase(filename_fakes9),readFileSupabase(filename_fakes10),getInfoVIllages()])
-    
-    let list_files=[file_fakes1, file_fakes2, file_fakes3, file_fakes4, file_fakes5, file_fakes6,file_fakes7,file_fakes8,file_fakes9,file_fakes10]
+    const tabs_tribe = document.getElementsByClassName("li_tribe");
 
-    for(let i=0;i<tabs_tribe.length;i++){
-        let idDivParent=tabs_tribe[i].getAttribute("rel");
+    const results = await Promise.all([
+        readFileSupabase(filename_fakes1),
+        readFileSupabase(filename_fakes2),
+        readFileSupabase(filename_fakes3),
+        readFileSupabase(filename_fakes4),
+        readFileSupabase(filename_fakes5),
+        readFileSupabase(filename_fakes6),
+        readFileSupabase(filename_fakes7),
+        readFileSupabase(filename_fakes8),
+        readFileSupabase(filename_fakes9),
+        readFileSupabase(filename_fakes10),
+        getInfoVIllages()
+    ]);
 
-        let textarea=document.getElementById(idDivParent).getElementsByTagName("textarea")[0]
-        let paragraph_saved_by=document.getElementById(idDivParent).getElementsByTagName("p")[0]
-        let paragraph_nr_coord=document.getElementById(idDivParent).getElementsByTagName("p")[1]
-        let dropdown_source=document.getElementById(idDivParent).getElementsByClassName("select_get_coord")[0]
-        
-        //initialize panels tribe when mouse is up
-        tabs_tribe[i].addEventListener("mouseup",async function(){
-            if(tabs_tribe[i].classList.contains("active")==false){
-                try{
-                    let data_coord=await readFileSupabase(list_filename_fakes[i])
-                    data_coord = data_coord.replace(/</g, "").replace(/>/g, "")
-                    let obj=JSON.parse(data_coord)
-                    obj.coords = obj.coords.replace(/"/g, "").replace(/'/g, "").replace(/`/g, "")
-                   obj.data = obj.data.replace(/"/g, "").replace(/'/g, "").replace(/`/g, "")
+    const mapVillage = results.pop();
+    const list_files = results;
 
-                    textarea.value=obj.coords
-                    obj.playerName = obj.playerName.replace(/"/g, "").replace(/'/g, "").replace(/`/g, "")
-                    paragraph_saved_by.innerText="saved by "+ obj.playerName +" on "+obj.data
-                    paragraph_nr_coord.innerText="nr coords "+obj.coords.split(" ").length
-                    tabs_tribe[i].innerText=obj.nameTab
+    for (let i = 0; i < tabs_tribe.length; i++) {
+        const idDivParent = tabs_tribe[i].getAttribute("rel");
+        const parent = document.getElementById(idDivParent);
+        if (!parent) continue;
 
-                    if(obj.list_input != undefined){
-                        $('#table_get_coords input[type=number], #table_get_coords input[type=text]').each(function (index,elem) {
-                            this.value=obj.list_input[index]
-                        });
-                    }
-                    else{
-                        $('#table_get_coords input[type=number], #table_get_coords input[type=text]').each(function (index,elem) {
-                            this.value=""
-                        }); 
-                    }
-                    if(obj.sourceCoord != undefined){
-                        dropdown_source.value=obj.sourceCoord
-                        if(obj.sourceCoord == "coordGrabber"){
-                            textarea.value = getCoordsGrabber(mapVillage)
-                            paragraph_nr_coord.innerText="nr coords "+textarea.value.split(" ").length
-                        }
-                    }
-                    // console.log(obj)
-                    UI.SuccessMessage("get coords",1000)
-                }catch(e){
-                    UI.ErrorMessage("error coords2",1000)
-                }
+        const textarea = parent.getElementsByTagName("textarea")[0];
+        const paragraphs = parent.getElementsByTagName("p");
+        const paragraph_saved_by = paragraphs[0];
+        const paragraph_nr_coord = paragraphs[1];
+        const dropdown_source = parent.getElementsByClassName("select_get_coord")[0];
 
-            }
+        /* ================= CLICK LOAD ================= */
+        tabs_tribe[i].addEventListener("mouseup", async () => {
+            if (tabs_tribe[i].classList.contains("active")) return;
 
-        }) 
-        // initialize the first time when the script is run
-        if(tabs_tribe[i].classList.contains("active")==false){
-            try{
-                let obj=JSON.parse(list_files[i])
-                // console.log(obj)
-                textarea.value=obj.coords;
-                paragraph_saved_by.innerText="saved by "+obj.playerName+" on "+obj.data
-                paragraph_nr_coord.innerText="nr coords "+obj.coords.split(" ").length
-                tabs_tribe[i].innerText=obj.nameTab
- 
+            try {
+                let data_coord = await readFileSupabase(list_filename_fakes[i]);
+                if (!data_coord) throw new Error("empty file");
 
-                if(obj.list_input != undefined){
-                        // console.log(obj)
-                    $('#table_get_coords input[type=number], #table_get_coords input[type=text]').each(function (index,elem) {
-                        this.value=obj.list_input[index]
+                data_coord = safeString(data_coord)
+                    .replace(/[<>]/g, "");
+
+                const obj = JSON.parse(data_coord);
+
+                const coords = safeString(obj.coords)
+                    .replace(/["'`]/g, "");
+
+                const data = safeString(obj.data)
+                    .replace(/["'`]/g, "");
+
+                const playerName = safeString(obj.playerName)
+                    .replace(/["'`]/g, "");
+
+                textarea.value = coords;
+                paragraph_saved_by.innerText = `saved by ${playerName} on ${data}`;
+                paragraph_nr_coord.innerText = `nr coords ${safeCoordsCount(coords)}`;
+                tabs_tribe[i].innerText = safeString(obj.nameTab);
+
+                if (Array.isArray(obj.list_input)) {
+                    $('#table_get_coords input').each(function (idx) {
+                        this.value = obj.list_input[idx] ?? "";
                     });
+                } else {
+                    $('#table_get_coords input').val("");
                 }
-                else{
-                    $('#table_get_coords input[type=number], #table_get_coords input[type=text]').each(function (index,elem) {
-                        this.value=""
-                    }); 
-                }
-                if(obj.sourceCoord != undefined){
-                    dropdown_source.value=obj.sourceCoord
-                    if(obj.sourceCoord == "coordGrabber"){
-                        textarea.value = getCoordsGrabber(mapVillage)
-                        paragraph_nr_coord.innerText="nr coords "+textarea.value.split(" ").length
 
+                if (obj.sourceCoord) {
+                    dropdown_source.value = obj.sourceCoord;
+                    if (obj.sourceCoord === "coordGrabber") {
+                        textarea.value = getCoordsGrabber(mapVillage);
+                        paragraph_nr_coord.innerText =
+                            `nr coords ${safeCoordsCount(textarea.value)}`;
                     }
                 }
 
-                // console.log(obj)
-                UI.SuccessMessage("upload coords",1000)
-            }catch(e){
-                UI.ErrorMessage("save coords",1000)
-                console.log(e)
+                UI.SuccessMessage("get coords", 1000);
+
+            } catch (e) {
+                console.error(e);
+                UI.ErrorMessage("error coords", 1000);
+            }
+        });
+
+        /* ================= INITIAL LOAD ================= */
+        if (!tabs_tribe[i].classList.contains("active")) {
+            try {
+                if (!list_files[i]) throw new Error("empty file");
+
+                const obj = JSON.parse(list_files[i]);
+                const coords = safeString(obj.coords);
+
+                textarea.value = coords;
+                paragraph_saved_by.innerText =
+                    `saved by ${safeString(obj.playerName)} on ${safeString(obj.data)}`;
+                paragraph_nr_coord.innerText =
+                    `nr coords ${safeCoordsCount(coords)}`;
+                tabs_tribe[i].innerText = safeString(obj.nameTab);
+
+                if (Array.isArray(obj.list_input)) {
+                    $('#table_get_coords input').each(function (idx) {
+                        this.value = obj.list_input[idx] ?? "";
+                    });
+                } else {
+                    $('#table_get_coords input').val("");
+                }
+
+                if (obj.sourceCoord === "coordGrabber") {
+                    textarea.value = getCoordsGrabber(mapVillage);
+                    paragraph_nr_coord.innerText =
+                        `nr coords ${safeCoordsCount(textarea.value)}`;
+                }
+
+                UI.SuccessMessage("upload coords", 1000);
+
+            } catch (e) {
+                console.error(e);
+                UI.ErrorMessage("save coords", 1000);
             }
         }
-
-
     }
 }
 
 
 
 async function getInfoVIllages(){
-    
+
     return new Promise(async(resolve,reject)=>{
         let filename_innoDB=game_data.world+"infoVillages"
         await insertlibraryLocalBase().catch(err=>{alert(err)})
@@ -1762,7 +1916,7 @@ async function getInfoVIllages(){
                 })
             }
 
-    
+
             for(let i=0;i<dataVillage.length;i++){
                 if(mapPlayer.get(dataVillage[i].split(",")[4])!=undefined){
                     mapVillage.set(dataVillage[i].split(",")[2]+"|"+dataVillage[i].split(",")[3],{
@@ -1780,9 +1934,9 @@ async function getInfoVIllages(){
 
             let data=JSON.stringify(obj)
             data=replaceSpecialCaracters(data)
-        
+
             await localBase.setItem(filename_innoDB,data)
-        
+
         }else{
             // console.log("i am herererere")
             let ino_db= JSON.parse(data)
@@ -1790,7 +1944,7 @@ async function getInfoVIllages(){
             mapVillage=new Map(ino_db.data)
 
             // console.log("mapVillage",mapVillage)
-            
+
 
             console.log("updating")
 
@@ -1801,7 +1955,7 @@ async function getInfoVIllages(){
                 let dataVillage=httpGet(url+"/map/village.txt").split(/\r?\n/);
                 let dataPlayer=httpGet(url+"/map/player.txt").split(/\r?\n/);
                 let dataAlly=httpGet(url+"/map/ally.txt").split(/\r?\n/);
-    
+
                 for(let i=0;i<dataAlly.length-1;i++){
                     // console.log(dataPlayer[i].split(",")[1])
                     let tribeName=innoReplaceSpecialCaracters(dataAlly[i].split(",")[1])
@@ -1817,8 +1971,8 @@ async function getInfoVIllages(){
                         tribeName: tribeName
                     })
                 }
-    
-        
+
+
                 for(let i=0;i<dataVillage.length;i++){
                     if(mapPlayer.get(dataVillage[i].split(",")[4])!=undefined){
                         mapVillage.set(dataVillage[i].split(",")[2]+"|"+dataVillage[i].split(",")[3],{
@@ -1833,7 +1987,7 @@ async function getInfoVIllages(){
                 }
                 obj.datetime=current_date
                 obj.data=Array.from(mapVillage.entries())
-                
+
                 let data=JSON.stringify(obj)
                 data=replaceSpecialCaracters(data)
                 await localBase.setItem(filename_innoDB,data)
@@ -1897,7 +2051,7 @@ function innoReplaceSpecialCaracters(text){//ino database has special characters
     text=text.replaceAll("%7B","_")
     text=text.replaceAll("%7C","|")
     text=text.replaceAll("%7D","|")
-    
+
     text=text.replaceAll("%7E","{")
 
     text=text.replaceAll("%C3%84","Ã„")
@@ -2076,7 +2230,7 @@ function getBonusNight() { //get bonus night
             obj.start_hour=start_hour
             obj.end_hour=end_hour
 
-            
+
             localStorage.setItem(game_data.world+"nightBonus",JSON.stringify(obj));
             console.log("save speed world")
         return obj
@@ -2111,7 +2265,7 @@ function getBonusNightForEach(list_href){// return bonus night interval for each
                             end_hour:night_bonus_interval[1],
 
                         })
-            
+
                         let stop_ajax=new Date().getTime();
                         let diff=stop_ajax-start_ajax
                         console.log("wait: "+diff)
@@ -2122,7 +2276,7 @@ function getBonusNightForEach(list_href){// return bonus night interval for each
                         },200-diff)
                     }
                 })
-                
+
             }
             else
             {
@@ -2136,27 +2290,7 @@ function getBonusNightForEach(list_href){// return bonus night interval for each
 }
 
 
-function getSpeedConstant() { //Get speed constant (world speed * unit speed) for world
-    if (localStorage.getItem(game_data.world+"speedWorld") !== null) {
-        let obj=JSON.parse(localStorage.getItem(game_data.world+"speedWorld"))
-        console.log("speed world already exist")
-        return obj
-    }
-    else { //Get data from xml and save it in localStorage to avoid excessive XML requests to server
-            let data=httpGet("/interface.php?func=get_config") //Load world data
-            const parser = new DOMParser();
-            const htmlDoc = parser.parseFromString(data, 'text/html');
-            let obj={}
-            let worldSpeed = Number(htmlDoc.getElementsByTagName("speed")[0].innerHTML)
-            let unitSpeed = Number(htmlDoc.getElementsByTagName("unit_speed")[0].innerHTML);
-            obj.unitSpeed=unitSpeed
-            obj.worldSpeed=worldSpeed
 
-            localStorage.setItem(game_data.world+"speedWorld",JSON.stringify(obj));
-            console.log("save speed world")
-        return obj
-    }
-}
 
 function calcDistance(coord1,coord2)
 {
@@ -2295,42 +2429,50 @@ function replaceSpecialCaracters(data){//some special data cannot be compressed
 
 
 }
-
-function checkPageRun(){//check if the script is run on the right page
-    let href=window.location.href
-    if(href.includes("screen=place")){
-        let list_href=JSON.parse(localStorage.getItem(game_data.world+"launchFakes"));
-        if(list_href.length>0){
-            let current_href=list_href.pop();
-            localStorage.setItem(game_data.world+"launchFakes",JSON.stringify(list_href));
-            UI.SuccessMessage("left "+list_href.length+" fakes",1000);
-    
-            window.open(current_href,"_self");
-            throw new Error("fake sent");// i don't like this throw error here
-
-    
-        }
-    }
-    else if(document.getElementById("combined_table")==null){
-        alert("the script must be run from overview_villages&mode=combined ")
-        window.location.href=game_data.link_base_pure+"overview_villages&mode=combined"
-        throw new Error("wrong page");
-
-    }
-    
+function parseCoord(coord) {
+    if (typeof coord !== "string") return null;
+    const m = coord.match(/^(\d+)\|(\d+)$/);
+    if (!m) return null;
+    return { x: m[1], y: m[2] };
 }
 
 
+    // ===== SPEED INIT (AFTER FUNCTION DEFINITION) =====
+const speedConst = getSpeedConstant();
+
+window.speedWorld   = speedConst.worldSpeed;
+window.speedTroupes = speedConst.unitSpeed;
+
+window.nobleSpeed  = 2100 * 1000 / (speedWorld * speedTroupes);
+window.ramSpeed    = 1800 * 1000 / (speedWorld * speedTroupes);
+window.swordSpeed  = 1320 * 1000 / (speedWorld * speedTroupes);
+window.axeSpeed    = 1080 * 1000 / (speedWorld * speedTroupes);
+window.lightSpeed  = 600  * 1000 / (speedWorld * speedTroupes);
+window.scoutSpeed  = 540  * 1000 / (speedWorld * speedTroupes);
+
 async function startFakes(){
     try {
+
+        // 🔒 HARD GUARD — REQUIRED PAGE CHECK
+        const combinedTable = document.getElementById("combined_table");
+        if (!combinedTable) {
+            UI.ErrorMessage(
+                "Run this from Overview → Villages → Combined",
+                3000
+            );
+            return; // ⛔ STOP ENTIRE FUNCTION
+        }
+
+        const tableRows = combinedTable.getElementsByTagName("tr");
+
         let mapTroupes=new Map();
         let mapInfoVillages=await getInfoVIllages();
         let selectModLaunch=document.getElementById("select_option_fakes").value
         let selectAttack=document.getElementById("select_type_attack").value
         let landSpecific=$(".set_troops  input[type=checkbox][value=land_specific]:visible").prop("checked")
         let nrFakesPerVillage=parseInt(document.getElementById("nr_fakes_per_village").value)
-        
-        
+
+
         let nrFakes=parseInt(document.getElementById("nr_fakes").value)
         let nrSplits=parseInt(document.getElementById("nr_split").value)
         let minPop=parseInt($(".min_pop:visible").val())
@@ -2375,7 +2517,7 @@ async function startFakes(){
         }
 
 
-    //////////////////////////////////////////////////////////////get template////////////////////////////////////////////////////////////////   
+    //////////////////////////////////////////////////////////////get template////////////////////////////////////////////////////////////////
         let limitFake=getFakeLimit()/100;
         console.log(limitFake)
         for(let i=0;i<unitsLength;i++){
@@ -2384,7 +2526,7 @@ async function startFakes(){
             mapTroupes.set(troupeName,nrTroupe)
         }
 
-        let table_combined=document.getElementById("combined_table").getElementsByTagName("tr")
+        let table_combined = tableRows;
         let select_type=document.getElementById("select_type_attack").value
 
         if(select_type=="fakes"){
@@ -2405,7 +2547,7 @@ async function startFakes(){
                         let selectNameTroupe=key;
                         let selectValueTroupe=mapTroupes.get(key)
                         let currentTroupe=vectorTroupes[index]
-                        
+
                         if(selectValueTroupe!=0){
                             if(currentTroupe>nrFakes){
                                 if(selectValueTroupe>0 && currentTroupe >= selectValueTroupe * nrFakes){
@@ -2421,11 +2563,11 @@ async function startFakes(){
                                         static:"false"
                                     }
                                     totalPop+=currentTroupe*troupesPop[selectNameTroupe]
-        
+
                                 }
                             }
                         }
-        
+
                     })
                     let availableFakesTotal=totalPop/limitPop;
                     // console.log("current coord "+currentCoord)
@@ -2445,7 +2587,7 @@ async function startFakes(){
                                 let troupeTemplate=availableTroupes[key].value/nrFakes
                                 templateFakes[key]=troupeTemplate
                                 totalPopTemplate+=troupeTemplate*troupesPop[key]
-        
+
                             }
                         }
                     })
@@ -2470,7 +2612,7 @@ async function startFakes(){
                                 templateFakes[key]=templateFakes[key]-1;
                                 totalPopTemplate-=6;
                             }
-                            //rams 
+                            //rams
                             if(totalPopTemplate-limitPop>=5 && troupesPop[key]==5 && k%5==0  && templateFakes[key]>1 ){
                                 // console.log("remove ram")
                                 templateFakes[key]=templateFakes[key]-1;
@@ -2482,15 +2624,15 @@ async function startFakes(){
                                 templateFakes[key]=templateFakes[key]-1;
                                 totalPopTemplate-=8;
                             }
-        
-                            
-        
-                            
-        
+
+
+
+
+
                             if(templateFakes[key]==0){
                                 delete templateFakes[key]
                             }
-        
+
                         })
                         if(totalPopTemplate==limitPop)
                             break;
@@ -2501,7 +2643,7 @@ async function startFakes(){
                     // Object.keys(templateFakes).forEach(key=>{console.log(key+" "+templateFakes[key])})
                     // console.log("-------------------------------------------------------------------------------")
                     let minFakes=Math.min(nrFakes,parseInt(availableFakesTotal))
-        
+
                     if(availableFakesTotal>1.2 &&(templateFakes["ram"]>=1 || templateFakes["catapult"]>=1)){
                         listFakesTemplate.push({
                             templateFakes:templateFakes,
@@ -2518,7 +2660,7 @@ async function startFakes(){
             }
             else{
                 for(let i=1;i<table_combined.length;i++){
-                
+
                     let vectorTroupes=Array.from(table_combined[i].getElementsByClassName("unit-item")).map(e=>{return parseInt(e.innerText)})
                     let currentCoord=table_combined[i].getElementsByClassName("quickedit-label")[0].innerText.match(/\d+\|\d+/)[0]
                     let linkBase=table_combined[i].getElementsByClassName("quickedit-content")[0].getElementsByTagName("a")[0].href.replace("overview","place")
@@ -2529,12 +2671,12 @@ async function startFakes(){
                         let selectNameTroupe=key;
                         let selectValueTroupe=mapTroupes.get(key)
                         let currentTroupe=vectorTroupes[index]
-                        
+
                         if(selectValueTroupe > 0 && selectValueTroupe != "min" && (selectNameTroupe=="spy" ||selectNameTroupe=="ram"|| selectNameTroupe=="catapult" )){
                             if(currentTroupe >= selectValueTroupe*nrFakes ){
                                 availableTroupes[selectNameTroupe]=selectValueTroupe*nrFakes
                             }
-                        }    
+                        }
                     })
                     console.log("availableTroupes",availableTroupes)
                     let templateFakes={}
@@ -2553,7 +2695,7 @@ async function startFakes(){
                     else if( availableTroupes["catapult"]>=nrFakes){
                         templateFakes["catapult"] = parseInt(availableTroupes["catapult"]/nrFakes)
                     }
-        
+
                     console.log("-------------------------------------------------------------------------------")
                     if(templateFakes["ram"]>=1 || templateFakes["catapult"]>=1){
                         listFakesTemplate.push({
@@ -2569,7 +2711,7 @@ async function startFakes(){
                         })
                     }
                 }
-        
+
             }
         }
         else{//nukes/fangs
@@ -2595,7 +2737,7 @@ async function startFakes(){
 
                     let name_troop = units[j]
                     vectorTroupes[j] -= reserve_troops[j]
-                    let value_troop = Math.min(vectorTroupes[j], send_troops[j]) 
+                    let value_troop = Math.min(vectorTroupes[j], send_troops[j])
                     // console.log(`name ${name_troop}: value: ${value_troop}  vector:${vectorTroupes[i]}, send:${send_troops[j]}`)
                     value_troop = (value_troop<= 0) ? 0 : value_troop
                     availableTroupes[name_troop] = value_troop
@@ -2625,7 +2767,7 @@ async function startFakes(){
                     speedTroop=scoutSpeed
                 }
 
-                    
+
                 // console.log(`${pop} >= ${minPop}`)
                 if(pop >= minPop){
                     // console.log(`availableTroupes:`,availableTroupes)
@@ -2642,7 +2784,7 @@ async function startFakes(){
         }
 
 
-                
+
 
         shuffleArray(listFakesTemplate)
         console.log("listFakesTemplate",listFakesTemplate)
@@ -2676,7 +2818,7 @@ async function startFakes(){
                 let infoVillage=mapInfoVillages.get(list_coords[i])
                 if(infoVillage==undefined){
                     list_coords.splice(i,1)
-                    i--; 
+                    i--;
                 }
                 else if(ally_tribe.includes(infoVillage.allyId)){
                     list_coords.splice(i,1)
@@ -2686,7 +2828,7 @@ async function startFakes(){
         }
 
 
-        //add bonus night,if it is active, to each village 
+        //add bonus night,if it is active, to each village
         let map_idPlayers=new Map()
         if(bonusNight.active==2){
             for(let i=0;i<list_coords.length;i++){
@@ -2733,7 +2875,7 @@ async function startFakes(){
                     href+=key+"="+obj.templateFakes[key]+"&"
                 })
 
-                //if bonus night exist 
+                //if bonus night exist
                 if(bonusNight.active==1 || bonusNight.active==2){
                     for(let l=k;l<list_coords.length;l++){
                         let time_travel = calcDistance(obj.coordOrigin,list_coords[l]) * (ramSpeed)//time travel for ram speed
@@ -2761,13 +2903,17 @@ async function startFakes(){
                             for(let l=k;l<list_coords.length;l++){
                                 let coord_target=list_coords[l];
                                 if(intervalHour(time_start,time_end,time_target)==false && checkWindow(start_window,stop_window,coord_origin,coord_target,obj.speedTroop)==true){//check if attack lands inside the window
-                                    href+="x="+coord_target.split("|")[0]+"&y="+coord_target.split("|")[1]+"&"
+                                  const p = parseCoord(coord_target);
+if (!p) continue;
+
+href += `x=${p.x}&y=${p.y}&`;
+
                                     found_target=true
 
                                     if(select_type=="nukes" || select_type=="fangs"){
                                         list_coords.splice(k,1)
                                     }else{
-                                        if(map_nr_destination.has(coord_target)){//check if coord dest exist and then check if there are enough fakes                                        
+                                        if(map_nr_destination.has(coord_target)){//check if coord dest exist and then check if there are enough fakes
                                             if(map_nr_destination.get(coord_target)>=nrFakesPerVillage){
                                                 list_coords.splice(k,1)
                                             }
@@ -2777,14 +2923,14 @@ async function startFakes(){
                                         else
                                             k++
                                     }
-                                    
+
                                     let landing_time=calculateLandingTime(coord_origin,coord_target,obj.speedTroop)
                                     obj.coordDestination=coord_target
                                     obj.nr_from = obj.nr_from + 1
                                     obj.landing_time=landing_time
                                     break;
                                 }
-                                k++  
+                                k++
                             }
                         }
                         else{
@@ -2792,7 +2938,11 @@ async function startFakes(){
                             let coord_target=list_coords[l];
                             if(intervalHour(time_start,time_end,time_target)==false){
                                 console.log("it is not on bonus night")
-                                href+="x="+list_coords[l].split("|")[0]+"&y="+list_coords[l].split("|")[1]+"&"
+                             const p = parseCoord(coord_target);
+if (!p) continue;
+
+href += `x=${p.x}&y=${p.y}&`;
+
                                 found_target=true
 
                                 if(select_type=="nukes" || select_type=="fangs"){
@@ -2800,7 +2950,7 @@ async function startFakes(){
                                 }else{
                                     if(map_nr_destination.has(coord_target)){//check if coord dest exist and then check if there are enough fakes
                                         // console.log(`number baaaa: ${map_nr_destination.get(coord_origin)}`)
-                                        
+
                                         if(map_nr_destination.get(coord_target)>=nrFakesPerVillage){
                                             list_coords.splice(k,1)
                                         }
@@ -2834,14 +2984,17 @@ async function startFakes(){
                         for(let l=k;l<list_coords.length;l++){
                             let coord_target=list_coords[l];
                             if(checkWindow(start_window,stop_window,coord_origin,coord_target,obj.speedTroop)==true){//check if attack lands inside the window
-                                href+="x="+coord_target.split("|")[0]+"&y="+coord_target.split("|")[1]+"&"
+const p = parseCoord(coord_target);
+if (!p) continue;
+
+href += `x=${p.x}&y=${p.y}&`;
                                 found_target=true
                                 if(select_type=="nukes" || select_type=="fangs"){
                                     list_coords.splice(k,1)
                                 }else{
                                     if(map_nr_destination.has(coord_target)){//check if coord dest exist and then check if there are enough fakes
                                         // console.log(`number baaaa: ${map_nr_destination.get(coord_origin)}`)
-                                        
+
                                         if(map_nr_destination.get(coord_target)>=nrFakesPerVillage){
                                             list_coords.splice(k,1)
                                             console.log(list_coords)
@@ -2860,7 +3013,7 @@ async function startFakes(){
                                 obj.landing_time=landing_time
                                 break;
                             }
-                            k++  
+                            k++
                         }
                     }
                     else{//just land whenever is possible
@@ -2870,7 +3023,10 @@ async function startFakes(){
 
                         let coord_target=list_coords[k];
                         let coord_origin=obj.coordOrigin
-                        href+="x="+coord_target.split("|")[0]+"&y="+coord_target.split("|")[1]+"&"
+const p = parseCoord(coord_target);
+if (!p) continue;
+
+href += `x=${p.x}&y=${p.y}&`;
                         found_target=true
                         if(select_type=="nukes" || select_type=="fangs"){
                             list_coords.splice(k,1)
@@ -2913,7 +3069,7 @@ async function startFakes(){
                     repeatforNukes=true
                 }
 
-                
+
             }
         }
         //add number of attacks per village
@@ -2928,7 +3084,7 @@ async function startFakes(){
         list_info_launch.sort((o1,o2)=>{
             return (new Date(o1.landing_time).getTime() > new Date(o2.landing_time).getTime())?1:
             (new Date(o1.landing_time).getTime() < new Date(o2.landing_time).getTime())?-1:0
-            
+
         })
         $(".hide_btn_show").show()
         if(document.getElementsByClassName("active")[0].classList.contains("own") && ( select_type=="nukes" || select_type=="fangs")){
@@ -2942,12 +3098,12 @@ async function startFakes(){
             showLaunches(list_info_launch)
         })
 
-        //only for nukes/fangs , delete coord 
+        //only for nukes/fangs , delete coord
         $("#btn_delete").off("click")
         $("#btn_delete").on("click",()=>{
             if(confirm("are you sure you want to delete coords?")){
                 console.log("delete coord")
-                
+
                 if(document.getElementsByClassName("active")[0].classList.contains("own") && ( select_type=="nukes" || select_type=="fangs")){
                     if($(".active textarea").val().match(/\d+\|\d+/g)!=null){
                         let coords=Array.from($(".active textarea").val().match(/\d+\|\d+/g))
@@ -2975,12 +3131,12 @@ async function startFakes(){
 
         shuffleArray(list_href)
         console.log(list_href)
-        
+
         /////////////////////////////////////////////////////create button for tabs//////////////////////////////////////////
-    
+
         $(".open_tab").remove();
         if(selectModLaunch=="open tabs"){
-            
+
             let nr_buttons=Math.ceil(list_href.length/nrSplits);
             let delayTab=parseInt(document.getElementById("delay_tabs").value)
             delayTab=(Number.isNaN(delayTab)==true || delayTab<200)?200:delayTab
@@ -2992,7 +3148,7 @@ async function startFakes(){
                 let stopTo=(i*nrSplits)+nrSplits
                 if((i*nrSplits)+nrSplits>list_href.length)
                     stopTo=list_href.length
-    
+
                 let btn=document.createElement("button")
                 btn.classList="btn evt-confirm-btn btn-confirm-yes open_tab"
                 btn.innerText="[ "+startFrom+" - "+stopTo+" ]";
@@ -3004,29 +3160,29 @@ async function startFakes(){
                     btn.classList.remove("evt-confirm-btn")
                     btn.classList.remove("btn-confirm-yes")
                     btn.classList.add("btn-confirm-no")
-                    
+
                     for(let j=0;j<current_hrefs.length;j++){
                         window.setTimeout(()=>{
                             window.open(current_hrefs[j], '_blank')
                             console.log(new Date().getTime())
                         },delayTab*j)
-                    
+
                     }
-                    
+
                     $(".open_tab").prop('disabled', true)
                     window.setTimeout(()=>{
-                        $(".open_tab").prop('disabled', false) 
+                        $(".open_tab").prop('disabled', false)
                     },delayTab*(stopTo-startFrom))
-    
-    
+
+
                 }
                 document.getElementById("div_open_tabs").appendChild(btn)
-                
+
             }
 
         }
         else if(selectModLaunch=="go to rally"){
-            
+
             console.log("go to rally");
             let current_href=list_href.pop();
             localStorage.setItem(game_data.world+"launchFakes",JSON.stringify(list_href))
@@ -3042,12 +3198,14 @@ async function startFakes(){
             let filename_innoDB=game_data.world+"infoVillages"
             localBase.removeItem(filename_innoDB)
             await getInfoVIllages()
-            
+
         }
     }
 
 
 }
+
+window.startFakes = startFakes;
 
 
 function checkWindow(start_window,stop_window,coord_origin, coord_target,speedTroop){
@@ -3059,7 +3217,7 @@ function checkWindow(start_window,stop_window,coord_origin, coord_target,speedTr
     let date_current = new Date(serverDate+" "+serverTime).getTime()
 
     let date_land = new Date(date_current+time_travel).getTime()
-    
+
     if(date_land >= start_window.getTime()  && date_land <= stop_window.getTime())
         return true
     else
@@ -3154,7 +3312,7 @@ function showLaunches(list_info_launch){
                 <td style="text-align:center; width:auto; background-color:${header};border: 1px solid ${borderColor}" >
                     <center style="margin:5px;font-weight: bold"><font color="${title}">${value}</font></center>
                 </td>`
-            }        
+            }
 
             html_table+=`
             <td style="text-align:center; width:auto; background-color:${header};border: 1px solid ${borderColor}">
@@ -3201,6 +3359,7 @@ function showLaunches(list_info_launch){
 
     })
 }
+       
 
 
 
@@ -3225,7 +3384,7 @@ function createTableGetCoords(){
             <td>Min coord:</td>
             <td colspan="2"><input type="number" class="scriptInput" style="text-align:center;font-size:18px" id="input_x_min" min="0" max="1000" placeholder="X"></td>
             <td colspan="2"><input type="number" class="scriptInput" style="text-align:center;font-size:18px" id="input_y_min" min="0" max="1000" placeholder="Y"></td>
-        
+
         </tr>
         <tr>
             <td>Max coord:</td>
@@ -3240,7 +3399,7 @@ function createTableGetCoords(){
             <td><input type="number" style="text-align:center;font-size:18px" id="input_center_x" min="0" max="1000" class="scriptInput" placeholder="X"></td>
             <td><input type="number" style="text-align:center;font-size:18px" id="input_center_y" min="0" max="1000" class="scriptInput" placeholder="Y"></td>
 
- 
+
         </tr>
 
     </table>
@@ -3253,7 +3412,7 @@ function createTableGetCoords(){
     else{
 
         $("#div_get_coords").toggle(500)
-    }    
+    }
 
 }
 
@@ -3305,7 +3464,7 @@ function getCoordsGrabber(mapVillage){
                 if(found==false)
                     isValid=false
             }
-            
+
             //check for tribes names
             if(tribesName.length>0){
                 let found=false
@@ -3316,9 +3475,9 @@ function getCoordsGrabber(mapVillage){
                     }
                 }
                 if(found==false)
-                    isValid=false 
+                    isValid=false
             }
-            
+
             //check for continents
             if(continents.length>0){
                 let found=false
@@ -3329,9 +3488,9 @@ function getCoordsGrabber(mapVillage){
                     }
                 }
                 if(found==false)
-                    isValid=false 
+                    isValid=false
             }
-            
+
 
             let[x,y]=coord.split("|")
             //for x min
@@ -3360,18 +3519,14 @@ function getCoordsGrabber(mapVillage){
 
             if(isValid==true){
                 result_coords.push(coord)
-            } 
+            }
 
         } catch (error) {}
-        
+
     })
-    
+
     // console.log("result_coords",result_coords)
     return result_coords.join(" ");
 } // ✅ end getCoordsGrabber
-
-// =========================
-
-// javascript:$.getScript('https://dl.dropboxusercontent.com/s/2q29vaqbibe6tph/fakeScriptMain.js?dl=0');void(0)
 
 }
