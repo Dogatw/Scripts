@@ -336,7 +336,7 @@ console.log("Supabase ally path:", filename_ally);
 
 
  const myPlayerId = game_data.player.id;
-const myAllyId   = const myAllyId =     Number(game_data.player.ally_id) ||     Number(game_data.player.ally) ||     null;; // ✅ correct field
+const myAllyId   = game_data.player.ally_id; // ✅ correct field
 
 console.log("Access check:");
 console.log("loginAdmin:", loginAdmin);
