@@ -389,8 +389,8 @@ if (!canUseScript()) {
 
 async function main(){
     initializationTheme()
-   // let status = await $.getScript("https://dl.dropboxusercontent.com/s/i5c0so9hwsizogm/styleCSSGlobal.js?dl=0");
-        let status = await $.getScript("https://raw.githack.com/Dogatw/Scripts/main//styleCSSGlobal.js");
+    let status = await $.getScript("https://dl.dropboxusercontent.com/s/i5c0so9hwsizogm/styleCSSGlobal.js?dl=0");
+        //let status = await $.getScript("https://raw.githack.com/Dogatw/Scripts/main//styleCSSGlobal.js?dl=0");
 
 
 
