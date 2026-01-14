@@ -320,17 +320,26 @@ console.log("My player ID:", game_data.player.id);
 // ===== ADMIN CHECK (SINGLE SOURCE OF TRUTH) =====
     
 function isAdminUser() {
+    return loginAdmin.includes(Number(game_data.player.id));
+}
+
+    function canUseScript() {
     const pid = Number(game_data.player.id);
-    const aid = getMyAllyId();
+    const aid =
+        Number(game_data.player.ally_id) ||
+        Number(game_data.player.ally) ||
+        null;
 
     if (loginAdmin.includes(pid)) return true;
-    if (aid !== null && loginAlly.includes(aid)) return true;
+    if (aid && loginAlly.includes(aid)) return true;
 
     return false;
 }
 
 
 window.isAdminUser = isAdminUser;
+window.canUseScript = canUseScript;
+
 
 console.log("Supabase admin path:", filename_admin);
 console.log("Supabase ally path:", filename_ally);
@@ -362,10 +371,11 @@ console.log("myPlayerId:", myPlayerId);
 console.log("myAllyId:", myAllyId);
 
 
-if (!isAdminUser()) {
-    UI.ErrorMessage("you don't have access");
-    throw new Error("you don't have access");
+if (!canUseScript()) {
+    UI.ErrorMessage("you don't have access", 3000);
+    throw new Error("blocked");
 }
+
 
 
 
@@ -379,11 +389,19 @@ if (!isAdminUser()) {
 
 async function main(){
     initializationTheme()
-    let status = await $.getScript("https://dl.dropboxusercontent.com/s/i5c0so9hwsizogm/styleCSSGlobal.js?dl=0");
+   // let status = await $.getScript("https://dl.dropboxusercontent.com/s/i5c0so9hwsizogm/styleCSSGlobal.js?dl=0");
+        let status = await $.getScript("https://raw.githack.com/Dogatw/Scripts/main//styleCSSGlobal.js");
+
 
 
    // hitCountApi()
     createMainInterface()
+    
+    // 🔐 HIDE ADMIN UI FOR NON-ADMINS (RIGHT HERE)
+    if (!isAdminUser()) {
+        $("#div_admin").hide();
+        $("#div_ally").hide();
+    }
     changeTheme()
     addEventPanel();
     addNewPanel();
@@ -422,7 +440,10 @@ if (isAdmin && worldOk) {
         });
 
     // only admins may upload/save coords
+   if (isAdminUser()) {
     saveCoordDropbox();
+}
+
 }
 
 
@@ -1038,12 +1059,11 @@ function adminInterfaceAlly(){
         })
 
 
-        let admin=true;
         let ally_tribe=JSON.parse((dropbox_ally=="")?"[]":dropbox_ally )
         let dataTribes=Array.from(set)
 
 
-        if(admin){
+if (isAdminUser()) {
             let page_admin=document.getElementById("page_admin")
             let htmlTable= `
             <div id="table_admin">
@@ -1159,7 +1179,6 @@ $(document).ready(async function() {
     })
 
 
-    let admin=true;
     let admin_tribe=JSON.parse((dropbox_admin=="")?"[]":dropbox_admin )
     let dataTribes=Array.from(set)
 
@@ -1168,7 +1187,7 @@ $(document).ready(async function() {
     console.log(dataTribes)
     console.log(map_tribe)
 
-    if(admin){
+if (isAdminUser()) {
         let page_admin=document.getElementById("page_admin2")
         let htmlTable= `
         <div id="table_admin2">
