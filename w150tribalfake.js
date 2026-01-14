@@ -332,7 +332,7 @@ console.log("myAllyId:", myAllyId);
 
 if (!isAdminUser()) {
     UI.ErrorMessage("you don't have access");
-   // throw new Error("you don't have access");
+    throw new Error("you don't have access");
 }
 
 
