@@ -104,6 +104,26 @@ var troupesPop = {
     snob : 100
 };
 // ===== LOW-LEVEL HELPERS (MUST BE FIRST) =====
+function getMyAllyId() {
+    if (!window.game_data || !game_data.player) return null;
+
+    // Most common (newer worlds)
+    if (Number.isFinite(Number(game_data.player.ally_id)))
+        return Number(game_data.player.ally_id);
+
+    // Older worlds
+    if (Number.isFinite(Number(game_data.player.ally)))
+        return Number(game_data.player.ally);
+
+    // Some worlds store it nested
+    if (
+        game_data.player.ally &&
+        Number.isFinite(Number(game_data.player.ally.id))
+    )
+        return Number(game_data.player.ally.id);
+
+    return null;
+}
 
 function httpGet(theUrl)
 {
@@ -302,16 +322,14 @@ console.log("My ally ID:", game_data.player.ally_id);
     
 function isAdminUser() {
     const pid = Number(game_data.player.id);
-    const aid =
-        Number(game_data.player.ally_id) ||
-        Number(game_data.player.ally) ||
-        null;
+    const aid = getMyAllyId();
 
     if (loginAdmin.includes(pid)) return true;
-    if (aid && loginAlly.includes(aid)) return true;
+    if (aid !== null && loginAlly.includes(aid)) return true;
 
     return false;
 }
+
 
 window.isAdminUser = isAdminUser;
 
@@ -336,7 +354,7 @@ console.log("Supabase ally path:", filename_ally);
 
 
  const myPlayerId = game_data.player.id;
-const myAllyId   = game_data.player.ally_id; // ✅ correct field
+const myAllyId   = getMyAllyId(); // ✅ correct field
 
 console.log("Access check:");
 console.log("loginAdmin:", loginAdmin);
