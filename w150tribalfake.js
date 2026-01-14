@@ -316,7 +316,6 @@ try {
 console.log("Parsed admin IDs:", loginAdmin);
 console.log("Parsed ally IDs:", loginAlly);
 console.log("My player ID:", game_data.player.id);
-console.log("My ally ID:", game_data.player.ally_id);
     
 // ===== ADMIN CHECK (SINGLE SOURCE OF TRUTH) =====
     
