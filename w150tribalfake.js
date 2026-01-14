@@ -267,37 +267,52 @@ dropbox_ally  = await getAlly();
 console.log("RAW admin file:", dropbox_admin);
 console.log("RAW ally file:", dropbox_ally);
 
+
+
+//  get admin and ally parsing
+
+
 loginAdmin = [];
-loginAlly  = [];
-
-
 
 try {
-    loginAdmin = JSON.parse(dropbox_admin || "[]").map(e => Number(e.adminId));
-} catch {}
+    loginAdmin = JSON.parse(dropbox_admin || "[]")
+        .map(e => Number(e.adminId))
+        .filter(id => Number.isFinite(id));
+} catch (e) {
+    console.warn("Invalid admin file", e);
+}
+loginAlly = [];
 
 try {
-    loginAlly = JSON.parse(dropbox_ally || "[]").map(e => Number(e.allyId));
-} catch {}
+    loginAlly = JSON.parse(dropbox_ally || "[]")
+        .map(e => Number(e.allyId))
+        .filter(id => Number.isFinite(id));
+} catch (e) {
+    console.warn("Invalid ally file", e);
+}
+
 
 
 console.log("Parsed admin IDs:", loginAdmin);
 console.log("Parsed ally IDs:", loginAlly);
 console.log("My player ID:", game_data.player.id);
-console.log("My ally ID:", game_data.player.ally_id);
+console.log("My ally ID:", const myAllyId =     Number(game_data.player.ally_id) ||     Number(game_data.player.ally) ||     null;);
+    
 // ===== ADMIN CHECK (SINGLE SOURCE OF TRUTH) =====
+    
 function isAdminUser() {
     const pid = Number(game_data.player.id);
-    const aid = game_data.player.ally_id;
+    const aid =
+        Number(game_data.player.ally_id) ||
+        Number(game_data.player.ally) ||
+        null;
 
-    return (
-        Array.isArray(loginAdmin) &&
-        (
-            loginAdmin.includes(pid) ||
-            (aid && loginAlly.includes(aid))
-        )
-    );
+    if (loginAdmin.includes(pid)) return true;
+    if (aid && loginAlly.includes(aid)) return true;
+
+    return false;
 }
+
 window.isAdminUser = isAdminUser;
 
 console.log("Supabase admin path:", filename_admin);
@@ -321,7 +336,7 @@ console.log("Supabase ally path:", filename_ally);
 
 
  const myPlayerId = game_data.player.id;
-const myAllyId   = game_data.player.ally_id; // ✅ correct field
+const myAllyId   = const myAllyId =     Number(game_data.player.ally_id) ||     Number(game_data.player.ally) ||     null;; // ✅ correct field
 
 console.log("Access check:");
 console.log("loginAdmin:", loginAdmin);
