@@ -225,17 +225,6 @@ window.nrTroopSelect = 13;
 // ===============================================================
 
 
-const speedConst  = getSpeedConstant();
-var speedWorld    = speedConst.worldSpeed;
-var speedTroupes  = speedConst.unitSpeed;
-
-var nobleSpeed=2100*1000/(speedWorld*speedTroupes)//ms
-var ramSpeed=1800*1000/(speedWorld*speedTroupes)//ms
-var swordSpeed=1320*1000/(speedWorld*speedTroupes)//ms
-var axeSpeed=1080*1000/(speedWorld*speedTroupes)//ms
-var lightSpeed=600*1000/(speedWorld*speedTroupes)//ms
-var scoutSpeed=540*1000/(speedWorld*speedTroupes)//ms
-
 
 var countApiKey = "fakeScriptInterface";
 var countNameSpace="madalinoTribalWarsScripts"
@@ -2395,6 +2384,20 @@ function parseCoord(coord) {
     if (!m) return null;
     return { x: m[1], y: m[2] };
 }
+
+
+    // ===== SPEED INIT (AFTER FUNCTION DEFINITION) =====
+const speedConst = getSpeedConstant();
+
+window.speedWorld   = speedConst.worldSpeed;
+window.speedTroupes = speedConst.unitSpeed;
+
+window.nobleSpeed  = 2100 * 1000 / (speedWorld * speedTroupes);
+window.ramSpeed    = 1800 * 1000 / (speedWorld * speedTroupes);
+window.swordSpeed  = 1320 * 1000 / (speedWorld * speedTroupes);
+window.axeSpeed    = 1080 * 1000 / (speedWorld * speedTroupes);
+window.lightSpeed  = 600  * 1000 / (speedWorld * speedTroupes);
+window.scoutSpeed  = 540  * 1000 / (speedWorld * speedTroupes);
 
 async function startFakes(){
     try {
