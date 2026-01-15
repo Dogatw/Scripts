@@ -1,6 +1,5 @@
 (async function () {
-
-/******************** CONFIG ********************/
+    /******************** CONFIG ********************/
     const SUPABASE_URL = "https://jjojlwqjapkkujmgbxum.supabase.co";
     const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impqb2psd3FqYXBra3VqbWdieHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MjAzMzgsImV4cCI6MjA4Mzk5NjMzOH0.-dvxGtypZ-K9tpWprGFQw1-M0IChjVa3Hlqr5a2Ma3U";
@@ -11,6 +10,13 @@
 
     /******************** HELPERS ********************/
     const isAdmin = () => game_data.player.id === ADMIN_PLAYER_ID;
+
+function getServerTimestamp() {
+    const d = document.getElementById("serverDate")?.textContent.trim();
+    const t = document.getElementById("serverTime")?.textContent.trim();
+    if (!d || !t) return Date.now();
+    return new Date(`${d} ${t}`).getTime();
+}
 
     function getTWServerTimeString() {
         const d = document.getElementById("serverDate");
@@ -93,10 +99,12 @@ function parseCommands() {
     };
 
     const cmds = [];
+    const TEN_MIN = 10 * 60 * 1000;
+    const now = getServerTimestamp();
 
     rows.forEach(row => {
         const unitCells = row.querySelectorAll("td.unit-item");
-        if (unitCells.length !== popMap.length) return; // skip header / junk rows
+        if (unitCells.length !== popMap.length) return;
 
         let pop = 0;
         let cats = 0;
@@ -114,32 +122,42 @@ function parseCommands() {
         });
 
         if (!pop) return;
-let defender = "";
 
-// 1️⃣ Prefer actual enemy player link
-const playerLink = row.querySelector("a[href*='screen=info_player']");
-if (playerLink) {
-    defender = playerLink.textContent.trim();
-} else {
-    // 2️⃣ Fallback: clean label (last resort)
-    const label =
-        row.querySelector(".quickedit-label")?.textContent || "";
-
-    defender = label
-        .replace(/\(.*?\)/g, "")   // remove (coords, units)
-        .replace(/FAKE.*$/i, "")   // remove fake text
-        .trim();
-}
-
-
+        // --- Label (only for fake detection)
         const label =
             row.querySelector(".quickedit-label")?.textContent || "";
 
         const isFake = /fake/i.test(label);
 
+        // --- Try to read timestamp from row metadata
+        let sentTime = null;
+
+        // 1️⃣ Best case: TW-provided dataset timestamp
+        if (row.dataset && row.dataset.commandTime) {
+            const t = Number(row.dataset.commandTime);
+            if (!isNaN(t)) sentTime = t * 1000;
+        }
+
+        // 2️⃣ Fallback: visible time text (best-effort)
+        if (sentTime === null) {
+            const match = row.textContent.match(/\d{2}:\d{2}:\d{2}/);
+            if (match) {
+                const d = document.getElementById("serverDate")?.textContent.trim();
+                if (d) {
+                    const t = new Date(`${d} ${match[0]}`);
+                    if (!isNaN(t)) sentTime = t.getTime();
+                }
+            }
+        }
+
+        // ❌ Apply 10-minute rule ONLY if time is known
+        if (sentTime !== null) {
+            if (now - sentTime < TEN_MIN) return;
+        }
+
+        // --- Push (attacker-only, no defender)
         cmds.push({
             off: game_data.player.name,
-            def: defender,
             pop,
             cats,
             snob,
@@ -168,19 +186,22 @@ if (playerLink) {
 
     /******************** UPLOAD ********************/
 async function logUpload() {
-    await fetch(`${SUPABASE_URL}/rest/v1/upload_log`, {
-        method: "POST",
-        headers: {
-            apikey: SUPABASE_ANON_KEY,
-            "Content-Type": "application/json",
-            Prefer: "resolution=merge-duplicates"
-        },
-        body: JSON.stringify({
-            world: game_data.world,
-            player_name: game_data.player.name,
-            server_time: getTWServerTimeString()
-        })
-    });
+    await fetch(
+        `${SUPABASE_URL}/rest/v1/upload_log?on_conflict=world,player_name`,
+        {
+            method: "POST",
+            headers: {
+                apikey: SUPABASE_ANON_KEY,
+                "Content-Type": "application/json",
+                Prefer: "resolution=merge-duplicates"
+            },
+            body: JSON.stringify({
+                world: game_data.world,
+                player_name: game_data.player.name,
+                server_time: getTWServerTimeString()
+            })
+        }
+    );
 }
 
 
@@ -486,4 +507,5 @@ function createUI() {
         sessionStorage.removeItem("sam_auto_upload");
         setTimeout(uploadCommands, 800);
     }
+
 })();
