@@ -1,4 +1,6 @@
-    /******************** CONFIG ********************/
+(async function () {
+
+/******************** CONFIG ********************/
     const SUPABASE_URL = "https://jjojlwqjapkkujmgbxum.supabase.co";
     const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impqb2psd3FqYXBra3VqbWdieHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MjAzMzgsImV4cCI6MjA4Mzk5NjMzOH0.-dvxGtypZ-K9tpWprGFQw1-M0IChjVa3Hlqr5a2Ma3U";
@@ -484,3 +486,4 @@ function createUI() {
         sessionStorage.removeItem("sam_auto_upload");
         setTimeout(uploadCommands, 800);
     }
+})();
