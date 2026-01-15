@@ -1,4 +1,3 @@
-
 (async function () {
     "use strict";
 
@@ -115,7 +114,8 @@ function parseCommands() {
 
         // ❌ Skip non-command / header rows
         const unitCells = row.querySelectorAll("td.unit-item");
-        if (unitCells.length !== popMap.length) return;
+// Require at least SOME unit cells (real command row)
+if (unitCells.length === 0) return;
 
         let pop = 0;
         let cats = 0;
