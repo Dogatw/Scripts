@@ -1,4 +1,6 @@
 (async function () {
+    "use strict";
+
     /******************** CONFIG ********************/
     const SUPABASE_URL = "https://jjojlwqjapkkujmgbxum.supabase.co";
     const SUPABASE_ANON_KEY =
@@ -97,6 +99,7 @@ function parseCommands() {
         spy:2, light:4, marcher:5, heavy:6,
         ram:5, catapult:8, snob:100
     };
+let skippedTooFresh = 0;
 
     const cmds = [];
     const TEN_MIN = 10 * 60 * 1000;
@@ -152,8 +155,12 @@ function parseCommands() {
 
         // ❌ Apply 10-minute rule ONLY if time is known
         if (sentTime !== null) {
-            if (now - sentTime < TEN_MIN) return;
-        }
+    if (now - sentTime < TEN_MIN) {
+        skippedTooFresh++;
+        return;
+    }
+}
+
 
         // --- Push (attacker-only, no defender)
         cmds.push({
@@ -165,7 +172,7 @@ function parseCommands() {
         });
     });
 
-    return cmds;
+return { cmds, skippedTooFresh };
 }
 
 
@@ -247,9 +254,19 @@ cmds.forEach(c => {
             tries++;
             if (document.querySelectorAll(".unit-item").length) {
                 clearInterval(wait);
-                const cmds = parseCommands();
-                if (!cmds.length) return UI.ErrorMessage("No commands found");
-                processAndUpload(cmds);
+             const result = parseCommands();
+if (!result.cmds.length) {
+    return UI.ErrorMessage("No commands found");
+}
+
+processAndUpload(result.cmds);
+
+if (result.skippedTooFresh > 0) {
+    UI.InfoMessage(
+        `Some commands were skipped (still cancellable, <10 min old)`
+    );
+}
+
             }
             if (tries > 20) {
                 clearInterval(wait);
