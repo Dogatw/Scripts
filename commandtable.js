@@ -103,51 +103,48 @@ function parseCommands() {
     let skippedTooFresh = 0;
     const cmds = [];
 
-    rows.forEach(row => {
+  rows.forEach(row => {
 
-        // ❌ 1️⃣ Skip commands that are still cancellable (TW truth)
-        const cancelBox = row.querySelector('input[name="cancel[]"]');
-        if (cancelBox && !cancelBox.disabled) {
-            skippedTooFresh++;
-            return;
-        }
+    // 1️⃣ Skip cancellable commands (except fakes)
+    const cancelBox = row.querySelector('input[name="cancel[]"]');
+    if (cancelBox && !cancelBox.disabled) {
+        skippedTooFresh++;
+        return;
+    }
 
-        // ❌ Skip non-command / header rows
-        const unitCells = row.querySelectorAll("td.unit-item");
-// Require at least SOME unit cells (real command row)
-if (unitCells.length === 0) return;
+    const unitCells = row.querySelectorAll("td.unit-item");
 
-        let pop = 0;
-        let cats = 0;
-        let snob = 0;
+    // ✅ NEW: only skip rows with NO unit cells at all
+    if (unitCells.length === 0) return;
 
-        unitCells.forEach((td, i) => {
-            const count = parseInt(td.textContent.trim(), 10) || 0;
-            if (!count) return;
+    let pop = 0, cats = 0, snob = 0;
 
-            const unit = popMap[i];
-            pop += count * popValue[unit];
-            if (unit === "catapult") cats += count;
-            if (unit === "snob") snob += count;
-        });
+    unitCells.forEach((td, i) => {
+        const count = parseInt(td.textContent.trim(), 10) || 0;
+        if (!count) return;
 
-        if (!pop) return;
-
-        // --- Label (only for fake detection)
-        const label =
-            row.querySelector(".quickedit-label")?.textContent || "";
-
-        const isFake = /fake/i.test(label);
-
-        // --- Push (attacker-only)
-        cmds.push({
-            off: game_data.player.name,
-            pop,
-            cats,
-            snob,
-            fake: isFake
-        });
+        const unit = popMap[i];
+        pop += count * popValue[unit];
+        if (unit === "catapult") cats += count;
+        if (unit === "snob") snob += count;
     });
+
+    if (!pop) return;
+
+    const label =
+        row.querySelector(".quickedit-label")?.textContent || "";
+
+    const isFake = /fake/i.test(label);
+
+    cmds.push({
+        off: game_data.player.name,
+        pop,
+        cats,
+        snob,
+        fake: isFake
+    });
+});
+
 
     return { cmds, skippedTooFresh };
 }
