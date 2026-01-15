@@ -1,3 +1,4 @@
+
 (async function () {
     "use strict";
 
@@ -83,10 +84,10 @@ document.head.appendChild(style);
     /******************** PARSER ********************/
 function parseCommands() {
     const table = document.getElementById("commands_table");
-    if (!table) return [];
+    if (!table) return { cmds: [], skippedTooFresh: 0 };
 
     const rows = table.querySelectorAll("tr");
-    if (!rows.length) return [];
+    if (!rows.length) return { cmds: [], skippedTooFresh: 0 };
 
     const popMap = [
         "spear", "sword", "axe", "archer", "spy",
@@ -99,13 +100,20 @@ function parseCommands() {
         spy:2, light:4, marcher:5, heavy:6,
         ram:5, catapult:8, snob:100
     };
-let skippedTooFresh = 0;
 
+    let skippedTooFresh = 0;
     const cmds = [];
-    const TEN_MIN = 10 * 60 * 1000;
-    const now = getServerTimestamp();
 
     rows.forEach(row => {
+
+        // ❌ 1️⃣ Skip commands that are still cancellable (TW truth)
+        const cancelBox = row.querySelector('input[name="cancel[]"]');
+        if (cancelBox && !cancelBox.disabled) {
+            skippedTooFresh++;
+            return;
+        }
+
+        // ❌ Skip non-command / header rows
         const unitCells = row.querySelectorAll("td.unit-item");
         if (unitCells.length !== popMap.length) return;
 
@@ -119,7 +127,6 @@ let skippedTooFresh = 0;
 
             const unit = popMap[i];
             pop += count * popValue[unit];
-
             if (unit === "catapult") cats += count;
             if (unit === "snob") snob += count;
         });
@@ -132,37 +139,7 @@ let skippedTooFresh = 0;
 
         const isFake = /fake/i.test(label);
 
-        // --- Try to read timestamp from row metadata
-        let sentTime = null;
-
-        // 1️⃣ Best case: TW-provided dataset timestamp
-        if (row.dataset && row.dataset.commandTime) {
-            const t = Number(row.dataset.commandTime);
-            if (!isNaN(t)) sentTime = t * 1000;
-        }
-
-        // 2️⃣ Fallback: visible time text (best-effort)
-        if (sentTime === null) {
-            const match = row.textContent.match(/\d{2}:\d{2}:\d{2}/);
-            if (match) {
-                const d = document.getElementById("serverDate")?.textContent.trim();
-                if (d) {
-                    const t = new Date(`${d} ${match[0]}`);
-                    if (!isNaN(t)) sentTime = t.getTime();
-                }
-            }
-        }
-
-        // ❌ Apply 10-minute rule ONLY if time is known
-        if (sentTime !== null) {
-    if (now - sentTime < TEN_MIN) {
-        skippedTooFresh++;
-        return;
-    }
-}
-
-
-        // --- Push (attacker-only, no defender)
+        // --- Push (attacker-only)
         cmds.push({
             off: game_data.player.name,
             pop,
@@ -172,7 +149,7 @@ let skippedTooFresh = 0;
         });
     });
 
-return { cmds, skippedTooFresh };
+    return { cmds, skippedTooFresh };
 }
 
 
@@ -212,7 +189,7 @@ async function logUpload() {
 }
 
 
-    async function processAndUpload(cmds) {
+async function processAndUpload(cmds, skippedTooFresh) {
        const atk = {};
 
 cmds.forEach(c => {
@@ -243,7 +220,13 @@ cmds.forEach(c => {
 
         await logUpload();
         loadDashboard();
-        UI.SuccessMessage(`Uploaded ${cmds.length} commands`);
+let msg = `Uploaded ${cmds.length} commands`;
+
+if (skippedTooFresh > 0) {
+    msg += ` (${skippedTooFresh} skipped: still cancellable)`;
+}
+
+UI.SuccessMessage(msg);
     }
 
     async function uploadCommands() {
@@ -259,13 +242,8 @@ if (!result.cmds.length) {
     return UI.ErrorMessage("No commands found");
 }
 
-processAndUpload(result.cmds);
+processAndUpload(result.cmds, result.skippedTooFresh);
 
-if (result.skippedTooFresh > 0) {
-    UI.InfoMessage(
-        `Some commands were skipped (still cancellable, <10 min old)`
-    );
-}
 
             }
             if (tries > 20) {
