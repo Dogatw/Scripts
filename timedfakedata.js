@@ -1,6 +1,44 @@
+
+
+
+
+
 (function () {
     'use strict';
+/* ===== ACCESS CONTROL : PLAYER + WORLD ===== */
 
+
+    // 🔐 ALLOWED PLAYERS
+    const ALLOWED_PLAYERS = Object.freeze([
+      //  'SamuraiLord',
+     //   'cousin',
+        'cousin1'
+    ]);
+
+    // 🌍 ALLOWED WORLDS
+    const ALLOWED_WORLDS = Object.freeze([
+       // 'in100',
+      //  'in101',
+        'en150'
+    ]);
+
+    // 🧠 Detect player & world (Tribal Wars safe)
+    const gameData = window.game_data || {};
+    const playerName = gameData.player?.name;
+    const worldName  = gameData.world;
+
+    // 🚫 HARD BLOCK
+    if (
+        !playerName ||
+        !worldName ||
+        !ALLOWED_PLAYERS.includes(playerName) ||
+        !ALLOWED_WORLDS.includes(worldName)
+    ) {
+        console.warn('⛔ ACCESS DENIED', { playerName, worldName });
+        throw new Error('Unauthorized player or world — script stopped');
+    }
+
+    console.log('✅ ACCESS GRANTED', { playerName, worldName });
    /* ================= LOGGING ================= */
 const TF_LOG = true;
 function tfLog(...args) {
