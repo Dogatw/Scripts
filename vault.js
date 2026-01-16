@@ -10000,7 +10000,7 @@ Array.from(map_upload_time.keys()).forEach((key,index)=>{
             obj_upload[k] = null;
         }
     });
-});
+
 
             html+=`
             <tr>
@@ -11077,6 +11077,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
