@@ -1,3 +1,4 @@
+//MS
 (function () {
     'use strict';
 /* ===== ACCESS CONTROL : PLAYER + WORLD ===== */
