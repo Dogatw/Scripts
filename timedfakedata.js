@@ -7,7 +7,7 @@
     const ALLOWED_PLAYERS = Object.freeze([
       //  'SamuraiLord',
         'cousin',
-        'cousin1'
+        'Cousin1'
     ]);
 
     // 🌍 ALLOWED WORLDS
