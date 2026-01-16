@@ -1,3 +1,21 @@
+// ===== SUPABASE CONFIG =====
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+
+const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
+const SUPABASE_BUCKET = 'vault';
+const SUPABASE_FOLDER = 'reports';
+
+/*var listAccessPlayer=[
+    "codygoodthegreat",
+    "Cousin",
+    "Josip Broz",
+    "Vuke",
+     ];*/
 const _0x4425ce = _0x35b2;
 (function(_0x486ccf, _0x596a83) {
     const _0xa1da7b = _0x35b2,
