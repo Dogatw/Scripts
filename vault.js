@@ -2328,10 +2328,13 @@ async function uploadIncomings(){
         let date_current=serverDate+" "+serverTime
 
         //update status map
-        let obj_status={
-            name:game_data.player.name,
-            incoming_date:date_current,
-        }
+       let obj_status = {
+    name: game_data.player.name,
+    incoming_date: date_current,
+    command_date: null,
+    troops_date: null
+}
+
 
 
         if(mapStatus.has(game_data.player.id.toString())){
@@ -10930,6 +10933,18 @@ async function uploadOwnTroops(){
         console.log("erorr map status from dropbox: " + error)
     }
 
+    // ✅ NORMALIZE mapStatus (VERY IMPORTANT)
+mapStatus.forEach((obj, key) => {
+    if (!obj) return;
+
+    // make sure ALL date fields exist
+    obj.incoming_date ??= null;
+    obj.command_date  ??= null;
+    obj.troops_date   ??= null;
+
+    mapStatus.set(key, obj);
+});
+
 
     // console.log(mapTroopsHomeDropbox)
     // console.log(mapStatus)
@@ -11040,6 +11055,7 @@ async function uploadOwnTroops(){
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
