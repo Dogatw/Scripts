@@ -7569,12 +7569,16 @@ async function viewSupport(){
     Array.from(map_coming.keys()).forEach(key=>{
         try {
             let obj_output={}
-            let playerId=mapVillages.get(key).playerId
-            // console.log(playerId)
-            let villageId=mapVillages.get(key).villageId
+          let villageObj = mapVillages.get(coord);
+if (!villageObj) return;
+
+let playerId = villageObj.playerId;
+let villageId = villageObj.villageId;
+
             let playerName=mapVillages.get(key).playerName
 
-            let list_coming=map_coming.get(key)
+let list_coming = map_coming.get(key);
+if (!Array.isArray(list_coming)) return;
             let hasAttacks=false
             let nrAttacks=0,nr_supports=0,nrNobles=0;
             let snipe=false,sniped=false,recap=false,recaped=false;
@@ -8260,8 +8264,12 @@ async function viewSupport(){
 
     //this part is for Ally Info
     let mapVillageById=new Map()
-    Array.from(map_playerId.keys()).forEach(key=>{
-        let list_coords = map_playerId.get(key).list_coords
+   Array.from(map_playerId.keys()).forEach(key=>{
+    let playerObj = map_playerId.get(key);
+    if (!playerObj || !Array.isArray(playerObj.list_coords)) return;
+
+    let list_coords = playerObj.list_coords;
+
 
         for(let i=0;i<list_coords.length;i++){
             let list_coming=list_coords[i].list_coming
@@ -9978,15 +9986,20 @@ function createTableUploadTime(map_upload_time){
 
                 </tr>`
 
-    Array.from(map_upload_time.keys()).forEach((key,index)=>{
-        let obj_upload=map_upload_time.get(key)
-        // 🛡️ normalize date fields (string ONLY)
-["incoming_date", "command_date", "troops_date"].forEach(k => {
-    if (obj_upload[k] instanceof Date) {
-        obj_upload[k] = parseDate(obj_upload[k].getTime());
-    } else if (obj_upload[k] === undefined) {
-        obj_upload[k] = null;
-    }
+Array.from(map_upload_time.keys()).forEach((key,index)=>{
+    let obj_upload = map_upload_time.get(key);
+
+    // 🛑 STOP if object does not exist
+    if (!obj_upload || typeof obj_upload !== "object") return;
+
+    // 🛡️ normalize date fields (string ONLY)
+    ["incoming_date", "command_date", "troops_date"].forEach(k => {
+        if (obj_upload[k] instanceof Date) {
+            obj_upload[k] = parseDate(obj_upload[k].getTime());
+        } else if (obj_upload[k] === undefined) {
+            obj_upload[k] = null;
+        }
+    });
 });
 
             html+=`
@@ -11064,6 +11077,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
