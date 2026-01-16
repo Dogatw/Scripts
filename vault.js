@@ -9980,6 +9980,11 @@ function createTableUploadTime(map_upload_time){
 
     Array.from(map_upload_time.keys()).forEach((key,index)=>{
         let obj_upload=map_upload_time.get(key)
+        // 🛡️ ensure date fields exist (VERY IMPORTANT)
+obj_upload.incoming_date ??= null;
+obj_upload.command_date  ??= null;
+obj_upload.troops_date   ??= null;
+
         html+=`
             <tr>
                 <td style="text-align:left; width:auto; background-color:${headerColor}" >
@@ -11055,6 +11060,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
