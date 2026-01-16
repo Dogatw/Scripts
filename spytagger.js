@@ -4018,7 +4018,7 @@ async function uploadSupports() {
         } else _0x52904e(_0x123b78(0x395));
     });
 }
-
+window.uploadSupports=uploadSupports;
 function ajaxTroopsComing(_0x47cc79) {
     return new Promise((_0x2d1d66, _0xc67409) => {
         const _0xe787d0 = _0x2f7d;
