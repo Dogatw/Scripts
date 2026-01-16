@@ -7566,16 +7566,20 @@ async function viewSupport(){
     });
     // console.log("list_filters",list_filters)
 
-    Array.from(map_coming.keys()).forEach(key=>{
-        try {
-            let obj_output={}
-          let villageObj = mapVillages.get(coord);
-if (!villageObj) return;
+  Array.from(map_coming.keys()).forEach(key => {
+    try {
+        let obj_output = {}
 
-let playerId = villageObj.playerId;
-let villageId = villageObj.villageId;
+        // ✅ RULE 1: key IS the coord
+        let coord = key;
 
-            let playerName=mapVillages.get(key).playerName
+        let villageObj = mapVillages.get(coord);
+        if (!villageObj) return;
+
+        let playerId = villageObj.playerId;
+        let villageId = villageObj.villageId;
+        let playerName = villageObj.playerName;
+
 
 let list_coming = map_coming.get(key);
 if (!Array.isArray(list_coming)) return;
@@ -7926,27 +7930,34 @@ if (!Array.isArray(list_coming)) return;
     sortInfoIncomings(map_playerId,mapVillages)
 
 
-    //add event for search input
-    $("#input_search").on("input",(event)=>{
-        let text_input=event.target
-        if(text_input.value!=undefined){
-            if(text_input.value.match(/\d+\|\d+/)!=null){
-                let coord=text_input.value.match(/\d+\|\d+/)[0]
-                text_input.value=coord
-                // console.log(coord)
-                let playerId=mapVillages.get(coord).playerId
-                let villageId=mapVillages.get(coord).villageId
+   // ✅ Rule 2: search input handler (ONLY place for input coord logic)
+$("#input_search").on("input", event => {
+    const value = event.target.value;
+    const match = value.match(/\d+\|\d+/);
 
-                if($(`.table_player img[coord-id=${villageId}]`).is(":visible")==false)
-                    $(`#table_view img[player-id=${playerId}]`).click();
+    // stop if no coord
+    if (!match) return;
 
-                if($(`.table_coord img[coord-id=${villageId}]`).is(":visible")==false)
-                    $(`.table_player img[coord-id=${villageId}]`).click();
+    const coord = match[0];
+    event.target.value = coord;
 
+    const villageObj = mapVillages.get(coord);
+    if (!villageObj) return;
 
-            }
-        }
-    })
+    const playerId = villageObj.playerId;
+    const villageId = villageObj.villageId;
+
+    // open player row if hidden
+    if (!$(`.table_player img[coord-id=${villageId}]`).is(":visible")) {
+        $(`#table_view img[player-id=${playerId}]`).click();
+    }
+
+    // open coord row if hidden
+    if (!$(`.table_coord img[coord-id=${villageId}]`).is(":visible")) {
+        $(`.table_player img[coord-id=${villageId}]`).click();
+    }
+});
+
 
 
 
@@ -7971,7 +7982,11 @@ if (!Array.isArray(list_coming)) return;
         try {//if a village become a barb
             let obj_report=map_reports.get(key)
 
-            let villageId=mapVillages.get(key).villageId
+let coord = key;
+let villageObj = mapVillages.get(coord);
+if (!villageObj) return;
+
+let villageId = villageObj.villageId;
             let player_destination_name=mapVillages.get(key).playerName
             let player_destination_id=mapVillages.get(key).playerId
             let time_report=obj_report.time_report
@@ -8340,10 +8355,20 @@ if (!Array.isArray(list_coming)) return;
 
 
     //add troops home for own villages that don't have incomings
-    Array.from(map_troops_home.keys()).forEach(coord=>{
-        let villageDetails = mapVillages.get(coord)
-        let troopsHomeDetails = map_troops_home.get(coord)
-        let totalPop = 0, totalPopOff = 0, totalPopDef = 0
+   Array.from(map_troops_home.keys()).forEach(coord => {
+    const villageDetails = mapVillages.get(coord);
+    if (!villageDetails) return;
+
+    const troopsHomeDetails = map_troops_home.get(coord);
+    if (!troopsHomeDetails) return;
+
+    let totalPop = 0;
+    let totalPopOff = 0;
+    let totalPopDef = 0;
+
+    // safe from here on
+
+
 
 
         Object.keys(troopsHomeDetails.troopInVillage).forEach(troopName=>{
@@ -11117,6 +11142,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
