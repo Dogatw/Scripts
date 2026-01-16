@@ -43,8 +43,7 @@ if (
 
     console.log('✅ ACCESS GRANTED', { playerName, worldName });
  
-(function () {
-    'use strict';
+
 
    /* ================= LOGGING ================= */
 const TF_LOG = true;
@@ -809,6 +808,6 @@ if (attackClicked && !confirmDone) {
 })();
 
 
-})();
+
 
 
