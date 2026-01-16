@@ -328,7 +328,7 @@ function getInterface(){
             </table>
             <center style="margin:10px"><div id="report_view" style="background-color:#d2c09e"><div><center>
             <div class="scriptFooter">
-                <div style=" margin-top:5px;"><h5>Made by Costache</h5></div>
+                <div style=" margin-top:5px;"><h5>Made by Costache and fixed by SAM</h5></div>
             </div>
         </div>
     </div>
@@ -11027,5 +11027,6 @@ async function uploadOwnTroops(){
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
