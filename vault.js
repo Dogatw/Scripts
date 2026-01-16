@@ -10644,21 +10644,29 @@ function convertBuildTime(milliseconds){
 
 
 
-function convertDate(date){
-    let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    let monthIndex = date.split("/")[0]-1
-    let dayIndex = date.split("/")[1]
-    let time = date.split(" ")[1]
-    console.log(date)
-    console.log(`${months[monthIndex]} ${dayIndex} ${time}` )
+function convertDate(date) {
+    if (typeof date !== 'string') {
+        throw new Error("convertDate: date must be a string, got " + typeof date);
+    }
 
-    if (months[monthIndex] == undefined)
-        return ""
-    else
-        return `${months[monthIndex]} ${dayIndex} ${time}`
+    // Expected: MM/DD HH:MM:SS
+    const match = date.match(/^(\d{2})\/(\d{2})\s(\d{2}:\d{2}:\d{2})$/);
+    if (!match) {
+        throw new Error("convertDate: invalid date format → " + date);
+    }
 
+    const [, mm, dd, time] = match;
 
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const monthIndex = Number(mm) - 1;
+
+    if (!months[monthIndex]) {
+        throw new Error("convertDate: invalid month → " + mm);
+    }
+
+    return `${months[monthIndex]} ${dd} ${time}`;
 }
+
 
 ////////////////////////////////////////////// get commands sharing settings ///////////////////////////////////////
 
@@ -11027,6 +11035,7 @@ async function uploadOwnTroops(){
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
