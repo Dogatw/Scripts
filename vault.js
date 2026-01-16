@@ -8413,6 +8413,10 @@ Array.from(map_playerId.keys()).forEach(key => {
         totalPopOff = Math.round( totalPopOff / 1000)
         totalPopDef = Math.round( totalPopDef / 1000)
 
+       if (!villageDetails || villageDetails.villageId == null) {
+    return; // or continue if inside a loop
+}
+
         if(!mapVillageById.has(villageDetails.villageId)){
             mapVillageById.set(villageDetails.villageId + "", {
                 "villageId": villageDetails.villageId,
@@ -11168,6 +11172,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
