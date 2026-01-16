@@ -6,7 +6,7 @@
     // 🔐 ALLOWED PLAYERS
     const ALLOWED_PLAYERS = Object.freeze([
       //  'SamuraiLord',
-     //   'cousin',
+        'cousin',
         'cousin1'
     ]);
 
