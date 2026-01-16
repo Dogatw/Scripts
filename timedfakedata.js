@@ -53,6 +53,33 @@ function tfLog(...args) {
     console.log('[TF]', ...args);
 }
 
+/* ================= CENTRAL SCHEDULER ================= */
+// 🔥 THIS IS STEP 2 — ONLY OVERVIEW PAGE USES IT
+const SCHED_KEY = 'tf_scheduler_fire';
+
+function scheduleCentralFire(cmdId, launchEpoch) {
+    const delay = launchEpoch - Timing.getCurrentServerTime();
+
+    tfLog(
+        'SCHEDULER SET',
+        'id:', cmdId,
+        'launch:', new Date(launchEpoch).toISOString(),
+        'delay(ms):', delay
+    );
+
+    setTimeout(() => {
+        localStorage.setItem(
+            SCHED_KEY,
+            JSON.stringify({
+                id: cmdId,
+                fireAt: launchEpoch,
+                firedAt: Timing.getCurrentServerTime()
+            })
+        );
+    }, Math.max(0, delay));
+}
+
+
     /* ================= CONFIG ================= */
     const STORAGE_KEY = 'tw_timed_fake_settings';
     const MS_PER_MIN = 60000;
@@ -64,14 +91,42 @@ function tfLog(...args) {
 
     let autoLaunched = new Set(); // prevent double auto-rally
 
-    let unitSpeeds = {};
-    let selectedUnit = 'ram';
+    const UNIT_INPUT_MAP = {
+    spear: 'spear',
+    sword: 'sword',
+    axe: 'axe',
+    archer: 'archer',
+    scout: 'spy',     // ⚠️ important
+    light: 'light',
+    heavy: 'heavy',
+    ram: 'ram',
+    catapult: 'catapult',
+    noble: 'snob'     // ⚠️ important
+};
+
+
+  const unitSpeeds = {
+    spear: 18,
+    sword: 22,
+    axe: 18,
+    archer: 18,
+    scout: 9,
+    light: 10,
+    heavy: 11,
+    ram: 30,
+    catapult: 30,
+    noble: 35
+};
+
+let selectedUnit = 'ram'; // default
+
     let villages = [];
     let results = [];
 
-    /* ================= LOAD UNIT SPEEDS ================= */
+/* ================= UNIT SPEED CONFIG ================= */
 
 const SERVER_OFFSET = Timing.getCurrentServerTime() - Date.now();
+    const TZ_OFFSET_SECONDS = SERVER_OFFSET / 1000;
 
 function formatServerDate(localEpochMs) {
     return new Date(localEpochMs + SERVER_OFFSET).toLocaleString();
@@ -89,32 +144,23 @@ function parseServerTWDate(str) {
     // Build a UTC timestamp so local timezone is ignored
     return Date.UTC(y, mo - 1, d, h, mi, s);
 }
-function formatServerTime(epoch, forcedMs) {
+
+function formatServerTime(epoch) {
     const d = new Date(epoch);
     const pad = n => String(n).padStart(2, '0');
-    const ms = String(
-        Number.isInteger(forcedMs) ? forcedMs : d.getUTCMilliseconds()
-    ).padStart(3, '0');
 
     return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()}, ` +
-           `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}.${ms}`;
+           `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
 }
 
 
 
-   async function loadUnitSpeeds() {
-        const xml = await $.get('/interface.php?func=get_unit_info');
-        $(xml).find('config').children().each((_,u)=>{
-            unitSpeeds[u.nodeName] = parseFloat($(u).find('speed').text());
-        });
-    }
 
     /* ================= SAVE / LOAD ================= */
     function saveSettings() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
             targets: $('#tf-targets').val(),
             time: $('#tf-time').val(),
-             ms: $('#tf-ms').val(),
             unit: selectedUnit
         }));
     }
@@ -125,7 +171,7 @@ function formatServerTime(epoch, forcedMs) {
 
     /* ================= UI ================= */
     function openUI() {
-Dialog.show('Content', `
+       Dialog.show('Content', `
 <style>
     .tf-panel {
         font-family: Arial, sans-serif;
@@ -257,32 +303,22 @@ Dialog.show('Content', `
             <div class="tf-hint">Server time (not local)</div>
         </div>
 
-<div class="tf-group">
-    <label>Milliseconds</label>
-    <input id="tf-ms"
-        class="tf-input"
-        type="number"
-        min="0"
-        max="999"
-        step="1"
-        placeholder="000">
-    <div class="tf-hint">0–999 ms (server)</div>
+<div class="form-group">
+  <label>UNIT</label>
+  <select id="unitType" class="form-control">
+    <option value="spear">Spear</option>
+    <option value="sword">Sword</option>
+    <option value="axe">Axe</option>
+    <option value="archer">Archer</option>
+    <option value="scout">Scout</option>
+    <option value="light">Light Cavalry</option>
+    <option value="heavy">Heavy Cavalry</option>
+    <option value="ram">Ram</option>
+    <option value="catapult">Catapult</option>
+    <option value="noble">Noble</option>
+  </select>
 </div>
 
-        <div class="tf-group">
-            <label>Unit type</label>
-            <div class="tf-units">
-                <label>
-                    <input type="radio" name="tf-unit" value="ram" checked>
-                    Ram
-                </label>
-                <label>
-                    <input type="radio" name="tf-unit" value="catapult">
-                    Catapult
-                </label>
-            </div>
-        </div>
-    </div>
 
     <div class="tf-footer">
         <button id="tf-go" class="tf-btn" disabled>Go</button>
@@ -295,28 +331,26 @@ Dialog.show('Content', `
         /* defaults — SERVER TIME */
 const serverNow = new Date(Timing.getCurrentServerTime());
 $('#tf-time').val(serverNow.toLocaleString());
-        $('#tf-ms').val('000');
-
 
 
         /* restore saved */
         const saved = loadSettings();
         if (saved.targets) $('#tf-targets').val(saved.targets);
         if (saved.time) $('#tf-time').val(saved.time);
-        if (saved.ms !== undefined) $('#tf-ms').val(saved.ms);
-        if (saved.unit) {
-            selectedUnit = saved.unit;
-            $(`input[name="tf-unit"][value="${saved.unit}"]`).prop('checked', true);
-        }
+    if (saved.unit) {
+    selectedUnit = saved.unit;
+    $('#unitType').val(saved.unit);
+}
+
 
         /* listeners */
         $('#tf-targets').on('input', saveSettings);
         $('#tf-time').on('change', saveSettings);
-        $('#tf-ms').on('input', saveSettings);
-        $('input[name="tf-unit"]').on('change', e=>{
-            selectedUnit = e.target.value;
-            saveSettings();
-        });
+   $('#unitType').on('change', e => {
+    selectedUnit = e.target.value;
+    saveSettings();
+});
+
     }
 
     /* ================= VILLAGES ================= */
@@ -350,23 +384,11 @@ function calculate() {
     const serverNow = Timing.getCurrentServerTime();
 
     // ✅ SERVER ARRIVAL TIME (USER INPUT)
-    const baseArrival = parseServerTWDate($('#tf-time').val());
-if (!baseArrival) {
-    alert('Invalid SERVER arrival time');
-    return;
-}
-
-const msRaw = $('#tf-ms').val();
-const ms = Number.isInteger(+msRaw)
-    ? Math.max(0, Math.min(999, +msRaw))
-    : 0;
-
-// 🔒 LOCK milliseconds to arrival
-
-
-// ✅ FINAL SERVER ARRIVAL (with ms)
-const arrivalTime = baseArrival + ms;
-
+    const arrivalTime = parseServerTWDate($('#tf-time').val());
+    if (!arrivalTime) {
+        alert('Invalid SERVER arrival time');
+        return;
+    }
 
     const speedMs = unitSpeeds[selectedUnit] * MS_PER_MIN;
     results = [];
@@ -388,13 +410,10 @@ const arrivalTime = baseArrival + ms;
     v,
     t,
     d,
-    launch,
-    land: arrivalTime,
+    launch,                  // SERVER launch epoch
+    land: arrivalTime,       // SERVER arrival epoch
     delta,
-    ms: ms   // ✅ single canonical field
 });
-
-
 
             }
         }
@@ -579,29 +598,19 @@ window.openRally = function (index) {
     const r = results[index];
     const [x, y] = r.t.split('|');
 
-    // 🔥 HYBRID PRECISION TARGET (SERVER-BASED)
-const targetSecond = formatServerTime(r.land)
-    .split(', ')[1]      // "HH:MM:SS.mmm"
-    .slice(0, 8);        // "HH:MM:SS"
-const targetMs = r.ms ?? 0;
+    // 🔒 PRE-CALCULATE CONFIRM CLICK TIME (SERVER EPOCH)
+const clickAt = r.launch;
+        const cmdId = `${r.v.id}_${r.t}_${r.launch}`;
 
-tfLog(
-    'HYBRID TARGET SET',
-    'targetSecond:', targetSecond,
-    'targetMs:', targetMs
-);
-
+    scheduleCentralFire(cmdId, r.launch);
 
 tfLog(
     'RALLY OPEN',
     'source:', r.v.coord,
     'target:', r.t,
-    'launch(server):', new Date(r.launch).toISOString(),
-    'now(server):', new Date(Timing.getCurrentServerTime()).toISOString(),
-    'targetSecond:', targetSecond,
-    'targetMs:', targetMs
+    'launch(server):', new Date(clickAt).toISOString(),
+    'now(server):', new Date(Timing.getCurrentServerTime()).toISOString()
 );
-
 
 
     $.get('/game.php', {
@@ -642,24 +651,31 @@ if (!win) {
 const doc = win.document;
 if (!doc || !doc.body) return;
 
-                /* STEP 1 — Fill unit + Attack */
-                if (!attackClicked) {
-                    const unitInput = doc.querySelector(`#unit_input_${selectedUnit}`);
-                   const attackBtn =
-    doc.querySelector('#target_attack') ||
-    doc.querySelector('input.attack') ||
-    doc.querySelector('.btn-attack');
 
+/* STEP 1 — Fill unit + Attack */
+if (!attackClicked) {
+    const unitKey = UNIT_INPUT_MAP[selectedUnit];
+    const unitInput = unitKey
+        ? doc.querySelector(`#unit_input_${unitKey}`)
+        : null;
 
-                    if (!unitInput || !attackBtn) return;
+    tfLog('UNIT USED', selectedUnit, '→ input:', unitKey);
 
-                    unitInput.value = 1;
-                    unitInput.dispatchEvent(new Event('input', { bubbles: true }));
+    const attackBtn =
+        doc.querySelector('#target_attack') ||
+        doc.querySelector('input.attack') ||
+        doc.querySelector('.btn-attack');
 
-                    setTimeout(() => attackBtn.click(), rand());
-                    attackClicked = true;
-                    return;
-                }
+    if (!unitInput || !attackBtn) return;
+
+    unitInput.value = 1;
+    unitInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+    setTimeout(() => attackBtn.click(), rand());
+    attackClicked = true;
+    return;
+}
+
 
                 /* STEP 2 — WAIT for CONFIRM PAGE DOM */
                 if (attackClicked && !confirmDone) {
@@ -688,7 +704,7 @@ win.addEventListener('beforeunload', closeOnUnload, { once: true });
     const table = doc.querySelector('#date_arrival')?.closest('table');
     if (!table || doc.getElementById('tf-arrivalTime-row')) return;
 
-const landServer = formatServerTime(r.land, r.ms);
+const landServer = formatServerTime(r.land);
 
     const row = doc.createElement('tr');
     row.id = 'tf-arrivalTime-row';
@@ -702,76 +718,69 @@ const landServer = formatServerTime(r.land, r.ms);
     table.querySelector('tbody').appendChild(row);
 })();
 
-/* STEP 2 — HYBRID PRECISION CONFIRM (MULTI-TAB SAFE) */
+/* STEP 2 — PRE-SCHEDULED SERVER CONFIRM */
 if (attackClicked && !confirmDone) {
 
     const submitBtn = doc.querySelector('#troop_confirm_submit');
-    const rel = doc.querySelector('.relative_time');
-    if (!submitBtn || !rel) return;
+    if (!submitBtn) return;
 
+
+    // ✅ CONFIRM PAGE IS READY (LOG HERE)
+    tfLog(
+        'CONFIRM PAGE READY',
+        'target:', r.t,
+        'now(server):', new Date(Timing.getCurrentServerTime()).toISOString()
+    );
+ // ⚠️ WARNING IF PAGE OPENED AFTER LAUNCH
+    if (clickAt < Timing.getCurrentServerTime()) {
+        tfLog(
+            'WARNING: CONFIRM PAGE OPENED AFTER LAUNCH',
+            'target:', r.t,
+            'missedBy(ms):', Timing.getCurrentServerTime() - clickAt
+        );
+    }
     confirmDone = true;
 
+    const serverNow = Timing.getCurrentServerTime();
+    let delay = clickAt - serverNow;
+
+    // late-safe
+    if (delay < 0) delay = 0;
+
+
+    // ✅ LOG SCHEDULING
     tfLog(
-        'HYBRID MODE ARMED',
-        'targetSecond:', targetSecond,
-        'targetMs:', targetMs
+        'CONFIRM SCHEDULED',
+        'target:', r.t,
+        'clickAt(server):', new Date(clickAt).toISOString(),
+        'now(server):', new Date(serverNow).toISOString(),
+        'delay(ms):', delay
     );
 
-    let fired = false;
-
-    const toSec = t => {
-        const [h, m, s] = t.split(':').map(Number);
-        return h * 3600 + m * 60 + s;
-    };
-
-    const targetSec = toSec(targetSecond);
-
-    const watcher = setInterval(() => {
+    setTimeout(() => {
         try {
-            const cur = rel.textContent?.slice(-8);
-            if (!cur || fired) return;
 
-            const curSec = toSec(cur);
+            tfLog(
+    'CONFIRM CLICK FIRED',
+    'target:', r.t,
+    'at(server):', new Date(Timing.getCurrentServerTime()).toISOString()
+);
+            submitBtn.click();
 
-            // 🔒 fire on exact second OR if tab woke up slightly late (≤2s)
-            if (
-                curSec === targetSec ||
-                (curSec > targetSec && curSec - targetSec <= 2)
-            ) {
-                fired = true;
-                clearInterval(watcher);
-
-                const delay = curSec === targetSec ? targetMs : 0;
-
-                setTimeout(() => {
-                    tfLog(
-                        'HYBRID CLICK FIRED',
-                        'cur:', cur,
-                        'target:', targetSecond,
-                        'delay(ms):', delay,
-                        'at(server):',
-                        new Date(Timing.getCurrentServerTime()).toISOString()
-                    );
-
-                    submitBtn.click();
-
-                    win.addEventListener(
-                        'beforeunload',
-                        () => {
-                            setTimeout(() => {
-                                try { win.close(); } catch {}
-                            }, 200);
-                        },
-                        { once: true }
-                    );
-                }, delay);
-            }
+            win.addEventListener(
+                'beforeunload',
+                () => {
+                    setTimeout(() => {
+                        try { win.close(); } catch {}
+                    }, 200);
+                },
+                { once: true }
+            );
         } catch {}
-    }, 5);
+    }, delay);
 
     return;
 }
-
 
 
 
@@ -798,7 +807,6 @@ if (attackClicked && !confirmDone) {
 
     if (isOverview) {
         openUI();
-        await loadUnitSpeeds();
         collectVillages();
         $('#tf-go')
             .prop('disabled', false)
@@ -807,8 +815,6 @@ if (attackClicked && !confirmDone) {
     }
 
 })();
-
-
 })();
 
 
