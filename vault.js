@@ -26,402 +26,155 @@
     window.__supabaseReady = true;
     console.log("✅ Supabase initialized");
 })();
-// ===============================
-// === DROPBOX → SUPABASE BRIDGE ===
-// ===============================
-async function readFileDropbox(filename) {
 
-    switch (filename) {
 
-        case "SUPABASE_SUPPORT": {
-            const map = await loadSupportDB(game_data.world, game_data.player.ally);
-            return new Blob(
-                [JSON.stringify([Array.from(map.entries()), []])],
-                { type: "application/json" }
-            );
-        }
 
-        case "SUPABASE_COMMANDS_ATTACK": {
-            const map = await loadCommandsAttackDB(game_data.world, game_data.player.ally);
-            return new Blob(
-                [JSON.stringify(Array.from(map.entries()))],
-                { type: "application/json" }
-            );
-        }
+function getDBRoot() {
+    if (window.__DB_ROOT) return window.__DB_ROOT;
 
-        case "SUPABASE_INCOMINGS": {
-            const map = await loadIncomingsDB(game_data.world, game_data.player.ally);
-            return new Blob(
-                [JSON.stringify(Array.from(map.entries()))],
-                { type: "application/json" }
-            );
-        }
+    const world = (window.game_data && game_data.world)
+        ? game_data.world
+        : "unknown";
 
-        case "SUPABASE_STATUS": {
-            const map = await loadStatusDB(game_data.world, game_data.player.ally);
-            return new Blob(
-                [JSON.stringify(Array.from(map.entries()))],
-                { type: "application/json" }
-            );
-        }
-
-        default:
-            throw new Error("Unknown virtual file: " + filename);
-    }
+    window.__DB_ROOT = "myDB_" + world;
+    return window.__DB_ROOT;
 }
 
 
-// ===============================
-// === VIRTUAL FILENAMES (SUPABASE)
-// ===============================
-var filename_support = "SUPABASE_SUPPORT";
-var filename_commands_attack = "SUPABASE_COMMANDS_ATTACK";
-var filename_incomings = "SUPABASE_INCOMINGS";
-var filename_status_upload = "SUPABASE_STATUS";
+var dropboxToken="",databaseName="",worldNumber=""
 
+var allUsers ,tribemates, permissions
+var filename_reports,filename_incomings,filename_users,filename_support,filename_commands_attack,filename_status_upload,filename_history_upload,filename_troops_home
 
-// ===============================
-// === REPORTS via Supabase DB ===
-// ===============================
+var listCommandsAttacks, commandsAttacksPromises
+var listSupport, supportPromises
+var nrFiles
 
-async function loadReportsDB(world, tribe) {
-  const { data, error } = await sb
-    .from("reports")
-    .select("coord, data")
-    .eq("world", world)
-    .eq("tribe", tribe);
-
-  if (error) {
-    console.error("loadReportsDB failed", error);
-    return new Map();
-  }
-
-  return new Map(data.map(r => [r.coord, r.data]));
-}
-
-async function saveReportDB(coord, reportData, world, tribe) {
-  const { error } = await sb
-    .from("reports")
-    .upsert({
-      coord,
-      data: reportData,
-      world,
-      tribe,
-      updated_at: new Date().toISOString()
-    });
-
-  if (error) {
-    console.error("saveReportDB failed", error);
-  }
-}
-
-// ===============================
-// === INCOMINGS via Supabase  ===
-// ===============================
-
-async function loadIncomingsDB(world, tribe) {
-  const { data, error } = await sb
-    .from("incomings")
-    .select("coord, data")
-    .eq("world", world)
-    .eq("tribe", tribe);
-
-  if (error) {
-    console.error("loadIncomingsDB failed", error);
-    return new Map();
-  }
-
-  return new Map(data.map(r => [r.coord, r.data]));
-}
-
-async function saveIncomingsDB(coord, incomingsData, world, tribe) {
-  const { error } = await sb
-    .from("incomings")
-    .upsert({
-      coord,
-      data: incomingsData,
-      world,
-      tribe,
-      updated_at: new Date().toISOString()
-    });
-
-  if (error) {
-    console.error("saveIncomingsDB failed", error);
-  }
-}
-
-// ===============================
-// === COMMANDS ATTACK via Supabase
-// ===============================
-async function loadCommandsAttackDB(world, tribe) {
-    const { data, error } = await sb
-        .from("commands_attack")
-        .select("coord, data")
-        .eq("world", world)
-        .eq("tribe", tribe);
-
-    if (error) {
-        console.error("loadCommandsAttackDB failed", error);
-        return new Map();
-    }
-
-    return new Map(data.map(r => [r.coord, r.data]));
-}
-
-async function saveCommandsAttackDB(coord, commandData, world, tribe) {
-    const { error } = await sb
-        .from("commands_attack")
-        .upsert({
-            coord,
-            data: commandData,
-            world,
-            tribe,
-            updated_at: new Date().toISOString()
-        });
-
-    if (error) {
-        console.error("saveCommandsAttackDB failed", error);
-    }
-}
-
-// ===============================
-// === SUPPORT via Supabase     ===
-// ===============================
-
-async function loadSupportDB(world, tribe) {
-  const { data, error } = await sb
-    .from("support")
-    .select("coord, data")
-    .eq("world", world)
-    .eq("tribe", tribe);
-
-  if (error) {
-    console.error("loadSupportDB failed", error);
-    return new Map();
-  }
-
-  return new Map(data.map(r => [r.coord, r.data]));
-}
-
-async function saveSupportDB(coord, supportData, world, tribe) {
-  const { error } = await sb
-    .from("support")
-    .upsert({
-      coord,
-      data: supportData,
-      world,
-      tribe,
-      updated_at: new Date().toISOString()
-    });
-
-  if (error) {
-    console.error("saveSupportDB failed", error);
-  }
-}
-
-// ===============================
-// === TROOPS_HOME via Supabase ===
-// ===============================
-
-async function loadTroopsHomeDB(world, tribe) {
-  const { data, error } = await sb
-    .from("troops_home")
-    .select("coord, data")
-    .eq("world", world)
-    .eq("tribe", tribe);
-
-  if (error) {
-    console.error("loadTroopsHomeDB failed", error);
-    return new Map();
-  }
-
-  return new Map(data.map(r => [r.coord, r.data]));
-}
-
-async function saveTroopsHomeDB(coord, troopsData, world, tribe) {
-  const { error } = await sb
-    .from("troops_home")
-    .upsert({
-      coord,
-      data: troopsData,
-      world,
-      tribe,
-      updated_at: new Date().toISOString()
-    });
-
-  if (error) {
-    console.error("saveTroopsHomeDB failed", error);
-  }
-}
-
-// ===============================
-// === STATUS via Supabase     ===
-// ===============================
-async function loadStatusDB(world, tribe) {
-  const { data, error } = await sb
-    .from("status")
-    .select("player_id, data")
-    .eq("world", world)
-    .eq("tribe", tribe);
-
-  if (error) {
-    console.error("loadStatusDB failed", error);
-    return new Map();
-  }
-
-  return new Map(data.map(r => [r.player_id, r.data]));
-}
-
-async function saveStatusDB(playerId, data, world, tribe) {
-  const { error } = await sb
-    .from("status")
-    .upsert({
-      player_id: playerId,
-      data,
-      world,
-      tribe,
-      updated_at: new Date().toISOString()
-    });
-
-  if (error) {
-    console.error("saveStatusDB failed", error);
-  }
-}
-
-// ===============================
-// === HISTORY via Supabase    ===
-// ===============================
-async function loadHistoryDB(world, tribe) {
-  const { data, error } = await sb
-    .from("history_upload")
-    .select("report_id, data")
-    .eq("world", world)
-    .eq("tribe", tribe);
-
-  if (error) {
-    console.error("loadHistoryDB failed", error);
-    return new Map();
-  }
-
-  return new Map(data.map(r => [r.report_id, r.data]));
-}
-
-async function saveHistoryDB(reportId, data, world, tribe) {
-  const { error } = await sb
-    .from("history_upload")
-    .upsert({
-      report_id: reportId,
-      data,
-      world,
-      tribe,
-      updated_at: new Date().toISOString()
-    });
-
-  if (error) {
-    console.error("saveHistoryDB failed", error);
-  }
-}
-
-
-// ===============================
-// === EXISTING SCRIPT CONTINUES ===
-// ===============================
-// ===================================================
-// === INITIAL SETUP (SUPABASE ERA, CLEAN VERSION) ===
-// ===================================================
-let timeDownloadStart;
-let timeDownloadStop;
-let mapVillageById;
-
-
-var allUsers, tribemates, permissions;
-
-// UI config
-var backgroundColor, borderColor, headerColor, titleColor;
-var headerColorPlayers, headerColorCoords, headerColorFirstRow;
-var widthInterface, widthInterfaceOverview;
-async function initWorldSpeedOnce() {
-    if (window.__speedReady) return;
-    window.__speedReady = false;
-
-    while (typeof window.game_data === "undefined") {
-        await new Promise(r => setTimeout(r, 50));
-    }
-
-    const speed = getSpeedConstant();
-    const sw = speed.worldSpeed;
-    const su = speed.unitSpeed;
-
-    window.nobleSpeed = 2100 * 1000 / (sw * su);
-    window.ramSpeed   = 1800 * 1000 / (sw * su);
-    window.swordSpeed = 1320 * 1000 / (sw * su);
-    window.axeSpeed   = 1080 * 1000 / (sw * su);
-    window.heavySpeed = 660  * 1000 / (sw * su);
-    window.lightSpeed = 600  * 1000 / (sw * su);
-    window.spySpeed   = 540  * 1000 / (sw * su);
-
-    window.__speedReady = true;
-    console.log("⚡ World speed initialized");
-}
-
+var backgroundColor, borderColor, headerColor, headerColor,titleColor, headerColorPlayers, headerColorCoords, headerColorFirstRow, headerColorFirstRow
+var widthInterface, widthInterfaceOverview
 (async () => {
-    // ⏳ WAIT FOR SUPABASE
-    while (!window.__supabaseReady) {
-        await new Promise(r => setTimeout(r, 50));
-    }
-
-    console.log("🟢 Supabase available");
-
-    // ⏳ WAIT FOR GAME DATA + SPEED
-    await initWorldSpeedOnce();
-
-    // ===========================
-    // UI COLORS / SIZES
-    // ===========================
     backgroundColor = "#32313f";
     borderColor = "#3e6147";
     headerColor = "#202825";
     titleColor = "#ffffdf";
-    headerColorPlayers = "#323232";
-    headerColorCoords = "#4d4d4d";
-    headerColorFirstRow = "#666600";
-    widthInterface = 600;
-    widthInterfaceOverview = 900;
+    headerColorPlayers="#323232"
+    headerColorCoords="#4d4d4d"
+    headerColorFirstRow="#666600"
+    widthInterface = 600
+    widthInterfaceOverview = 900
 
-    // ===========================
-    // USERS (SUPABASE)
-    // ===========================
-    const { data, error } = await sb
-        .from("users")
-        .select("player_name, permission")
-        .eq("world", game_data.world)
-        .eq("tribe", game_data.player.ally);
 
-    if (error) {
-        console.error("getUsers failed", error);
-        throw new Error("Cannot load users from Supabase");
+    allUsers =   await getUsers()
+
+    permissions = {}
+    tribemates=allUsers.split("\n").map(e=>{return e.split(",")[0].trim().toLowerCase()}).filter(e => e)
+    allUsers.split("\n").forEach(row => {
+        if(row.trim() != ''){
+            let name = row.split(",")[0].trim().toLowerCase()
+            let value = row.split(",")[1].trim()
+            permissions[name] = value
+        }
+
+    })
+    console.log(tribemates)
+    // console.log(permissions)
+
+    // if(!tribemates.includes(game_data.player.name.toLowerCase())){
+    //     UI.ErrorMessage("contact admin to give you permission",2000)
+    //     throw new Error("you do not have acces");
+    //     // console.log("you do not have acces" )
+    // }
+    // console.log("worldNumber ",worldNumber)
+    // if (game_data.world.match(/\d+/)[0] != worldNumber)
+    //     throw new Error("it doesn't work");
+
+    addCssStyle()
+    getInterface()
+    showButtons();
+    hitCountApi()
+    filename_reports=`${databaseName}/Reports.gz`;
+    filename_incomings=`${databaseName}/Incomings.gz`;
+    filename_users=`${databaseName}/Users.txt`;
+    filename_support=`${databaseName}/Support.gz`;
+    filename_commands_attack=`${databaseName}/Commands_attack.gz`;
+    filename_troops_home=`${databaseName}/Troops_home.gz`;
+
+    filename_status_upload=`${databaseName}/status.gz`;
+    filename_history_upload=`${databaseName}/history_upload.gz`;
+
+
+
+
+
+    listCommandsAttacks = []
+    commandsAttacksPromises = []
+    listSupport = []
+    supportPromises = []
+
+    nrFiles = 2
+    for(let i=0;i<nrFiles;i++){
+        let fileName = `${databaseName}/Commands_attack${i}.gz`
+        listCommandsAttacks.push(fileName)
+        commandsAttacksPromises.push(readFileDropbox(fileName))
+
+        fileName = `${databaseName}/Support${i}.gz`
+        listSupport.push(fileName)
+        supportPromises.push(readFileDropbox(fileName))
+    }
+    console.log(listCommandsAttacks)
+    console.log(listSupport)
+
+
+    try {
+        console.log(`${databaseName}/Support0.gz`)
+        let response = await readFileDropbox(`${databaseName}/Support0.gz`,dropboxToken)
+        console.log(response)
+    } catch (error) {
+        UI.SuccessMessage("create additional files")
+        window.setTimeout(async ()=>{
+            for(let i=0;i<nrFiles;i++){
+                let compressedData = await compress("[]", 'gzip')
+                await uploadFile(compressedData, `${databaseName}/Support${i}.gz`, dropboxToken)
+                await uploadFile(compressedData, `${databaseName}/Commands_attack${i}.gz`, dropboxToken)
+            }
+        },500)
+        console.log("files created")
     }
 
-   permissions = {};
-tribemates = [];
 
-data.forEach(u => {
-  const name = u.player_name.toLowerCase();
-  tribemates.push(name);
-  permissions[name] = true; // allow all users
-});
+    try {
+        let response = await readFileDropbox(filename_status_upload,dropboxToken)
+        console.log(response)
+    } catch (error) {
+        UI.SuccessMessage("create additional file")
+        window.setTimeout(async ()=>{
+            let compressedData = await compress("[]", 'gzip')
+            await uploadFile(compressedData, filename_reports, dropboxToken)
+            await uploadFile(compressedData, filename_support, dropboxToken)
+            await uploadFile(compressedData, filename_incomings, dropboxToken)
+            await uploadFile(compressedData, filename_commands_attack, dropboxToken)
+            await uploadFile(compressedData, filename_status_upload, dropboxToken)
+            await uploadFile(compressedData, filename_history_upload, dropboxToken)
+        },500)
+        console.log("file created")
+    }
 
 
-    console.log("👥 Tribemates:", tribemates);
+    try {
+        let response = await readFileDropbox(filename_troops_home,dropboxToken)
+        console.log(response)
+    } catch (error) {
+        UI.SuccessMessage("create additional file")
+        window.setTimeout(async ()=>{
+            let compressedData = await compress("[]", 'gzip')
+            await uploadFile(compressedData, filename_troops_home, dropboxToken)
+        },500)
+        console.log("file created")
+    }
 
-    // ===========================
-    // UI INIT
-    // ===========================
-    addCssStyle();
-    getInterface();
-    showButtons();
+
+
 })();
-
 
 
 
@@ -431,8 +184,8 @@ data.forEach(u => {
 
 var speedWorld=getSpeedConstant().worldSpeed;
 var speedTroupes=getSpeedConstant().unitSpeed;
-    
-    
+
+
 
 
 
@@ -475,6 +228,34 @@ var troopsPop = {
 {/* <img src="https://img.icons8.com/officel/16/000000/long-arrow-right.png"/> */}
 {/* <img src="https://img.icons8.com/officel/16/000000/long-arrow-left.png"/> */}
 
+function hitCountApi(){
+    $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}/up`, response=>{
+        console.log(`This script has been run: ${response.count} times`);
+    });
+    if(game_data.device !="desktop"){
+        $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_phone/up`, response=>{
+            console.log(`This script has been run on mobile: ${response.count} times`);
+        });
+    }
+
+    $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_id${game_data.player.id}/up`, response=>{
+        console.log(response)
+        if(response.count == 1){
+            console.log("here")
+            $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_users/up`, response=>{});
+        }
+
+    });
+
+    try {
+        $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_users`, response=>{
+            console.log(`Total number of users: ${response.count}`);
+        });
+
+    } catch (error) {}
+
+}
+
 
 function getInterface(){
     html = `
@@ -494,12 +275,12 @@ function getInterface(){
                     </td>
                     <td style="text-align:center; background-color:${headerColor}">
                         <center style="margin:10px"><input class="btn" type="button" id="upload_reports" onclick="uploadReports()" value="Upload"></center>
-    
+
                     </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}" id="progress_reports">None</font></center></p>
-                    </td>                       
-                </tr>        
+                    </td>
+                </tr>
                     <tr>
                     <td style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">Incomings</font></center></h2>
@@ -509,76 +290,76 @@ function getInterface(){
                     </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_incomings">None</font></center></p>
-                    </td>                       
+                    </td>
                 </tr>
                 <tr>
                     <td style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">Commands</font></center></h2>
                     </td>
                     <td style="text-align:center; background-color:${headerColor}">
-                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadSupports()" value="Upload"></center>    
+                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadSupports()" value="Upload"></center>
                     </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_support">None</font></center></p>
-                        </td>                       
-                </tr> 
+                        </td>
+                </tr>
                 <tr>
                     <td style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">Troops</font></center></h2>
                     </td>
                     <td style="text-align:center; background-color:${headerColor}">
-                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadOwnTroops()" value="Upload"></center>    
+                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadOwnTroops()" value="Upload"></center>
                     </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_troops_home">None</font></center></p>
-                        </td>                       
-                </tr> 
+                        </td>
+                </tr>
                 <tr>
                     <td style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">All Info</font></center></h2>
                     </td>
                     <td style="text-align:center; background-color:${headerColor}">
-                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadAll()" value="Upload all"></center>    
+                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadAll()" value="Upload all"></center>
                     </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_all">None</font></center></p>
-                    </td>                       
-                </tr>     
+                    </td>
+                </tr>
             </table>
             <h2><center style="margin:10px"><font color="${titleColor}" style="text-decoration: underline;text-decoration-color: ${titleColor}">Search Reports</font></center></h2>
             <table id="table_upload" class="" border="1" style="width: 100%;background-color:${backgroundColor};border-color:${borderColor}">
                 <tr>
                     <td  style="text-align:center; background-color:${headerColor}">
-                        <center style="margin:10px"><input class="btn" type="button" onclick="loadReports()" value="Load Reports"></center> 
-                        <center style="margin:10px"><input class="btn" type="button" onclick="databaseDetails()" value="Database Details"></center> 
+                        <center style="margin:10px"><input class="btn" type="button" onclick="loadReports()" value="Load Reports"></center>
+                        <center style="margin:10px"><input class="btn" type="button" onclick="databaseDetails()" value="Database Details"></center>
                     </td>
                     <td style="text-align:center; background-color:${headerColor}">
-                    <center style="margin:10px"><input style="text-align: center;" type="text" id="input_search" onclick="" placeholder="coord" ></center> 
+                    <center style="margin:10px"><input style="text-align: center;" type="text" id="input_search" onclick="" placeholder="coord" ></center>
                     </td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}" id="progress_search">status</font></center></p>
-                    </td>                       
-                </tr>   
+                    </td>
+                </tr>
                 <tr >
                     <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}" >filter tribes: </font></center></p>
                     </td>
                     <td colspan="2" style="text-align:center; background-color:${headerColor}">
-                        <center style="margin:10px"><input style="text-align: center;width:90%;" type="text" id="input_filter_tribe" onclick="" placeholder="tribe1,tribe2,..." ></center> 
+                        <center style="margin:10px"><input style="text-align: center;width:90%;" type="text" id="input_filter_tribe" onclick="" placeholder="tribe1,tribe2,..." ></center>
                     </td>
-                </tr>     
+                </tr>
                 <tr >
                     <td  style="text-align:center; background-color:${headerColor}">
-                        <center style="margin:10px"><input class="btn" id="btn_off_coord" type="button" value="Off Coords"></center> 
+                        <center style="margin:10px"><input class="btn" id="btn_off_coord" type="button" value="Off Coords"></center>
                     </td>
                     <td style="text-align:center; background-color:${headerColor}">
-                        <center style="margin:10px"><input class="btn" id="btn_def_coord" type="button" value="Def Coords"></center> 
-                    </td>      
+                        <center style="margin:10px"><input class="btn" id="btn_def_coord" type="button" value="Def Coords"></center>
+                    </td>
                     <td style="text-align:center; background-color:${headerColor}">
-                        <center style="margin:10px"><input class="btn" id="btn_stack_coord" type="button" value="Stacked Coords"></center> 
-                        <center style="margin:10px"><input style="text-align: center;" type="text" id="input_stacked" onclick="" placeholder="nr stack" ></center> 
-                    </td>    
-                </tr>        
+                        <center style="margin:10px"><input class="btn" id="btn_stack_coord" type="button" value="Stacked Coords"></center>
+                        <center style="margin:10px"><input style="text-align: center;" type="text" id="input_stacked" onclick="" placeholder="nr stack" ></center>
+                    </td>
+                </tr>
             </table>
             <center style="margin:10px"><div id="report_view" style="background-color:#d2c09e"><div><center>
             <div class="scriptFooter">
@@ -597,7 +378,7 @@ function getInterface(){
         $("#mobileContent").eq(0).prepend(html);
     }
 
-    
+
     if(document.getElementById("incomings_table")==null){
         $("#div_container").remove()
         $("#contentContainer").eq(0).prepend(html);
@@ -610,7 +391,7 @@ function getInterface(){
     }
 
 
-    
+
 
     $("#div_minimize").on("click",()=>{
         if($('#div_container').width() == widthInterface){
@@ -639,27 +420,67 @@ function closeWindow(){
     // window.location.reload();
 }
 
-async function getUsers() {
-    const { data, error } = await sb
-        .from("users")
-        .select("player_name, permission")
-        .eq("world", game_data.world)
-        .eq("tribe", String(game_data.player.ally));
-
-    if (error) {
-        console.error("getUsers failed", error);
-        throw new Error("Cannot load users from Supabase");
+async function loadEncryptedDataFromSupabase() {
+    while (!window.__supabaseReady) {
+        await new Promise(r => setTimeout(r, 20));
     }
 
-    // Convert to old format your script expects
+    const { data, error } = await window.sb
+        .from("script_config")
+        .select("*")
+        .eq("enabled", true)
+        .single();
+
+    if (error) throw error;
+
+    // 🔐 recreate encryptedData payload
+    window.encryptedData = `
+        databaseName = "${data.database_name}";
+        worldNumber = "${data.world_number}";
+        dropboxToken = null;
+    `;
+}
+
+
+async function getUsers() {
+
+    // keep whatever encryptedData logic you already have
+    if (typeof encryptedData === "undefined") {
+        await loadEncryptedDataFromSupabase(); // or ensureEncryptedData()
+        new Function(encryptedData)();
+    }
+
+    // 🔁 REPLACEMENT FOR Users.txt
+    const { data, error } = await window.sb
+        .from("script_permissions")
+        .select("player_name, permission");
+
+    if (error) throw error;
+
     return data
-        .map(u => `${u.player_name},${u.permission}`)
+        .map(r => `${r.player_name},${r.permission}`)
         .join("\n");
 }
 
 
 
 
+
+function insertCryptoLibrary(){
+    return new Promise((resolve,reject)=>{
+
+        let start=new Date().getTime()
+        let script = document.createElement('script');
+        script.type="text/javascript"
+        script.src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"
+        script.onload = function () {
+            let stop=new Date().getTime()
+            console.log(`insert crypto-js library in ${stop-start} ms`)
+            resolve("done")
+        };
+        document.head.appendChild(script);
+    })
+}
 
 function addWindow(){
     $("#contentContainer").eq(0).prepend(html);
@@ -738,7 +559,7 @@ async function uploadAll(){
                   </center>`, 10000)
 
 }
-
+window.uploadAll=uploadAll;
 function addCssStyle(){
     var css =`
     .shadow20 {
@@ -750,8 +571,8 @@ function addCssStyle(){
         width: 100%;
         margin: 0 auto;
         display: flex;
-        justify-content: center; 
-        align-items: center;    
+        justify-content: center;
+        align-items: center;
     }
     .scriptContainer{
         background: ${backgroundColor};
@@ -761,7 +582,7 @@ function addCssStyle(){
         border-radius: 15px;
 
         border-style: solid;
-        border-width: 5px 5px; 
+        border-width: 5px 5px;
         border-color:${backgroundColor};
 
     }
@@ -771,14 +592,14 @@ function addCssStyle(){
         width: 100%;
         margin: 0 auto;
         display: flex;
-        justify-content: right; 
-        align-items: center;  
-        margin-right:50px;  
+        justify-content: right;
+        align-items: center;
+        margin-right:50px;
     }
     `,
     head = document.head || document.getElementsByTagName('head')[0],
     style = document.createElement('style');
-    
+
     head.appendChild(style);
     style.type = 'text/css';
     if (style.styleSheet){
@@ -814,312 +635,571 @@ if(document.getElementById("incomings_table")!=null){
 
 
 /////////////////////////////////////////////////get all reports info//////////////////////////////////////////////////////////////////
-/**
- * Supabase batch upsert helper
- * - Splits into chunks (avoids payload limits)
- * - Uses ON CONFLICT index
- */// ===========================
-// SAFE GET (ANTI-429)
-// ===========================
-let RATE_LIMIT_UNTIL = 0;
+async function uploadReports(){
 
-async function safeGet(url) {
-    const now = Date.now();
 
-    // If we are in cooldown, wait
-    if (now < RATE_LIMIT_UNTIL) {
-        const wait = RATE_LIMIT_UNTIL - now;
-        console.warn(`⏸ Rate-limited, waiting ${Math.ceil(wait / 1000)}s`);
-        await new Promise(r => setTimeout(r, wait));
-    }
+    document.getElementById("progress_reports").innerText="Getting data...";
+
+    let [map_history_upload,status]=await Promise.all([readFileDropbox(filename_history_upload),insertlibraryLocalBase() ]).catch(err=>{alert(err)})
+    console.log(status)
 
     try {
-        const res = await $.get(url);
-
-        // human-like delay (500ms)
-        await new Promise(r => setTimeout(r, 250));
-
-        return res;
-    } catch (e) {
-        if (e?.status === 429) {
-            RATE_LIMIT_UNTIL = Date.now() + 10 * 60 * 1000; // 10 min cooldown
-            UI.ErrorMessage(
-                "⚠️ Too many requests. Pausing 10 minutes.",
-                5000
-            );
-        }
-        throw e;
+        let decompressedData = await decompress(await map_history_upload.arrayBuffer() , 'gzip');
+        map_history_upload=new Map( JSON.parse(decompressedData));
+    } catch (error) {
+        console.log("erorr map history upload from dropbox")
+        map_history_upload=new Map()
     }
-}
+
+    //if  database is stored locally
+    if(await localBase.getItem(game_data.world+"history_upload")!=undefined){
+        try{
+            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "history_upload"))
+            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+
+            let map_localBase=new Map( JSON.parse(decompressedData));
+            console.log("map_localBase history upload",map_localBase)
+            map_history_upload=new Map([...map_localBase, ...map_history_upload])
+        } catch (error) {
+            let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "history_upload"))));
+            map_history_upload=new Map([...map_localBase, ...map_history_upload])
+        }
+    }
+
+    console.log("map_history_upload",map_history_upload)
+    //delete if it's too old
+    Array.from(map_history_upload.keys()).forEach(key=>{
+        let currentDate=new Date();
+        let reportDate=new Date(map_history_upload.get(key).date)
+        if(currentDate.getTime()- reportDate.getTime() > 8*24*3600*1000){
+            // console.log("remove id: "+map_history_upload.get(key).date)
+            map_history_upload.delete(key)
+        }
+
+    })
 
 
-// ===============================
-// HELPERS – REPORT SCRAPING
-// ===============================
+    // console.log(map_history_upload)
 
-async function getLinks(onlyNew = true, map_history_upload = new Map()) {
-    const links = [];
-    const seen = new Set();
+    var [list_href, mapVillages]=await Promise.all([getLinks(true,map_history_upload),getInfoVillages() ]).catch(err=>{alert(err)})
 
-    let page = 0;
-    let stop = false;
 
-    while (!stop) {
-        const url = TribalWars.buildURL("GET", "report", {
-            mode: "all",
-            group_id: -1,
-            page
-        });
+    console.log("map_history_upload",map_history_upload)
 
-        const html = await $.get(url);
-        const doc = new DOMParser().parseFromString(html, "text/html");
+    $(document).on('click','.autoHideBox',function(){
+        UI.SuccessMessage("stop",2000)
+        list_href=[]
+    })
 
-        const rows = doc.querySelectorAll("tr[id^='report_']");
-        if (!rows.length) break;
 
-        for (const row of rows) {
-            const a = row.querySelector("a[href*='view=']");
-            if (!a) continue;
+    list_href=list_href.reverse();
+    console.log(list_href)
+    var list_data_reports=[]
+    var list_data_typeAttack=[]
+    var nr_reports=0;
+    var nr_reports_total=list_href.length
+    // addWindow();
+    // document.getElementById("progress_reports").innerText=nr_reports+"/"+nr_reports_total+" reports";
+    // UI.InfoMessage(nr_reports+"/"+nr_reports_total+" reports")
+    var current_url
 
-            const href = a.href;
-            const idMatch = href.match(/view=(\d+)/);
-            if (!idMatch) continue;
+    return new Promise(async(resolve,reject)=>{
+        async function ajaxRequest (urls) {
+            var time= 0
+            if(urls.length>0)
+            current_url=urls.pop().href;
+            else
+            current_url="stop"
+            // console.log("inside function "+urls.length)
+            if (urls.length >= 0 && current_url!= "stop") {
+                var start_ajax=new Date()
+                $.ajax({
+                    method: 'GET',
+                    url: current_url,
+                })
+                .done(async function (result) {
+                    const parser = new DOMParser();
+                    const htmlDoc = parser.parseFromString(result, 'text/html');
 
-            const reportId = idMatch[1];
+                    // addWindow();
+                    var startReport=new Date().getTime();
+                    let list=getDataReport(tribemates,htmlDoc);
+                    var stopReport=new Date().getTime();
+                    // console.log(stopReport-startReport)
+                    // console.log(list)
+                    if(list==null ){
+                        console.log("recaptcha, upload again")
+                        UI.ErrorMessage("recaptcha, upload again","slow")
+                        // addWindow();
+                        document.getElementById("progress_reports").innerText="recaptcha";
+                        list_href=[]
 
-            // STOP at first known report
-            if (onlyNew && map_history_upload.has(reportId)) {
-                stop = true;
-                break;
+                    }
+                    else if (list == 0){//error( player has been deleted)
+                        let idReport= parseInt(current_url.match(/view=(\d+)/)[1]);
+                        let currentDate=new Date().getFullYear()+"-"+(new Date().getMonth()+1)+"-"+new Date().getDate();
+
+                        if(htmlDoc.getElementsByClassName("unit-item unit-item-axe").length>0){
+                            var time_report=htmlDoc.getElementsByClassName("vis")[3].firstElementChild.children[1].children[1].innerText.trim();
+                            map_history_upload.set(idReport,{
+                                date:time_report,
+                                playerId:game_data.player.id.toString()
+                            })
+                        }
+                        else{
+                            map_history_upload.set(idReport,{
+                                date:currentDate,
+                                playerId:game_data.player.id.toString()
+                            })
+                        }
+                        UI.SuccessMessage(nr_reports+"/"+nr_reports_total+" reports")
+                        // document.getElementById("progress_reports").innerText=nr_reports+"/"+nr_reports_total+" reports"
+                        nr_reports++;
+                    }
+                    else{
+
+                        // console.log("herere")
+
+                        // console.log("reports info "+list)
+                        for(let j=0;j<list.length;j++){
+                            list_data_reports.push({"coord":list[j].coord,"reportInfo":list[j].reportInfo});
+
+
+                            ////////////////////////////////error reports////////////////////////////////
+                            if(list[j].reportInfo.time_report == 0 || new Date(list[j].reportInfo.time_report) == "Invalid Date"){
+                                // let list_errors = JSON.parse(await readFileDropbox(filename_errors_reports))
+                                // list_errors.push(htmlDoc.getElementsByClassName("nopad")[0].innerHTML)
+                                // await uploadFile(JSON.stringify(list_errors),filename_errors_reports,dropboxToken)
+
+                                let serverTime=htmlDoc.getElementById("serverTime").innerText
+                                let serverDate=htmlDoc.getElementById("serverDate").innerText.split("/")
+                                serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
+                                let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+                                list[j].reportInfo.time_report = `${months[parseInt(serverDate[1])]} ${serverDate[0]}, ${serverTime}`
+                            }
+                        }
+                        // document.getElementById("progress_reports").innerText=nr_reports+"/"+nr_reports_total+" reports";
+                        UI.SuccessMessage(nr_reports+"/"+nr_reports_total+" reports")
+                        // document.getElementById("progress_reports").innerText=nr_reports+"/"+nr_reports_total+" reports"
+
+
+                        nr_reports++;
+                        let idReport= parseInt(current_url.match(/view=(\d+)/)[1]);
+                        let currentDate=new Date().getFullYear()+"-"+(new Date().getMonth()+1)+"-"+new Date().getDate();
+
+                        if(htmlDoc.getElementsByClassName("unit-item unit-item-axe").length>0){
+                            var time_report=htmlDoc.getElementsByClassName("vis")[3].firstElementChild.children[1].children[1].innerText.trim();
+                            map_history_upload.set(idReport,{
+                                date:time_report,
+                                playerId:game_data.player.id.toString()
+                            })
+                        }
+                        else{
+                            map_history_upload.set(idReport,{
+                                date:currentDate,
+                                playerId:game_data.player.id.toString()
+                            })
+                        }
+                    }
+                    // console.log("map_history_upload size "+map_history_upload.size)
+
+
+                    ///save type of attack nuke/fang/fake
+                    let objTypeAttack=getDataReportTypeAttack(tribemates,htmlDoc);
+                    if(objTypeAttack==null ){
+                        console.log("recaptcha, upload again")
+                        UI.ErrorMessage("recaptcha, upload again","slow")
+                        // addWindow();
+                        document.getElementById("progress_reports").innerText="recaptcha";
+                        list_href=[]
+
+                    }
+                    else{
+                        if(objTypeAttack.length>0){
+                            objTypeAttack = objTypeAttack.pop()
+                            list_data_typeAttack.push(objTypeAttack)
+                        }
+                    }
+
+
+
+                    var stop_ajax=new Date();
+                    var dif_time=stop_ajax.getTime()-start_ajax.getTime();
+                    // console.log("dif_time "+dif_time+" wait "+(200-dif_time))
+                    window.setTimeout(function(){
+                        let next_ajax = new Date();
+                        let duration_ajax=next_ajax.getTime()-start_ajax.getTime();
+                        console.log("delay between requests is: "+duration_ajax+" ms")
+
+                        ajaxRequest(list_href);
+
+                    },200-dif_time)
+                });
+
             }
+            else
+            {
 
-            if (!seen.has(reportId)) {
-                seen.add(reportId);
-                links.push({ href, id: reportId });
+                UI.SuccessMessage("compressing database, wait few seconds",5000)
+
+
+                ////////////////////////////////////extract data from dropbox/////////////////////////////////////////
+                console.log("before reading map from dropbox")
+                let [map_dropbox, mapStatus,infoVillages,map_incomings]=await Promise.all([readFileDropbox(filename_reports) ,readFileDropbox(filename_status_upload),getInfoVillages(),readFileDropbox(filename_incomings)]).catch(err=>{alert(err)})
+
+                try {
+                    let decompressedData = await decompress(await map_dropbox.arrayBuffer() , 'gzip');
+                    map_dropbox=new Map( JSON.parse(decompressedData));
+                } catch (error) {
+                    console.log("erorrrrrrrrrrrrrrrr map report from dropbox")
+                    map_dropbox=new Map()
+                }
+
+                //if  database is stored locally
+                if(await localBase.getItem(game_data.world+"reports")!=undefined){
+                    try {
+                        let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "reports"))
+                        let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+                        let map_localBase=new Map( JSON.parse(decompressedData));
+
+                        console.log("map_localBase",map_localBase)
+                        map_dropbox=new Map([...map_localBase, ...map_dropbox])
+                    } catch (error) {
+                        let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "reports"))));
+                        map_dropbox=new Map([...map_localBase, ...map_dropbox])
+                    }
+                }
+
+
+                try {
+                    let decompressedData = await decompress(await map_incomings.arrayBuffer() , 'gzip');
+                    map_incomings=new Map( JSON.parse(decompressedData));
+                } catch (error) {
+                    map_incomings=new Map()
+                }
+
+                //if  database incomings is stored locally
+                if(await localBase.getItem(game_data.world+"incomings")!=undefined){
+                    try {
+                        let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "incomings"))
+                        let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+                        let map_localBase=new Map( JSON.parse(decompressedData));
+
+                        map_incomings=new Map([...map_localBase, ...map_incomings])
+                    } catch (error) {
+                        let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "incomings"))));
+                        map_incomings=new Map([...map_localBase, ...map_incomings])
+                    }
+                }
+
+                try {
+                    let decompressedData = await decompress(await mapStatus.arrayBuffer() , 'gzip');
+                    mapStatus=new Map( JSON.parse(decompressedData));
+                } catch (error) {
+                    console.log("erorrr map report from dropbox")
+                    mapStatus=new Map()
+                }
+
+
+                // addWindow();
+                let nr_update=0;
+                let nr_write=0;
+                list_data_reports.forEach(function(el){
+                    if(map_dropbox.has(el.coord)){//update   el[0]=key
+                        let obj_dropbox=map_dropbox.get(el.coord)
+
+                        if(el.coord==el.reportInfo.coordAttacker ){
+                            console.log("update for offensive" && el.reportInfo.typeAttacker!="?")
+                            delete el.reportInfo["troopsAtHome_"+el.coord]
+                            delete el.reportInfo["time_report_home_"+el.coord]
+
+
+                            if(el.reportInfo.typeAttacker=="new_off"){
+                                console.log("new_off, don't do anything")
+                            }else{
+                                console.log("coord exists in dropbox already")
+                                let time_prev=new Date(obj_dropbox.time_report);
+                                let time_current=new Date(el.reportInfo.time_report);
+                                console.log(time_current-time_prev)
+                                if(time_current-time_prev<48*3600*1000 && (el.reportInfo.typeAttacker=="def" )){//48 hours
+                                    console.log("it was def_cat")
+                                    map_dropbox.set(el.coord,{...obj_dropbox, ...el.reportInfo})//merge old info with new info
+                                    nr_update++;
+                                }
+                                else if(time_current-time_prev>=0 ){
+                                    console.log("update coord: "+el.coord+" in dropbox")
+                                    map_dropbox.set(el.coord,{...obj_dropbox, ...el.reportInfo})//merge old info with new info
+                                    nr_update++;
+                                }
+                            }
+
+                        }
+                        if(el.coord==el.reportInfo.coordDefender && el.reportInfo.typeDefender!="?"){
+                            console.log("update for defensive")
+                            if(el.reportInfo.typeDefender=="new_off" || el.reportInfo.typeDefender=="home_seen"){
+                                console.log(`defend type:${el.reportInfo.typeDefender} update troops home`)
+
+                                let time_prev=new Date(obj_dropbox.time_report);
+                                let time_current=new Date(el.reportInfo.time_report);
+
+                                if(time_current-time_prev>=0 ){
+                                    console.log("update coord: "+el.coord+" in dropbox")
+
+                                    obj_dropbox["troopsAtHome_"+el.coord]=el.reportInfo["troopsAtHome_"+el.coord]
+                                    obj_dropbox["time_report_home_"+el.coord]=el.reportInfo["time_report_home_"+el.coord]
+
+                                    map_dropbox.set(el.coord,obj_dropbox)
+                                    nr_update++;
+                                }
+
+                            }else{
+                                console.log("coord exists in dropbox already")
+                                let time_prev=new Date(obj_dropbox.time_report);
+                                let time_current=new Date(el.reportInfo.time_report);
+                                console.log(time_current-time_prev)
+                                if(time_current-time_prev<48*3600*1000 && (el.reportInfo.typeDefender=="def" )){//48 hours
+                                    console.log("it was def_cat")
+                                    map_dropbox.set(el.coord,{...obj_dropbox, ...el.reportInfo})
+                                    nr_update++;
+                                }
+                                else if(time_current-time_prev>=0 ){
+                                    console.log("update coord: "+el.coord+" in dropbox")
+                                    map_dropbox.set(el.coord,{...obj_dropbox, ...el.reportInfo})
+                                    nr_update++;
+                                }
+                            }
+                        }
+                    }
+                    else{//write
+                        if(el.coord==el.reportInfo.coordAttacker && el.reportInfo.typeAttacker!="?"){
+                            delete el.reportInfo["troopsAtHome_"+el.coord]
+                            delete el.reportInfo["time_report_home_"+el.coord]
+
+                            console.log("write coord in dropbox")
+                            map_dropbox.set(el.coord,el.reportInfo)
+                            nr_write++;
+                        }
+                        else if(el.coord==el.reportInfo.coordDefender && el.reportInfo.typeDefender!="?"){
+                            console.log("write coord in dropbox")
+                            if(el.reportInfo.typeDefender=="home_seen"){
+                                el.reportInfo.typeDefender="?"
+                            }
+
+                            map_dropbox.set(el.coord,el.reportInfo)
+                            nr_write++;
+                        }
+                    }
+                })
+
+
+
+                console.log("map_dropbox before",map_dropbox)
+
+                //clear map if contains data on tribe mates
+                let counterAttacker=0;
+                let counterDefender=0;
+                let counterTypAttacker=0;
+                let counterTypeDefender=0;
+                Array.from(map_dropbox.keys()).forEach(key=>{
+                    try {
+                        let obj=map_dropbox.get(key)
+                        let obj_village=mapVillages.get(key)
+                        // console.log("key=> "+obj.time_report)
+
+                        //if time reports is 0
+                        if(obj.time_report == 0){
+                            let serverTime=document.getElementById("serverTime").innerText
+                            let serverDate=document.getElementById("serverDate").innerText.split("/")
+                            let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+                            obj.time_report = months[parseInt(serverDate[1])-1]+" "+serverDate[0]+", "+serverDate[2]+" "+serverTime+ ":000";
+                            map_dropbox.set(key,obj)
+                        }
+                        let nameKey="time_report_home_"
+                        nameKey = nameKey.toLowerCase();// normalize both to lowercase to make it case insensitive
+                        const keys = Object.keys(obj);
+                        const wantedKey = keys.find(key => key.toLowerCase().includes(nameKey));
+                        //if time report return is 0
+                        if(obj[wantedKey] == 0){
+                            let serverTime=document.getElementById("serverTime").innerText
+                            let serverDate=document.getElementById("serverDate").innerText.split("/")
+                            let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+                            obj[wantedKey] = months[parseInt(serverDate[1])-1]+" "+serverDate[0]+", "+serverDate[2]+" "+serverTime+ ":000";
+                            map_dropbox.set(key,obj)
+                        }
+
+
+                        //remove non existent villages
+                        if(infoVillages.get(key) == undefined){
+                            map_dropbox.delete(key)
+
+                        }
+
+                        if(key == obj.coordAttacker){
+                            if(tribemates.includes(obj.nameAttacker.toLowerCase()) || obj.nameAttacker.toLowerCase() != obj_village.playerName.toLowerCase()  ){
+                                map_dropbox.delete(key)
+                                console.log(`delete coord ${key} old owner:${obj.nameAttacker.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (off report)`)
+                                counterAttacker++
+                            }
+                            else if(obj.typeAttacker=="?"){
+                                map_dropbox.delete(key)
+                                counterTypAttacker++
+                            }
+                        }
+                        else if(key == obj.coordDefender){
+                            if(tribemates.includes(obj.nameDefender.toLowerCase()) || obj.nameDefender.toLowerCase() != obj_village.playerName.toLowerCase() ){
+                                map_dropbox.delete(key)
+                                counterDefender++
+                                console.log(`delete coord ${key} old owner:${obj.nameDefender.toLowerCase()} != new owner:${obj_village.playerName.toLowerCase()} (def report)`)
+
+                            }
+                            else if(obj.typeDefender=="?"){
+                                map_dropbox.delete(key)
+                                counterTypeDefender++
+                            }
+                        }
+
+                    } catch (error) {
+
+                    }
+
+
+
+                })
+                console.log("remove counterAttacker",counterAttacker)
+                console.log("remove counterDefender",counterDefender)
+                console.log("remove counterTypAttacker",counterTypAttacker)
+                console.log("remove counterTypeDefender",counterTypeDefender)
+
+
+                console.log("map_dropbox after")
+                console.log(map_dropbox);
+                console.log("list_data_reports")
+                console.log(list_data_reports);
+
+                console.log("list_data_typeAttack",list_data_typeAttack)
+                //update attacks landed
+                list_data_typeAttack.forEach(el=>{
+                    console.log(el.coord_off)
+                    if(map_incomings.has(el.coord_off)){//add type attack for landed attack if still exists
+                        let list_incs = map_incomings.get(el.coord_off)
+                        for(let i=0;i<list_incs.length;i++){//find incomings
+                            // console.log(el.coord_off+" == "+list_incs[i].coord_off+", "+list_incs[i].id_player_off+" == "+
+                            // el.attackingPlayerId+", "+el.date_launch+" == "+list_incs[i].date_launch)
+
+                            if(list_incs[i].coord_off.trim() == el.coord_off.trim()  &&
+                                list_incs[i].id_player_off.trim() == el.attackingPlayerId.trim()  &&
+                                el.date_launch.trim() == list_incs[i].date_launch.trim()
+                                ){
+                                console.log("inside breee")
+                                list_incs[i].type_attack_landed = el.typeAttack
+                                map_incomings.set(el.coord_off,list_incs)
+                                console.log("read report and update incoming")
+                                break;
+                            }
+                        }
+                    }
+                })
+
+
+
+                let serverTime=document.getElementById("serverTime").innerText
+                let serverDate=document.getElementById("serverDate").innerText.split("/")
+                serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
+                let date_current=serverDate+" "+serverTime
+                console.log(date_current)
+                //update status map
+                let obj_status={
+                    name:game_data.player.name,
+                    report_date:date_current,
+                }
+
+
+                if(mapStatus.has(game_data.player.id.toString())){
+                    let obj_update=mapStatus.get(game_data.player.id.toString())
+                    mapStatus.set(game_data.player.id.toString(), {...obj_update, ...obj_status} )
+                }
+                else{
+                    mapStatus.set(game_data.player.id.toString(),obj_status)
+                }
+
+                let timeStartUpload = new Date().getTime();
+                var nr_start=new Date().getTime()
+
+                //upload reports
+                var data=JSON.stringify(Array.from(map_dropbox.entries()))
+                var length_data = data.length
+                let sizeReportsDB = formatBytes(new TextEncoder().encode(data).length)
+
+                let compressedData = await compress(data,'gzip')
+                let compressedDataBase64 = await blobToBase64(compressedData);
+                var length_data_compressed=compressedData.size;
+
+                var nr_stop=new Date().getTime()
+                console.log("after")
+                console.log(map_dropbox)
+                console.log("compressing data Reports: "+(nr_stop-nr_start))
+                console.log("length before: "+length_data+" length after compression: "+length_data_compressed)
+                console.log("compression factor: "+(length_data/length_data_compressed))
+
+
+
+
+                let data_status=JSON.stringify(Array.from(mapStatus.entries()))
+                let dataCompressed = await compress(data_status, "gzip")
+
+                await localBase.setItem(game_data.world + "reports",compressedDataBase64)
+                let result=await uploadFile(compressedData, filename_reports, dropboxToken).catch(err=>alert(err))
+                let resultStatus=await uploadFile(dataCompressed, filename_status_upload, dropboxToken).catch(err=>alert(err))
+
+
+                //upload incomings
+                var nr_start=new Date().getTime()
+                data=JSON.stringify(Array.from(map_incomings.entries()))
+                compressedData = await compress(data, 'gzip')
+                compressedDataBase64 = await blobToBase64(compressedData);
+                var nr_stop=new Date().getTime()
+                console.log("compressing data Incomings: "+(nr_stop-nr_start))
+
+
+                await localBase.setItem(game_data.world + "incomings", compressedDataBase64)
+                result = await uploadFile(compressedData, filename_incomings, dropboxToken)
+
+
+
+                //save history
+                if(result=="succes"){
+                    let data = JSON.stringify(Array.from(map_history_upload.entries()))
+                    let compressedData = await compress(data, 'gzip')
+                    let compressedDataBase64 = await blobToBase64(compressedData);
+
+                    await localBase.setItem(game_data.world + "history_upload", compressedDataBase64)
+                    await uploadFile(compressedData, filename_history_upload, dropboxToken).catch(err=>alert(err))
+                    let timeStopUpload = new Date().getTime();
+                    let totalTimeUpload =  Math.round(((timeStopUpload - timeStartUpload) / 1000) * 100) / 100
+                    document.getElementById("progress_reports").innerText = nr_reports_total+" reports";
+                    UI.SuccessMessage(`<b>Upload reports done</b> <br> <br>
+                                        Upload time: <b>${totalTimeUpload} sec</b> <br>
+                                        Reports Updated: <b>${nr_update}</b> <br>
+                                        Reports Added: <b>${nr_write} </b> <br>
+                                        Total Reports: <b>${map_dropbox.size} </b> <br>
+                                        Size DB: <b>${sizeReportsDB} </b>`, 10000)
+                    resolve({
+                        totalTimeUpload:totalTimeUpload,
+                        status: "success"
+                    })
+
+                }
+                else
+                     reject("error upload reports")
+
             }
         }
+        ajaxRequest(list_href);
+    })
 
-        page++;
-        await new Promise(r => setTimeout(r, 300));
-    }
 
-    console.log(`🔗 getLinks(): ${links.length} new reports`);
-    return links;
 }
-
-async function uploadReports() {
-
-    const progress = document.getElementById("progress_reports");
-    progress.innerText = "Getting data...";
-
-    const world = game_data.world;
-    const tribe = game_data.player.ally;
-
-    // ===========================
-    // LOAD HISTORY
-    // ===========================
-    const { data: historyRows = [] } = await sb
-        .from("history_upload")
-        .select("*")
-        .eq("world", world)
-        .eq("tribe", tribe);
-
-    const map_history = new Map(
-        historyRows.map(h => [h.report_id, h])
-    );
-
-    // prune > 8 days
-    const now = Date.now();
-    for (const [id, h] of map_history) {
-        if (now - new Date(h.date).getTime() > 8 * 864e5) {
-            map_history.delete(id);
-        }
-    }
-
-    // ===========================
-    // GET LINKS
-    // ===========================
-    let [list_href, mapVillages] = await Promise.all([
-        getLinks(true, map_history),
-        getInfoVillages()
-    ]);
-
-    list_href.reverse();
-
-// ===========================
-// SCRAPE (SAFE + FAST)
-// ===========================
-const scraped = [];
-const typeAttacks = [];
-
-for (let i = 0; i < list_href.length; i++) {
-    const html = await safeGet(list_href[i].href);
-    const doc = new DOMParser().parseFromString(html, "text/html");
-
-    const list = getDataReport(tribemates, doc);
-
-    // ⛔ Recaptcha → STOP everything
-    if (list === null) {
-        UI.ErrorMessage("⚠️ Recaptcha detected. Stopping scrape.", 5000);
-        break;
-    }
-
-    // ⛔ Deleted / invalid report → SKIP
-    if (!Array.isArray(list) || list.length === 0) {
-        continue;
-    }
-
-    // ✅ Valid reports
-    for (const r of list) {
-        scraped.push({
-            coord: r.coord,
-            reportInfo: r.reportInfo
-        });
-    }
-
-    // ===== Type attack (safe) =====
-    const type = getDataReportTypeAttack(tribemates, doc);
-    if (Array.isArray(type) && type.length) {
-        typeAttacks.push(type.pop());
-    }
-
-    // ===== History =====
-    const idMatch = list_href[i].href.match(/view=(\d+)/);
-    if (idMatch) {
-        const id = Number(idMatch[1]);
-        map_history.set(id, {
-            report_id: id,
-            date: new Date().toISOString(),
-            player_id: game_data.player.id
-        });
-    }
-
-    progress.innerText = `Scraped ${i + 1}/${list_href.length}`;
-}
-
-    // ===========================
-    // LOAD REPORTS + INCOMINGS
-    // ===========================
-    const { data: reportsDB = [] } = await sb
-        .from("reports")
-        .select("*")
-        .eq("world", world)
-        .eq("tribe", tribe);
-
-    const map_reports = new Map(
-        reportsDB.map(r => [r.coord, r.data])
-    );
-
-    const { data: incomingsDB = [] } = await sb
-        .from("incomings")
-        .select("*")
-        .eq("world", world)
-        .eq("tribe", tribe);
-
-    const map_incomings = new Map(
-        incomingsDB.map(i => [i.coord_off, i.data])
-    );
-
-    // ===========================
-    // MERGE REPORTS (UNCHANGED LOGIC)
-    // ===========================
-    let nr_update = 0, nr_write = 0;
-
-    for (const el of scraped) {
-        const old = map_reports.get(el.coord);
-        const r = el.reportInfo;
-
-        if (old) {
-            const tOld = new Date(old.time_report);
-            const tNew = new Date(r.time_report);
-
-            if (tNew >= tOld) {
-                map_reports.set(el.coord, { ...old, ...r });
-                nr_update++;
-            }
-        } else {
-            map_reports.set(el.coord, r);
-            nr_write++;
-        }
-    }
-
-    // ===========================
-    // UPDATE LANDED ATTACK TYPES
-    // ===========================
-    for (const t of typeAttacks) {
-        const list = map_incomings.get(t.coord_off);
-        if (!list) continue;
-
-        for (const inc of list) {
-            if (
-                inc.coord_off === t.coord_off &&
-                inc.id_player_off === t.attackingPlayerId &&
-                inc.date_launch === t.date_launch
-            ) {
-                inc.type_attack_landed = t.typeAttack;
-                break;
-            }
-        }
-    }
-
-    // ===========================
-    // SAVE REPORTS
-    // ===========================
-    progress.innerText = "Uploading reports...";
-
-    await upsertBatch(
-        "reports",
-        Array.from(map_reports.entries()).map(([coord, data]) => ({
-            world, tribe, coord, data, updated_at: new Date()
-        })),
-        "world,tribe,coord"
-    );
-
-    // ===========================
-    // SAVE INCOMINGS
-    // ===========================
-    await upsertBatch(
-        "incomings",
-        Array.from(map_incomings.entries()).map(([coord_off, data]) => ({
-            world, tribe, coord_off, data
-        })),
-        "world,tribe,coord_off"
-    );
-
-    // ===========================
-    // SAVE HISTORY
-    // ===========================
-    await upsertBatch(
-        "history_upload",
-        Array.from(map_history.values()).map(h => ({
-            world, tribe, ...h
-        })),
-        "world,tribe,report_id"
-    );
-
-    // ===========================
-    // STATUS
-    // ===========================
-    await upsertBatch(
-        "status",
-        [{
-            world,
-            tribe,
-            player_id: game_data.player.id,
-            name: game_data.player.name,
-            report_date: new Date()
-        }],
-        "world,tribe,player_id"
-    );
-
-    UI.SuccessMessage(
-        `<b>Upload complete</b><br>
-         Updated: <b>${nr_update}</b><br>
-         Added: <b>${nr_write}</b><br>
-         Total: <b>${map_reports.size}</b>`,
-        8000
-    );
-}
+window.uploadReports=uploadReports;
 
 
 function compress(string, encoding) {
@@ -1130,7 +1210,7 @@ function compress(string, encoding) {
     writer.close();
     return new Response(cs.readable).blob();
   }
-  
+
 function decompress(byteArray, encoding) {
     const cs = new DecompressionStream(encoding);
     const writer = cs.writable.getWriter();
@@ -1191,11 +1271,11 @@ function getLinks(all,map_idReports){
         }
         let datePage = await ajaxGet(link_reports)
         const parser = new DOMParser();
-        const htmlDoc = parser.parseFromString(datePage, 'text/html'); 
+        const htmlDoc = parser.parseFromString(datePage, 'text/html');
 
 
         let list_pages=[]
-    
+
         if($(htmlDoc).find(".paged-nav-item").parent().find("select").length>0){
             Array.from($(htmlDoc).find(".paged-nav-item").parent().find("select").find("option")).forEach(function(item){
                 list_pages.push(item.value)
@@ -1212,7 +1292,7 @@ function getLinks(all,map_idReports){
                 nr += pageSize;
             }
 
-    
+
         }
         else{
             list_pages.push(link_reports);
@@ -1221,9 +1301,9 @@ function getLinks(all,map_idReports){
         console.log(list_pages)
 
 
-    
+
         let list_href=[];
-        
+
         const run = async () => {
             console.log("Starting...");
             for (let i = 0; i < list_pages.length; i++) {
@@ -1242,7 +1322,7 @@ function getLinks(all,map_idReports){
                     let date_report=new Date(year+" "+month_day)
                     let current_date=new Date();
                     if(Math.abs(current_date-date_report)<7*24*3600*1000){//old
-        
+
                         let img_icon=table_report[i].children[1].children[0].children.length;
                         if(img_icon>0){//wordsTranslate[0]=supports ///// || table_report[i].innerText.includes(wordsTranslate[0])
                             let obj={
@@ -1254,20 +1334,20 @@ function getLinks(all,map_idReports){
                         }
                     }
                 }
-                UI.SuccessMessage(`get link page ${i+1}/${list_pages.length}`) 
-            }  
+                UI.SuccessMessage(`get link page ${i+1}/${list_pages.length}`)
+            }
         }
         await run();
         console.log("Done!");
         resolve(list_href)
 
-             
-             
-            
+
+
+
 
 
     })
-    
+
 }
 
 
@@ -1283,7 +1363,7 @@ function ajaxGet(theUrl){
             url: theUrl,
             method: 'get',
             success: (data) => {
-                
+
                 let stopAjax=new Date().getTime()
                 let difAjax=stopAjax-startAjax
                 console.log("wait ",difAjax)
@@ -1321,7 +1401,7 @@ function getDataReport(tribemates,htmlDoc){
             console.log("error upload")
             return 0;
         }
-        
+
         var attackingPlayer = attackInfo.find('a[href*=info_player]');
         var defendingPlayer = defenseInfo.find('a[href*=info_player]');
         var attackingPlayerId=attackingPlayer.prop('href').match(/id=(\w+)/)[1];
@@ -1330,8 +1410,8 @@ function getDataReport(tribemates,htmlDoc){
         reportInfo.defendingPlayerId=defendingPlayerId;
     }
     ///////////////////////////////////////////////////////////////////////////
-    
-    
+
+
     if(htmlDoc.getElementsByClassName("unit-item unit-item-axe").length>1)
     {
         var time_report=htmlDoc.getElementsByClassName("small grey")[0].parentElement.innerText.trim()
@@ -1357,7 +1437,7 @@ function getDataReport(tribemates,htmlDoc){
             reportInfo.time_report = time_report
         }
 
-   
+
 
 
 
@@ -1367,7 +1447,7 @@ function getDataReport(tribemates,htmlDoc){
         var coordAttacker=htmlDoc.getElementsByClassName("village_anchor")[0].innerText.match(/\d+\|\d+/)[0];
         var nameDefender=htmlDoc.getElementById("attack_info_def").children[0].children[0].children[1].innerText;
         var coordDefender=htmlDoc.getElementsByClassName("village_anchor")[1].innerText.match(/\d+\|\d+/)[0];
-        
+
 
         reportInfo.nameAttacker=nameAttacker;
         reportInfo.coordAttacker=coordAttacker;
@@ -1428,7 +1508,7 @@ function getDataReport(tribemates,htmlDoc){
 
         if(axe_atac_total+light_atac_total+ram_atac_total + cat_atac_total >=popOff)//&& axe_atac_total>=2500
         {
-            
+
             typeAttacker="off";
             nrTroupesAttacker=(axe_atac_total-axe_atac_pierderi)+(light_atac_total-light_atac_pierderi) + (ram_atac_total-ram_atac_pierderi);
             if(ram_atac_total>0 && noble==0 && axe_atac_total>=0){
@@ -1438,14 +1518,14 @@ function getDataReport(tribemates,htmlDoc){
                 time_return=new Date(time_return)
                 let date=new Date(time_return).toDateString().split(" ").slice(1).join(" ")
                 time_return=date+" "+new Date(time_return).toTimeString().split(" ")[0]
-                
+
             }else if(axe_atac_total>=0 && noble==0 ){
                 nrTroupesAttackerTotal=axe_atac_total+light_atac_total
                 time_attack=axeSpeed*calcDistance(coordAttacker,coordDefender)
                 time_return=new Date(time_report).getTime()+time_attack;
                 time_return=new Date(time_return)
                 let date=new Date(time_return).toDateString().split(" ").slice(1).join(" ")
-                time_return=date+" "+new Date(time_return).toTimeString().split(" ")[0]    
+                time_return=date+" "+new Date(time_return).toTimeString().split(" ")[0]
 
             }else if(axe_atac_total>=0 && noble>0){
                 nrTroupesAttackerTotal=axe_atac_total+light_atac_total+ram_atac_total
@@ -1453,7 +1533,7 @@ function getDataReport(tribemates,htmlDoc){
                 time_return=new Date(time_report).getTime()+time_attack;
                 time_return=new Date(time_return)
                 let date=new Date(time_return).toDateString().split(" ").slice(1).join(" ")
-                time_return=date+" "+new Date(time_return).toTimeString().split(" ")[0]    
+                time_return=date+" "+new Date(time_return).toTimeString().split(" ")[0]
             }
         }
         else if(spy_atac_total>4000){
@@ -1479,7 +1559,7 @@ function getDataReport(tribemates,htmlDoc){
 
 
         if((cat_atac_total>=50*8 && typeAttacker=="def") || (cat_atac_total>=50*8 && axe_atac_total+light_atac_total+ram_atac_total<20)){
-        
+
             typeAttacker="def_cat";
             nrTroupesAttacker=cat_atac_total-cat_atac_pierderi;
             if(noble==0){
@@ -1488,7 +1568,7 @@ function getDataReport(tribemates,htmlDoc){
                 time_return=new Date(time_report).getTime()+time_attack;
                 time_return=new Date(time_return)
                 let date=new Date(time_return).toDateString().split(" ").slice(1).join(" ")
-                time_return=date+" "+new Date(time_return).toTimeString().split(" ")[0]               
+                time_return=date+" "+new Date(time_return).toTimeString().split(" ")[0]
             }
         }
 
@@ -1498,14 +1578,14 @@ function getDataReport(tribemates,htmlDoc){
         reportInfo.nrTroupesAttackerTotal=nrTroupesAttackerTotal
         reportInfo.typeAttacker=typeAttacker;
         reportInfo.nrTroupesAttacker=nrTroupesAttacker;
-        
 
-        
+
+
         /////////////////////////////////////////////////defender date/////////////////////
         var nrTroupesDefender=0;
         var typeDefender="?";
         if(htmlDoc.getElementsByClassName("unit-item unit-item-axe").length>2){
-            
+
             reportInfo.defendingArmy = defenseInfo.find('#attack_info_def_units tr:nth-of-type(2) .unit-item').get().map((el) => { return { type: $(el).prop('class').match(/unit-item-([\w\-]+)/)[1], count: parseInt($(el).text().trim()) } })
             reportInfo.defendingArmyLosses = defenseInfo.find('#attack_info_def_units tr:nth-of-type(3) .unit-item').get().map((el) => { return { type: $(el).prop('class').match(/unit-item-([\w\-]+)/)[1], count: parseInt($(el).text().trim()) } })
 
@@ -1587,22 +1667,22 @@ function getDataReport(tribemates,htmlDoc){
 
         if(htmlDoc.getElementsByClassName("unit-item unit-item-axe").length>4){
             let travelingTroopsContainer = $(htmlDoc).find('#attack_spy_away');
-            if (travelingTroopsContainer.length) 
+            if (travelingTroopsContainer.length)
             {
                 reportInfo.travelingTroops = {};
-        
+
                 travelingTroopsContainer.find('.unit-item').each((i, el) => {
                     let $el = $(el);
                     let cls = $el.prop('class');
                     let unitType = cls.match(/unit\-item\-(\w+)/)[1];
                     reportInfo.travelingTroops[unitType] = parseInt($el.text().trim());
                 });
-            
+
                 var axe_aparare_spy=reportInfo.travelingTroops.axe
                 var light_aparare_spy=reportInfo.travelingTroops.light*4;
                 var ram_aparare_spy=reportInfo.travelingTroops.ram*5;
                 nrTroupesDefender+=axe_aparare_spy+(light_aparare_spy) + (ram_aparare_spy)
-    
+
                 if(nrTroupesDefender >= popOff )
                     typeDefender="off";
 
@@ -1613,11 +1693,11 @@ function getDataReport(tribemates,htmlDoc){
                         var archer_aparare_spy=reportInfo.travelingTroops.archer
                     else
                         var archer_aparare_spy=0
-    
+
                     var heavy_aparare_spy=reportInfo.travelingTroops.heavy*6;
                     var trupe_aparare_total=spear_aparare_total+sword_aparare_total+archer_aparare_total+heavy_aparare_total;
                     var total_aparare_spy=spear_aparare_spy+sword_aparare_spy+archer_aparare_spy+heavy_aparare_spy;
-        
+
                     if(total_aparare_spy>1000){
                         typeDefender="def";
                         nrTroupesDefender=total_aparare_spy;
@@ -1646,7 +1726,7 @@ function getDataReport(tribemates,htmlDoc){
                         let countApiKey = "fake_false";
                         $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}/up`, response=>{
                             console.log(`nr fake false: ${response.count} times`);
-                        }); 
+                        });
                     }
                 }
                 else if(label.includes("pred: nuke")){
@@ -1660,7 +1740,7 @@ function getDataReport(tribemates,htmlDoc){
                         let countApiKey = "nuke_false";
                         $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}/up`, response=>{
                             console.log(`nr nuke false: ${response.count} times`);
-                        }); 
+                        });
                     }
                 }
                 else if(label.includes("pred: fang")){
@@ -1674,12 +1754,12 @@ function getDataReport(tribemates,htmlDoc){
                         let countApiKey = "fang_false";
                         $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}/up`, response=>{
                             console.log(`nr fang false: ${response.count} times`);
-                        }); 
+                        });
                     }
                 }
-                
+
             } catch (error) {
-                
+
             }
         }
 
@@ -1702,7 +1782,7 @@ function getDataReport(tribemates,htmlDoc){
         console.log("recapthca")
         return null;
     }
-    
+
     return listObject;
     }
     catch(e){
@@ -1729,7 +1809,7 @@ function getDataReportTypeAttack(tribemates,htmlDoc){
             console.log("error upload")
             return 0;
         }
-        
+
         var attackingPlayer = attackInfo.find('a[href*=info_player]');
         var defendingPlayer = defenseInfo.find('a[href*=info_player]');
         var attackingPlayerId=attackingPlayer.prop('href').match(/id=(\w+)/)[1];
@@ -1737,8 +1817,8 @@ function getDataReportTypeAttack(tribemates,htmlDoc){
 
     }
     ///////////////////////////////////////////////////////////////////////////
-    
-    
+
+
     if(htmlDoc.getElementsByClassName("unit-item unit-item-axe").length>1)
     {
         var time_report=htmlDoc.getElementsByClassName("small grey")[0].parentElement.innerText.trim()
@@ -1758,7 +1838,7 @@ function getDataReportTypeAttack(tribemates,htmlDoc){
         var coordAttacker=htmlDoc.getElementsByClassName("village_anchor")[0].innerText.match(/\d+\|\d+/)[0];
         var nameDefender=htmlDoc.getElementById("attack_info_def").children[0].children[0].children[1].innerText;
         var coordDefender=htmlDoc.getElementsByClassName("village_anchor")[1].innerText.match(/\d+\|\d+/)[0];
-        
+
 
         if(attackingArmy[3].type=="archer"){
             var spear_atac_total =attackingArmy[0].count
@@ -1788,7 +1868,7 @@ function getDataReportTypeAttack(tribemates,htmlDoc){
         if(axe_atac_total+light_atac_total+ram_atac_total + cat_atac_total >=popOff)//&& axe_atac_total>=2500
         {
             if(ram_atac_total>0 || cat_atac_total>0)
-                typeAttack="nuke"       
+                typeAttack="nuke"
         }
         else if( cat_atac_total>=50*8 && axe_atac_total+light_atac_total+ram_atac_total<20){
             if(ram_atac_total>0 || cat_atac_total>0)
@@ -1799,7 +1879,7 @@ function getDataReportTypeAttack(tribemates,htmlDoc){
             if(ram_atac_total>0 || cat_atac_total>0)
                 typeAttack="fake"
 
-        }   
+        }
 
         if(!tribemates.includes(nameAttacker.toLowerCase()) && !typeAttack.includes("?")){
             let distance = calcDistance(coordAttacker,coordDefender)
@@ -1820,7 +1900,7 @@ function getDataReportTypeAttack(tribemates,htmlDoc){
             // console.log("listObject2")
             // console.log(listObject)
         }
-        
+
 
     }
     else if(htmlDoc.getElementsByClassName("unit-item unit-item-axe").length==0 || htmlDoc.getElementsByClassName("g-recaptcha").length>0
@@ -1944,7 +2024,7 @@ function getIncomings(){
 
             document.getElementById("progress_incomings").innerText="Getting data...";
             let incomings_href= game_data.link_base_pure+"overview_villages&mode=incomings&type=all&subtype=attacks&group=0&page=-1";
-    
+
             console.log("currentLink")
             console.log(incomings_href)
             let data = await ajaxGet(incomings_href);
@@ -1965,27 +2045,27 @@ function getIncomings(){
             }
             else{
                 list_href.push(incomings_href)
-        
+
             }
-    
-    
+
+
             console.log(list_href)
             let incomings_data=new Map();
-        
-    
+
+
             var indexIncoming=1;
             var url_length=list_href.length
             function ajaxRequest (urls) {
                 let current_url
                 if(urls.length>0){
-                    current_url=urls.pop() 
+                    current_url=urls.pop()
                 }
                 else{
                     current_url="stop"
                 }
                 console.log("in functie in plm "+urls.length)
                 // console.log(current_url)
-                
+
                 var start_ajax=new Date();
                 if (urls.length >= 0 && current_url!="stop") {
                     $.ajax({
@@ -2009,13 +2089,13 @@ function getIncomings(){
 
                                     let player_off=table_incomings[i].children[length_tr-4].innerText.trim()
                                     let player_def=game_data.player.name
-    
+
                                     let id_player_def=game_data.player.id.toString()
                                     let id_player_off=table_incomings[i].children[length_tr-4].getElementsByTagName("a")[0].href.split("id=")[1]
-                                    
+
                                     let id_coord_def=table_incomings[i].children[2].getElementsByTagName("a")[0].href.split("village=")[1].split("&")[0]
                                     let id_coord_off=table_incomings[i].children[2].getElementsByTagName("a")[0].href.split("id=")[1]
-    
+
                                     let distance=calcDistance(coord_off,coord_def);
 
                                     let server_date=htmlDoc.getElementById("serverDate").innerText.split("/")
@@ -2026,7 +2106,7 @@ function getIncomings(){
                                         labelName=table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src.split("tiny/")[1]
                                         if(labelName==undefined)
                                             labelName=table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src.split("command/")[1]
-    
+
                                     }
 
                                     let date_launch = "none";
@@ -2042,7 +2122,7 @@ function getIncomings(){
                                         }else if(labelName.includes("axe.png")){
                                             time_attack=axeSpeed *distance
                                         }
-                                        
+
                                         time_attack=Math.round(time_attack/1000)*1000
                                         date_launch = parseDate(new Date(date_land).getTime()-time_attack)+":"+milliseconds
                                     }else if(nameTroupe == lang["dcfafcb4323b102c7e204555d313ba0a"].toLowerCase()){
@@ -2066,20 +2146,20 @@ function getIncomings(){
                                         }
                                         else if(timeInMM > spySpeed*distance){
                                             time_attack=spySpeed*distance
-                                        }       
+                                        }
 
                                         if(time_attack>0){
                                             time_attack=Math.round(time_attack/1000)*1000
                                             date_launch = parseDate(new Date(date_land).getTime()-time_attack)+":"+milliseconds
                                         }
-                                        
+
                                     }
                                     // console.log(table_incomings[i])
                                     // console.log(date_land)
                                     if(new Date(date_land)=="Invalid Date"){
                                         throw new Error("new date doesnt working(use opera or chrome)")
                                     }
-    
+
                                     // console.log(date_land)
                                     if(!incomings_data.has(coord_off)){
                                         let list=[{
@@ -2097,7 +2177,7 @@ function getIncomings(){
                                                     id_coord_off:id_coord_off
                                                 }]
                                         incomings_data.set(coord_off,list)
-                    
+
                                     }else{
                                         let list=incomings_data.get(coord_off)
                                         list.push({
@@ -2118,7 +2198,7 @@ function getIncomings(){
                                     }
                                 }
                             }
-    
+
                             UI.SuccessMessage(indexIncoming+"/"+url_length)
                             indexIncoming++;
                             var stop_ajax=new Date();
@@ -2128,12 +2208,12 @@ function getIncomings(){
                             },dif_time)
                         }
                     })
-                
+
                 }
                 else
                 {
 
-                
+
                     if( htmlDoc.getElementsByClassName("g-recaptcha").length>0){//recaptcha
                         console.log("recapthca")
                         UI.ErrorMessage("recapthca, upload again")
@@ -2141,14 +2221,14 @@ function getIncomings(){
 
                         resolve(null);
                     }
-    
+
                     window.setTimeout(function(){
                         console.log(incomings_data)
                         resolve(incomings_data)
                     },1000+Math.random()*500)
-    
-    
-    
+
+
+
                 }
             }
             if(list_href.length>0)
@@ -2156,237 +2236,277 @@ function getIncomings(){
             else
                 reject("error on incomings")
         }
-        
+
     })
 }
 ///////////////////////////////////////////////////////upload all incomings//////////////////////////////////////////////////////////////////////////
 
-async function uploadIncomings() {
-    document.getElementById("progress_incomings").innerText = "Getting data...";
+async function uploadIncomings(){
 
-    // ⏳ ensure Supabase + game data
-    while (!window.__supabaseReady || typeof game_data === "undefined") {
-        await new Promise(r => setTimeout(r, 50));
-    }
+    var [incomings_data, map_incomings_dropbox,mapStatus,status]=await Promise.all([getIncomings(), readFileDropbox(filename_incomings),readFileDropbox(filename_status_upload),insertlibraryLocalBase()]).catch(err=>{alert(err)})
+    console.log(status)
 
-    // ===========================
-    // 1️⃣ GET NEW INCOMINGS
-    // ===========================
-    const incomings_data = await getIncomings(); // Map<coord, list[]>
 
-    // ===========================
-    // 2️⃣ LOAD EXISTING (SUPABASE)
-    // ===========================
-    let map_incomings = await loadIncomingsDB(
-        game_data.world,
-        game_data.player.ally
-    );
 
-    // ===========================
-    // 3️⃣ CLEAN OLD INCOMINGS
-    // ===========================
-    const now = Date.now();
-    const MAX_AGE = 50 * 3600 * 1000; // ~2 days
+    return new Promise(async(resolve,reject)=>{
+        UI.SuccessMessage("compressing database, wait few seconds",5000)
 
-    map_incomings.forEach((list, coord) => {
-        list = list.filter(inc => {
-            if (!inc.date_land) return false;
-            return new Date(inc.date_land).getTime() + MAX_AGE > now;
-        });
-
-        if (list.length === 0) {
-            map_incomings.delete(coord);
-        } else {
-            map_incomings.set(coord, list);
+        //merge map dropbox with map locabase
+        try {
+            let decompressedData = await decompress(await map_incomings_dropbox.arrayBuffer() , 'gzip');
+            map_incomings_dropbox=new Map( JSON.parse(decompressedData));
+        } catch (error) {
+            console.log("erorrr map report from dropbox")
+            map_incomings_dropbox=new Map()
         }
-    });
 
-    // ===========================
-    // 4️⃣ MERGE NEW INCOMINGS
-    // ===========================
-    let newIncs = 0;
+        //if there database is stored locally
+        if(await localBase.getItem(game_data.world+"incomings")!=undefined){
+            try{
+                let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "incomings"))
+                let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
 
-    incomings_data.forEach((list, coord) => {
-        if (map_incomings.has(coord)) {
-            const merged = [
-                ...map_incomings.get(coord),
-                ...list
-            ];
+                let map_localBase=new Map( JSON.parse(decompressedData));
+                console.log("map_localBase history upload",map_localBase)
+                map_incomings_dropbox=new Map([...map_localBase, ...map_incomings_dropbox])
 
-            // deduplicate by date_land
-            const unique = [
-                ...new Map(
-                    merged.map(i => [i.date_land, i])
-                ).values()
-            ].sort((a, b) =>
-                new Date(a.date_land) - new Date(b.date_land)
-            );
-
-            map_incomings.set(coord, unique);
-        } else {
-            map_incomings.set(coord, list);
-            newIncs += list.length;
+            } catch (error) {
+                let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "incomings"))));
+                map_incomings_dropbox=new Map([...map_localBase, ...map_incomings_dropbox])
+            }
         }
-    });
 
-    // ===========================
-    // 5️⃣ SAVE TO SUPABASE
-    // ===========================
-    let totalIncs = 0;
 
-    for (const [coord, list] of map_incomings.entries()) {
-        totalIncs += list.length;
-        await saveIncomingsDB(
-            coord,
-            list,
-            game_data.world,
-            game_data.player.ally
-        );
+        try {
+            let decompressedData = await decompress(await mapStatus.arrayBuffer() , 'gzip');
+            mapStatus=new Map( JSON.parse(decompressedData));
+        } catch (error) {
+            console.log("erorrr map report from dropbox")
+            mapStatus=new Map()
+        }
+
+
+
+        let server_date=document.getElementById("serverDate").innerText.split("/")
+        let server_time=document.getElementById("serverTime").innerText
+        let current_date=new Date(server_date[1]+"/"+server_date[0]+"/"+server_date[2]+" "+server_time);
+
+
+
+        console.log(map_incomings_dropbox)
+        /////////////////////////////////eliminate old incomings from dropbox////////////////////////////////////
+        let start=new Date();
+        Array.from(map_incomings_dropbox.keys()).forEach(el=>{
+            let list=map_incomings_dropbox.get(el);
+            let update=false;
+            for(let i=0;i<list.length;i++){
+
+                let date_incomings=new Date(list[i].date_land).getTime();
+                let two_days=50*3600*1000;
+
+                if(date_incomings + two_days < current_date || list[i].date_land == ""){
+                    list.splice(i,1);
+                    i--;
+                    update=true;
+                }
+
+                if(list[i]==""){
+                    list.splice(i,1);
+                    update=true;
+                }
+            }
+            if(update==true || list.length==0){
+                if(list.length==0)
+                    map_incomings_dropbox.delete(el);
+                else{
+                    map_incomings_dropbox.set(el,list);
+                }
+            }
+
+
+        })
+        console.log(map_incomings_dropbox)
+        let stop=new Date();
+        console.log(stop-start)
+
+        let newIncs = 0;
+        Array.from(incomings_data.keys()).forEach(el=>{
+            let list=incomings_data.get(el)
+            if(map_incomings_dropbox.has(el)){//update
+                let list_dropbox=map_incomings_dropbox.get(el)
+                list_dropbox=list_dropbox.concat(list);
+                var list_concat =[...new Map(list_dropbox.map(item => [item["date_land"], item])).values()].sort((o1,o2)=>{
+                    return (new Date(o1.date_land).getTime() > new Date(o2.date_land).getTime()) ? 1 :
+                             (new Date(o1.date_land).getTime() << new Date(o2.date_land).getTime()) ? -1 : 0
+                })
+                console.log(list_concat)
+                map_incomings_dropbox.set(el,list_concat);
+            }
+            else{//add
+                map_incomings_dropbox.set(el,list);
+                newIncs += list.length
+            }
+        })
+        let totalIncs = 0;
+        Array.from(map_incomings_dropbox.keys()).forEach(el=>{
+            let list=map_incomings_dropbox.get(el);
+            totalIncs += list.length
+        })
+
+
+
+
+
+        let serverTime=document.getElementById("serverTime").innerText
+        let serverDate=document.getElementById("serverDate").innerText.split("/")
+        serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
+        let date_current=serverDate+" "+serverTime
+
+        //update status map
+        let obj_status={
+            name:game_data.player.name,
+            incoming_date:date_current,
+        }
+
+
+        if(mapStatus.has(game_data.player.id.toString())){
+            let obj_update=mapStatus.get(game_data.player.id.toString())
+            mapStatus.set(game_data.player.id.toString(), {...obj_update, ...obj_status} )
+        }
+        else{
+            mapStatus.set(game_data.player.id.toString(),obj_status)
+        }
+
+
+        // console.log(map_incomings_dropbox)
+        let timeStartUpload = new Date().getTime();
+
+        // UI.SuccessMessage("compressing database, wait few seconds",2000)
+        var data=JSON.stringify(Array.from(map_incomings_dropbox.entries()))
+        let sizeIncomingsDB = formatBytes(new TextEncoder().encode(data).length)
+
+        let compressedData = await compress(data, 'gzip')
+        let compressedDataBase64 = await blobToBase64(compressedData);
+
+
+        try {
+            document.getElementById("progress_incomings").innerText=incomings_data.size+" coords";
+            document.getElementById("progress_all").innerText="done";
+        } catch (error) {
+
+        }
+        UI.SuccessMessage("upload incomings done","slow")
+
+
+
+        let data_status=JSON.stringify(Array.from(mapStatus.entries()))
+        let dataCompressed = await compress(data_status, "gzip")
+        let resultStatus=await uploadFile(dataCompressed,filename_status_upload,dropboxToken).catch(err=>alert(err))
+
+
+        await localBase.setItem(game_data.world+"incomings", compressedDataBase64)
+        let result=await uploadFile(compressedData, filename_incomings, dropboxToken)
+        if(result=="succes"){
+            let timeStopUpload = new Date().getTime();
+            let totalTimeUpload =  Math.round(((timeStopUpload - timeStartUpload) / 1000) * 100) / 100
+            UI.SuccessMessage(`<b>Upload incomings done</b> <br><br>
+                                Upload time: <b>${totalTimeUpload} sec</b>  <br>
+                                New incomings: <b>${newIncs} </b> <br>
+                                Total incomings: <b>${totalIncs} </b> <br>
+                                Size DB: <b>${sizeIncomingsDB}</b>
+                                `, 10000)
+            resolve({
+                totalTimeUpload: totalTimeUpload,
+                status: "success"
+            })
     }
+        else
+            reject("error upload incomings")
 
-    // ===========================
-    // 6️⃣ UPDATE STATUS (SUPABASE)
-    // ===========================
-    const serverTime = document.getElementById("serverTime").innerText;
-    const serverDate = document
-        .getElementById("serverDate")
-        .innerText.split("/");
-
-    const date_current =
-        `${serverDate[1]}/${serverDate[0]}/${serverDate[2]} ${serverTime}`;
-
-    await saveStatusDB(
-        game_data.player.id.toString(),
-        {
-            name: game_data.player.name,
-            incoming_date: date_current
-        },
-        game_data.world,
-        game_data.player.ally
-    );
-
-    // ===========================
-    // 7️⃣ UI FEEDBACK
-    // ===========================
-    document.getElementById("progress_incomings").innerText =
-        `${map_incomings.size} coords`;
-
-    UI.SuccessMessage(
-        `<b>Upload incomings done</b><br><br>
-         New incomings: <b>${newIncs}</b><br>
-         Total incomings: <b>${totalIncs}</b>`,
-        8000
-    );
-
-    return { status: "success" };
+    })
 }
+window.uploadIncomings=uploadIncomings;
 
 //////////////////////////////////////////////////////upload all data to dropbox/////////////////////////////////////////////////////////////////
 
-function uploadFile(data,filename,dropboxToken){
-    return new Promise((resolve,reject)=>{
-        // var file = new Blob([data], {type: "plain/text"});
-        var file = data
-        var nr_start1=new Date().getTime();
-        file.name=filename;
+function uploadFile(data, filename, dropboxToken){
+    return new Promise(async (resolve, reject) => {
 
-        //stop refreshing the page
+        var file = data;
+        var nr_start1 = new Date().getTime();
+        file.name = filename;
+
+        // stop refreshing the page
         $(document).bind("keydown", disableF5);
         window.onbeforeunload = function (e) {
             console.log("is uploading");
             return "are you sure?";
         };
 
-        var xhr = new XMLHttpRequest();
-        xhr.upload.onprogress = function(evt) {
-            console.log(evt)
-            var percentComplete = parseInt(100.0 * evt.loaded / evt.total);
-            console.log(percentComplete)
-            UI.SuccessMessage("progress upload: "+percentComplete+"%")
-        };
+        // --- Supabase upload (replacement) ---
+        while (!window.__supabaseReady) {
+            await new Promise(r => setTimeout(r, 20));
+        }
 
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var fileInfo = JSON.parse(xhr.response);
-                // Upload succeeded. Do something here with the file info.
-                UI.SuccessMessage("upload succes")
-                var nr_stop1=new Date().getTime();
-                console.log("time upload: "+(nr_stop1-nr_start1))
+        try {const DB_ROOT = getDBRoot(); // later you can derive this dynamically
+        const fullPath = `${DB_ROOT}/${file.name}`;
 
-                //enable refresh page
-                window.onbeforeunload = function (e) {
-                    console.log("done");
-                };
-                $(document).unbind("keydown", disableF5);
-                // if(typeof(TWMap) !="undefined" ){
-                //     console.log("init map")
-                //     TWMap.init();
-                // }
-                resolve("succes")
+            const { error } = await window.sb
+                .storage
+                .from("vault")
+                .upload(fullPath, file, {
+                    upsert: true,
+                    contentType: "application/octet-stream"
+                });
 
-            }
-            else {
-                var errorMessage = xhr.response || 'Unable to upload file';
-                // Upload failed. Do something here with the error.
-                UI.SuccessMessage("upload failed")
-                reject(errorMessage)
-            }
-        };
+            // simulate 100% progress (Supabase has no upload progress API)
+            UI.SuccessMessage("progress upload: 100%");
 
-        xhr.open('POST', 'https://content.dropboxapi.com/2/files/upload',false);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + dropboxToken);
-        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-        xhr.setRequestHeader('Dropbox-API-Arg', JSON.stringify({
-            path: '/' +  file.name,
-            autorename: true,
-            mode:'overwrite',
-            mute: false
-        }));
+            if (error) throw error;
 
-        xhr.send(file)
-    })
+            UI.SuccessMessage("upload succes");
+
+            var nr_stop1 = new Date().getTime();
+            console.log("time upload: " + (nr_stop1 - nr_start1));
+
+            // enable refresh page
+            window.onbeforeunload = function (e) {
+                console.log("done");
+            };
+            $(document).unbind("keydown", disableF5);
+
+            resolve("succes");
+
+        } catch (err) {
+            UI.SuccessMessage("upload failed");
+            reject(err);
+        }
+    });
 }
 
-async function readFileDropbox(filename) {
-    switch (filename) {
 
-        case "SUPABASE_SUPPORT": {
-            const map = await loadSupportDB(game_data.world, game_data.player.ally);
-            return new Blob(
-                [JSON.stringify([Array.from(map.entries()), []])],
-                { type: "application/json" }
-            );
+function readFileDropbox(filename){
+    return new Promise(async (resolve, reject) => {
+
+        // wait until Supabase is ready
+        while (!window.__supabaseReady) {
+            await new Promise(r => setTimeout(r, 20));
         }
+const DB_ROOT = getDBRoot();           // auto: myDB_zz3, myDB_en150, etc
+const fullPath = `${DB_ROOT}/${filename}`;
 
-        case "SUPABASE_COMMANDS_ATTACK": {
-            const map = await loadCommandsAttackDB(game_data.world, game_data.player.ally);
-            return new Blob(
-                [JSON.stringify(Array.from(map.entries()))],
-                { type: "application/json" }
-            );
+        const { data, error } = await window.sb
+            .storage
+            .from("vault")
+            .download(fullPath);
+
+        if (error || !data) {
+            reject("error-> file doesnt exists"); // SAME ERROR STRING
+        } else {
+            resolve(data); // Blob (same as Dropbox)
         }
-
-        case "SUPABASE_INCOMINGS": {
-            const map = await loadIncomingsDB(game_data.world, game_data.player.ally);
-            return new Blob(
-                [JSON.stringify(Array.from(map.entries()))],
-                { type: "application/json" }
-            );
-        }
-
-        case "SUPABASE_STATUS": {
-            const map = await loadStatusDB(game_data.world, game_data.player.ally);
-            return new Blob(
-                [JSON.stringify(Array.from(map.entries()))],
-                { type: "application/json" }
-            );
-        }
-
-        default:
-            throw new Error("Unknown virtual file: " + filename);
-    }
+    });
 }
-
 
 
 
@@ -2428,19 +2548,19 @@ function disableF5(e) { if ((e.which || e.keyCode) == 116 || (e.which || e.keyCo
 
 //////////////////////////////////////////////////////buttons in incomings page/////////////////////////////////////////////////////////////////
 
-            
+
 function showButtons(){
     if(document.getElementById("incomings_table")!=null){
         $("#table_incomings").remove();
         var incomingshtml=`
-    
-        <table id="table_incomings" class="" border="1" style="width: 50%;">    
+
+        <table id="table_incomings" class="" border="1" style="width: 50%;">
             <tbody>
             <tr>
                 <td style="text-align:center; width:auto;">
                     <center style="margin:10px"><input class="btn" type="button" onclick="addWindow()"value="Open Upload"></center>
-                </td>            
-            
+                </td>
+
                 <td style="text-align:center; width:auto;">
                         <center style="margin:10px"><input id="moreInfo" class="btn" type="button" onclick="moreInfo()" value="More Info"></center>
                         <table>
@@ -2450,14 +2570,14 @@ function showButtons(){
                                 <td><a href="#" onclick="UI.InfoMessage('This value is to find launch series of the enemy <br> It can predict if an incoming is fake/nuke/fang <br> The lower the value is set the more likely the prediction is true ',8000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a></td>
                             </tr>
                         </table>
-                </td>            
+                </td>
                 <td style="text-align:center; width:auto;">
                         <center style="margin:10px"><input class="btn" id="btn_tag" type="button" onclick="tagIncomings()" value="Tag"><a href="#" onclick="UI.InfoMessage('You can tag incs directly without pressing on More Info button',10000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a> </center>
                         <center style="margin:10px"><input class="btn" id="btn_backtime" type="button"  value="back time"></center>
                         <center style="margin:10px"><input class="btn" id="btn_senttime" type="button"  value="sent time"></center>
                         <center style="margin:10px"><input class="btn" id="btn_stacks" type="button"  value="stacks"></center>
-                </td>            
-                <td style="text-align:center; width:auto;" >        
+                </td>
+                <td style="text-align:center; width:auto;" >
                         <table>
                             <tr>
                                 <td colspan = "2"><input class="btn" type="button" onclick="setIntervalIncomings()" value="Get Incomings"></td>
@@ -2486,20 +2606,20 @@ function showButtons(){
                                 <td><input type="number" id="input_duplicates" value="50" min="0" max="1000"  placeholder="50" style="text-align:center"></td>
                             </tr>
                         </table>
-      
-                </td>            
+
+                </td>
                 <td style="text-align:center; width:auto;">
                         <center style="margin:10px"><input id="btn_highlight" class="btn" type="button" onclick="toggleHighLight()" value="highlight"></center>
-                </td>  
+                </td>
                 <td hidden style="text-align:center; width:auto;" id="td_show_incomings">
                     <center style="margin:10px">
                             <input class="btn" type="button"  value="Show Incomings" id="btn_show_incs">
                             <select style="margin:10px" id="id_select_incs">
                             </select></td>
                     </center>
-                    
-            </td>            
-            </tr>                
+
+            </td>
+            </tr>
             </tbody>
         </table>
         </div>`
@@ -2514,7 +2634,7 @@ function showButtons(){
     link.media = 'all';
     document.getElementsByTagName('head')[0].appendChild(link);
     }
-    
+
 
     if(document.getElementById("incomings_table")!=null){
 
@@ -2533,7 +2653,7 @@ function showButtons(){
             localStorage.setItem(game_data.world+"addStacks","false")
             document.getElementById("btn_stacks").classList.remove("btn-confirm-yes")
             document.getElementById("btn_stacks").classList.add("btn-confirm-no")
-        }   
+        }
 
 
         //////////////////////////////add event for button stacks
@@ -2549,11 +2669,11 @@ function showButtons(){
                 document.getElementById("btn_stacks").classList.remove("btn-confirm-no")
                 document.getElementById("btn_stacks").classList.add("btn-confirm-yes")
             }
-            
+
         })
 
 
-        
+
         //////////////////////////initialize button back time colours
         if(localStorage.getItem(game_data.world+"addBacktime")!=null){
             let isHighLight=localStorage.getItem(game_data.world+"addBacktime")
@@ -2563,13 +2683,13 @@ function showButtons(){
             else{
                 document.getElementById("btn_backtime").classList.add("btn-confirm-no")
             }
-    
+
         }
         else{
             localStorage.setItem(game_data.world+"addBacktime","false")
             document.getElementById("btn_backtime").classList.remove("btn-confirm-yes")
             document.getElementById("btn_backtime").classList.add("btn-confirm-no")
-        }   
+        }
 
 
         //////////////////////////////add event for button back time
@@ -2585,7 +2705,7 @@ function showButtons(){
                 document.getElementById("btn_backtime").classList.remove("btn-confirm-no")
                 document.getElementById("btn_backtime").classList.add("btn-confirm-yes")
             }
-            
+
         })
 
 
@@ -2599,13 +2719,13 @@ function showButtons(){
             else{
                 document.getElementById("btn_senttime").classList.add("btn-confirm-no")
             }
-    
+
         }
         else{
             localStorage.setItem(game_data.world+"addSentTime","false")
             document.getElementById("btn_senttime").classList.remove("btn-confirm-yes")
             document.getElementById("btn_senttime").classList.add("btn-confirm-no")
-        }   
+        }
         ///////////////////////////////////add event for button sent time
         $("#btn_senttime").off("click")
         $("#btn_senttime").on("click",()=>{
@@ -2619,7 +2739,7 @@ function showButtons(){
                 document.getElementById("btn_senttime").classList.remove("btn-confirm-no")
                 document.getElementById("btn_senttime").classList.add("btn-confirm-yes")
             }
-            
+
 
         })
         /////////////////////////////initialize button get def village colours
@@ -2631,14 +2751,14 @@ function showButtons(){
             else{
                 document.getElementById("btn_get_def").classList.add("btn-confirm-no")
             }
-    
+
         }
         else{
             localStorage.setItem(game_data.world+"get_def_vills","false")
             document.getElementById("btn_get_def").classList.remove("btn-confirm-yes")
             document.getElementById("btn_get_def").classList.add("btn-confirm-no")
-        }   
-        ///////////////////////////////////add event for button get def 
+        }
+        ///////////////////////////////////add event for button get def
         $("#btn_get_def").off("click")
         $("#btn_get_def").on("click",()=>{
             if(document.getElementById("btn_get_def").classList.contains("btn-confirm-yes")){
@@ -2651,10 +2771,10 @@ function showButtons(){
                 document.getElementById("btn_get_def").classList.remove("btn-confirm-no")
                 document.getElementById("btn_get_def").classList.add("btn-confirm-yes")
             }
-            
+
         })
-    
-    
+
+
         //////////////////////////initialize button get only fakes colours
         if(localStorage.getItem(game_data.world+"get_only_fakes")!=null){
             let isHighLight=localStorage.getItem(game_data.world+"get_only_fakes")
@@ -2664,13 +2784,13 @@ function showButtons(){
             else{
                 document.getElementById("btn_get_fakes").classList.add("btn-confirm-no")
             }
-    
+
         }
         else{
             localStorage.setItem(game_data.world+"get_only_fakes","false")
             document.getElementById("btn_get_fakes").classList.remove("btn-confirm-yes")
             document.getElementById("btn_get_fakes").classList.add("btn-confirm-no")
-        }   
+        }
         //////////////////////////////////add event for button get only fakes
         $("#btn_get_fakes").off("click")
         $("#btn_get_fakes").on("click",()=>{
@@ -2684,9 +2804,9 @@ function showButtons(){
                 document.getElementById("btn_get_fakes").classList.remove("btn-confirm-no")
                 document.getElementById("btn_get_fakes").classList.add("btn-confirm-yes")
             }
-            
+
         })
-    
+
         let value=localStorage.getItem(game_data.world+"pop_fake_tagging2")
         if(value!=null){
             document.getElementById("input_pop_fake2").value=parseFloat(value)
@@ -2715,14 +2835,14 @@ function showButtons(){
     }
 
 
-    
+
 }
 
 
 
 
 
-        
+
 //////////////////////////////////////////////////////show info in incomings page/////////////////////////////////////////////////////////////////
 
 function removeLandedIncomings(incomings){
@@ -2751,7 +2871,7 @@ async function moreInfo(){
     $('#id_select_incs option').remove()
     console.log("inainte")
     var [map_reports_dropbox, map_incomings_dropbox, data_support, status]=await Promise.all([
-        readFileDropbox(filename_reports), 
+        readFileDropbox(filename_reports),
         readFileDropbox(filename_incomings),
         readFileDropbox(filename_support),
         insertlibraryLocalBase()]).catch(err=>{alert(err)})
@@ -2761,9 +2881,9 @@ async function moreInfo(){
     //extract data from dropbox, update and then upload
     let map_support_dropbox,map_troops_home_dropbox
     try {
-        let decompressedData = await decompress(await data_support.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await data_support.arrayBuffer() , 'gzip');
         map_support_dropbox=new Map(JSON.parse(decompressedData)[0])
-        map_troops_home_dropbox =new Map(JSON.parse(decompressedData)[1])   
+        map_troops_home_dropbox =new Map(JSON.parse(decompressedData)[1])
     } catch (error) {
         console.log("erorrrrrrrrrrrrrrrr map report from dropbox")
         console.log(error)
@@ -2771,16 +2891,16 @@ async function moreInfo(){
         map_troops_home_dropbox=new Map()
     }
 
-    //merge batch commands attacks (EXTRA files) 
+    //merge batch commands attacks (EXTRA files)
     for(let i=0;i<data_support_batch.length;i++){
-        let decompressedData = await decompress(await data_support_batch[i].arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await data_support_batch[i].arrayBuffer() , 'gzip');
         if(decompressedData != "[]"){
             let map_support_batch = new Map(JSON.parse(decompressedData)[0])
             let map_troops_home_batch = new Map(JSON.parse(decompressedData)[1])
 
             map_support_dropbox = new Map([...map_support_dropbox, ...map_support_batch])
             map_troops_home_dropbox = new Map([...map_troops_home_dropbox, ...map_troops_home_batch])
-        }      
+        }
 
         let fileName = `${databaseName}/Support${i}.txt`
         if(await localBase.getItem(fileName) != undefined){
@@ -2788,11 +2908,11 @@ async function moreInfo(){
                 let decompressedDataBase64 = base64ToBlob(await localBase.getItem(fileName))
                 let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
                 let map_localBase=new Map( JSON.parse(decompressedData));
-    
+
                 // console.log("map_localBase_support",map_localBase)
                 map_support_dropbox=new Map([...map_localBase, ...map_support_dropbox])
             } catch (error) {
-                
+
             }
         }
         fileName = `${databaseName}/Support${i}.txtHome`
@@ -2801,26 +2921,26 @@ async function moreInfo(){
                 let decompressedDataBase64 = base64ToBlob(await localBase.getItem(fileName))
                 let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
                 let map_localBase=new Map( JSON.parse(decompressedData));
-    
+
                 // console.log("map_localBase_troops home",map_localBase)
                 map_troops_home_dropbox=new Map([...map_localBase, ...map_troops_home_dropbox])
             } catch (error) {
-                
+
             }
         }
     }
-    
+
     // console.log("hererer")
     // console.log(map_support_dropbox)
     // console.log(map_troops_home_dropbox)
     //get support coming for each coord
-    
+
 
 
 
     /////////merge maps for reports
     try {
-        let decompressedData = await decompress(await map_reports_dropbox.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await map_reports_dropbox.arrayBuffer() , 'gzip');
         map_reports_dropbox=new Map( JSON.parse(decompressedData));
     } catch (error) {
         console.log("erorrrrrrrrrrrrrrrr map report from dropbox")
@@ -2835,7 +2955,7 @@ async function moreInfo(){
             let map_localBase=new Map( JSON.parse(decompressedData));
 
             console.log("map_localBase",map_localBase)
-            map_reports_dropbox=new Map([...map_localBase, ...map_reports_dropbox]) 
+            map_reports_dropbox=new Map([...map_localBase, ...map_reports_dropbox])
         } catch (error) {}
     }
 
@@ -2844,7 +2964,7 @@ async function moreInfo(){
 
     /////////merge maps for incomings
     try {
-        let decompressedData = await decompress(await map_incomings_dropbox.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await map_incomings_dropbox.arrayBuffer() , 'gzip');
         map_incomings_dropbox=new Map( JSON.parse(decompressedData));
     } catch (error) {
         console.log("erorrr map report from dropbox")
@@ -2856,7 +2976,7 @@ async function moreInfo(){
         try{
             let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "incomings"))
             let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
-    
+
             let map_localBase=new Map( JSON.parse(decompressedData));
             console.log("map_localBase history upload",map_localBase)
             map_incomings_dropbox=new Map([...map_localBase, ...map_incomings_dropbox])
@@ -2882,7 +3002,7 @@ async function moreInfo(){
                 let list_incomings = map_player_inc.get(list_incomingsAll[i].id_player_off)
                 list_incomings.push(list_incomingsAll[i])
                 map_player_inc.set(list_incomingsAll[i].id_player_off,list_incomings)
-                
+
             }else{
                 let list_incomings = []
                 list_incomings.push(list_incomingsAll[i])
@@ -2948,7 +3068,7 @@ async function moreInfo(){
         let new_list_incomings=[]
         let color=true;
         for(let i=0;i<list_incomings.length-1;i++){
-   
+
             let serieLaunches = new Set();
             let currentDate=new Date(list_incomings[i].date_launch).getTime();
             let nextDate=new Date(list_incomings[i+1].date_launch).getTime();
@@ -2968,18 +3088,18 @@ async function moreInfo(){
                     else{
                         if(color== true)
                             color= false
-                        else 
+                        else
                             color =true
                         break;
                     }
                 }
             }
-            
+
             // console.log("serieLaunches",serieLaunches)
             // console.log(Array.from(serieLaunches))
             let nr_fangs=0,nr_nukes=0,nr_fakes=0
             Array.from(serieLaunches).forEach(key=>{
-        
+
                 if(key.type_attack_landed != undefined){
 
                     if(key.type_attack_landed =="fake")
@@ -3027,7 +3147,7 @@ async function moreInfo(){
 
 
         map_player_inc.set(key,new_list_incomings)
-        
+
         if(new_list_incomings.length>0){
             list_players.push({
                 name_player_off:new_list_incomings[0].player_off+" ("+ new_list_incomings.length +")",
@@ -3077,35 +3197,35 @@ async function moreInfo(){
         let start=new Date();
         map_incomings_dropbox = removeLandedIncomings(map_incomings_dropbox)
 
-        
+
         // let table=document.getElementById("incomings_table").lastElementChild.children
         let incomings_table=document.getElementById("incomings_table").cloneNode(true)
         let table=incomings_table.lastElementChild.children
         let list=[];
         let map_nr_atacuri=new Map();
         let map_nr_destination=new Map();
-        
+
         //adaugare o noua coloana
         let coloana_nr=table[0].insertCell(3);
         coloana_nr.outerHTML="<th class='deleteTh'><a href=# id='id_nr'> nr</a></th>";
         coloana_nr.className="info"
-        
+
         let coloana_tribe=table[0].insertCell(4);
         coloana_tribe.outerHTML="<th class='deleteTh'><a href=# id='id_nr_tr'> nr_tribe</a></th>";
         coloana_tribe.className="info"
-        
+
         let coloana_type=table[0].insertCell(5);
         coloana_type.outerHTML="<th class='deleteTh'><a href=# id='id_type'> type</a></th>";
-        coloana_type.className="info"     
-        
+        coloana_type.className="info"
+
         let coloana_pop=table[0].insertCell(6);
         coloana_pop.outerHTML="<th class='deleteTh'><a href=# id='id_pop'>pop</a></th>";
         coloana_pop.className="info"
-        
+
         let coloana_time=table[0].insertCell(7);
         coloana_time.outerHTML="<th class='deleteTh'><a href=# id='id_time'>time</a></th>";
         coloana_time.className="info"
-        
+
         let coloana_report=table[0].insertCell(8);
         coloana_report.outerHTML="<th class='deleteTh'><a href=# id='id_report'>report</a></th>";
         coloana_report.className="info"
@@ -3132,7 +3252,7 @@ async function moreInfo(){
             let coord=table[i].children[2].innerText.match(/\d+\|\d+/)[0];
             let coord_destination=table[i].children[1].innerText.match(/\d+\|\d+/)[0];
             let nameLabel=table[i].children[0].innerText.trim().split(/\s+/)[0].toLowerCase();
-            
+
             let player_name_off
             let player_id
 
@@ -3181,7 +3301,7 @@ async function moreInfo(){
             var html_predict="?"
             var html_home="?"
             var html_comming="?"
-            
+
             var length_tr=table[i].children.length
             let coord=list_coord_player[i-1].coord
             let player_id=list_coord_player[i-1].player_id
@@ -3190,7 +3310,7 @@ async function moreInfo(){
 
             let coord_destination=table[i].children[1].innerText.match(/\d+\|\d+/)[0];
             let coord_origin=table[i].children[2].innerText.match(/\d+\|\d+/)[0];
-            
+
             let duplicate_destination=map_nr_destination.get(coord_destination)
             table[i].children[1].setAttribute("data-nr",duplicate_destination)
 
@@ -3220,7 +3340,7 @@ async function moreInfo(){
                 }else if(labelName.includes("axe.png")){
                     time_attack=axeSpeed *distance
                 }
-                
+
                 if(time_attack>0){
                     time_attack=Math.round(time_attack/1000)*1000
                     let time_launch=(parseDate(new Date(date_land).getTime()-time_attack)+":"+milliseconds).trim()
@@ -3229,8 +3349,8 @@ async function moreInfo(){
                     if(mapPredict.has(time_launch+"_"+player_name_off))
                         html_predict=`<h4>${mapPredict.get(time_launch+"_"+player_name_off).replace("pred_","")}</h4>`
                 }
-                
-            
+
+
             }else if(nameLabel == lang["dcfafcb4323b102c7e204555d313ba0a"].toLowerCase()){
                 let timeInMM=table[i].children[length_tr-1].innerText.split(":")
                 timeInMM=timeInMM[0]*3600*1000+timeInMM[1]*60*1000+timeInMM[2]*1000;
@@ -3253,7 +3373,7 @@ async function moreInfo(){
                 }
                 else if(timeInMM > spySpeed*distance){
                     time_attack=spySpeed*distance
-                }       
+                }
 
                 if(time_attack>0){
                     time_attack=Math.round(time_attack/1000)*1000
@@ -3263,12 +3383,12 @@ async function moreInfo(){
                     if(mapPredict.has(time_launch+"_"+player_name_off))
                         html_predict=`<h4>${mapPredict.get(time_launch+"_"+player_name_off).replace("pred_","")}</h4>`
                 }
-                
+
             }
 
 
 
-            
+
             if(map_incomings_dropbox.has(coord)){
                 let list_incomings=map_incomings_dropbox.get(coord)
                 // html_nr_tribe=" <center><h4 style='color:black'>"+list_incomings.length+"</h4></center>";
@@ -3319,10 +3439,10 @@ async function moreInfo(){
                     let serverDate=document.getElementById("serverDate").innerText.split("/")
                     serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
                     let date_current=new Date(serverDate+" "+serverTime).getTime()
-                    
+
                     //calculate population
                     let date_landing_report=new Date(obj.time_report)
-                    let distance 
+                    let distance
                     if(game_data.device == "desktop")
                         distance=parseFloat(table[i].children[length_tr-3].innerText);
                     else
@@ -3362,7 +3482,7 @@ async function moreInfo(){
                         // console.log(time_attack)
                         // console.log(date_landing_report.getTime())
                         let timeForRecruiting = (date_land.getTime()-time_attack)-date_landing_report.getTime()
-                        nr_troupes_dropbox=calcProductionTroupes(timeForRecruiting,nr_troupes_dropbox)                             
+                        nr_troupes_dropbox=calcProductionTroupes(timeForRecruiting,nr_troupes_dropbox)
                         nr_troupes_dropbox=Math.round(nr_troupes_dropbox*10)/10+"%"
                         // console.log("final "+nr_troupes_dropbox)
                     }
@@ -3420,19 +3540,19 @@ async function moreInfo(){
             coloana_tribe=table[i].insertCell(4);
             coloana_tribe.innerHTML=html_nr_tribe
             coloana_tribe.className="info"
-        
+
             coloana_type=table[i].insertCell(5);
             coloana_type.innerHTML=html_type
             coloana_type.className="info"
-        
+
             coloana_pop=table[i].insertCell(6);
             coloana_pop.innerHTML=html_pop
             coloana_pop.className="info"
-        
+
             coloana_time=table[i].insertCell(7);
             coloana_time.innerHTML=html_time
             coloana_time.className="info"
-        
+
             coloana_report=table[i].insertCell(8);
             coloana_report.innerHTML=html_report
             coloana_report.className="info"
@@ -3477,7 +3597,6 @@ async function moreInfo(){
 
 }
 
-    
 //////////////////////////////////////////////////////sort incomings by.. /////////////////////////////////////////////////////////////////
 
 function sortIncomings()
@@ -3544,7 +3663,7 @@ function sortIncomings()
                     cell.classList.add("selected")
                     var delimitator  = document.createTextNode('--');
                     cell.appendChild(delimitator);
-                
+
                 }
             pozitie++;
             }
@@ -3562,7 +3681,7 @@ function sortIncomings()
     document.getElementById("id_nr_tr").addEventListener("click",function()
     {
         var start=new Date();
-        
+
         $(".tr_delimitator").remove();
         list.sort( (a,b)=>{
             return (parseInt(a.children[4].innerText)<parseInt(b.children[4].innerText))?1:(parseInt(a.children[4].innerText)>parseInt(b.children[4].innerText))?-1:
@@ -3599,7 +3718,7 @@ function sortIncomings()
                     cell.classList.add("selected")
                     var delimitator  = document.createTextNode('--');
                     cell.appendChild(delimitator);
-                
+
                 }
             pozitie++;
             }
@@ -3655,7 +3774,7 @@ function sortIncomings()
         var stop=new Date();
         console.log(stop-start)
     })
-    
+
     //sort by nr pop
     document.getElementById("id_pop").addEventListener("click",function()
     {
@@ -3666,12 +3785,12 @@ function sortIncomings()
         list.sort( (a,b)=>{
             if(a.children[6].innerText=="?")
                 var a_comp=2000000;
-            else    
+            else
                 var a_comp=parseFloat(a.children[6].innerText);
 
             if(b.children[6].innerText=="?")
                 var b_comp=2000000;
-            else    
+            else
                 var b_comp=parseFloat(b.children[6].innerText);
 
             return (a_comp>b_comp)?1:(a_comp<b_comp)?-1:
@@ -3748,7 +3867,7 @@ function sortIncomings()
         }
         list_info=[]
         new_table.appendChild(last_row);
-        
+
         let pozitie=1
         for(let i=0;i<list.length;i++)
         {
@@ -3809,7 +3928,7 @@ function sortIncomings()
         }
         list_info=[]
         new_table.appendChild(last_row);
-        
+
         let pozitie=2
         for(let i=0;i<list.length-1;i++)
         {
@@ -3868,7 +3987,7 @@ function sortIncomings()
             new_table.appendChild(list[i]);
         }
         new_table.appendChild(last_row);
-        // 
+        //
         for(let i=0;i<list.length;i++)
         {
             list_info.push({
@@ -3884,7 +4003,7 @@ function sortIncomings()
         var newRow   = tableRef.insertRow(1);
         newRow.className="tr_delimitator"
         let cell  = newRow.insertCell();
-        
+
         cell.setAttribute("colspan",length_table)
         cell.classList.add("selected")
         var delimitator  = document.createElement("button")
@@ -3915,13 +4034,13 @@ function sortIncomings()
                 delimitator.style.margin="10px"
                 delimitator.classList.add("btn","load_troops")
                 cell.appendChild(delimitator);
-                
-                
+
+
             pozitie++;
             }
             pozitie++;
         }
-        
+
         list_info=[]
         var stop=new Date();
         console.log(stop-start)
@@ -3930,10 +4049,10 @@ function sortIncomings()
 
 
 }
-        
+
 //////////////////////////////////////////////////////tag incomings /////////////////////////////////////////////////////////////////
 async function tagIncomings(){
-    
+
     if(document.getElementsByClassName("info").length==0){
         document.getElementById("moreInfo").click();
         await waitForElm(".info")
@@ -3954,9 +4073,9 @@ async function tagIncomings(){
     var swordSpeed=1260*1000/(speedWorld*speedTroupes)//ms
     var axeSpeed=1080*1000/(speedWorld*speedTroupes)//ms
     console.log("constant world",speedWorld*speedTroupes)
-    
 
-    
+
+
     let list_incomingId=[]
     let listTdRename=[]
     for(let i=0;i<table_incomings.length;i++){
@@ -4007,7 +4126,7 @@ async function tagIncomings(){
         timeInMM=timeInMM[0]*3600*1000+ timeInMM[1]*60*1000+timeInMM[2]*1000;
         // console.log("timeInMM",timeInMM)
         list_incomingId.push(incomingId)
-        
+
         let backtime="none"
         let sentTime="none"
         if(table_incomings[i].getElementsByClassName("possible_fake").length>0 && table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img").length==2){
@@ -4023,9 +4142,9 @@ async function tagIncomings(){
             }else if(labelName.includes("axe.png")){
                 time_attack=axeSpeed *distance
             }
-            
+
             let dateLand=new Date(date_land)
-            
+
             time_attack=Math.round(time_attack/1000)*1000
             backtime = parseDate(dateLand.getTime()+time_attack)
             sentTime = parseDate(dateLand.getTime()-time_attack)
@@ -4049,7 +4168,7 @@ async function tagIncomings(){
         else if(table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img").length==2){
             let labelName=table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src
             let time_attack=0;
-            
+
             if(labelName.includes("snob.png")){
                 time_attack=nobleSpeed*distance
             }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
@@ -4069,7 +4188,7 @@ async function tagIncomings(){
             sentTime = parseDate(dateLand.getTime()-time_attack)
             console.log("backtime",backtime)
         }
-        
+
 
         let obj={
             incomingId:incomingId,
@@ -4123,7 +4242,7 @@ async function tagIncomings(){
             if(time_attack > 0){
                 time_attack=Math.round(time_attack/1000)*1000
                 // console.log("time_attack",time_attack)
-    
+
                 let dateLand=new Date(date_land)
                 backtime = parseDate(dateLand.getTime()+time_attack)
                 sentTime = parseDate(dateLand.getTime()-time_attack)
@@ -4133,17 +4252,17 @@ async function tagIncomings(){
             }
         }
         console.log(obj)
-        
+
 
         if(!table_incomings[i].children[0].innerText.toLowerCase().includes('"')){
             list_incomings_href.push(obj)
         }
 
         listTdRename.push(table_incomings[i].children[0])
-       
+
     }
 
-    
+
     console.log(listTdRename)
     let table_commands=document.getElementById("incomings_table")
     let length_columns=table_commands.getElementsByTagName("tbody")[0].children[0].children.length
@@ -4152,7 +4271,7 @@ async function tagIncomings(){
 
     for(let i=0;i<listTdRename.length;i++){
         $(table_commands).append(`<tr class="nowrap row_ax"><td colspan="${length_columns}"> ${listTdRename[i].innerHTML} </td></tr>`)
-        
+
     }
     $(table_commands).append(lastRow)
 
@@ -4253,7 +4372,7 @@ async function tagIncomings(){
                         console.log("dif_time "+dif_time+" wait "+(200-dif_time))
                         window.setTimeout(function(){
                             ajaxRequest (list_incomings_href)
-    
+
                         },200-dif_time)
                     }
                 })
@@ -4265,7 +4384,7 @@ async function tagIncomings(){
             }
 
 
-        
+
         }
         else
         {
@@ -4276,15 +4395,15 @@ async function tagIncomings(){
         }
     }
     ajaxRequest(list_incomings_href);
-    
+
     }
-        
+
 
 }
-    
+
 function parseDate(time){
     let date=new Date(time)
-    
+
     let year=date.getFullYear();
     let month=("00"+(date.getMonth()+1)).slice(-2)
     let day=("00"+date.getDate()).slice(-2)
@@ -4363,7 +4482,7 @@ function calcProductionTroupes(time,popReport){
         else break;
     }
     time_temp=time
-    while(maxPop<20000  && time_temp>0){   
+    while(maxPop<20000  && time_temp>0){
         if(countRam<nrRamMax){
             countRam++;
             time_temp-=ramTime;
@@ -4386,7 +4505,7 @@ async function loadReports(){
 
     /////////merge maps for reports
     try {
-        let decompressedData = await decompress(await map_search.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await map_search.arrayBuffer() , 'gzip');
         map_search=new Map( JSON.parse(decompressedData));
     } catch (error) {
         console.log("erorrrrrrrrrrrrrrrr map report from dropbox")
@@ -4401,7 +4520,7 @@ async function loadReports(){
             let map_localBase=new Map( JSON.parse(decompressedData));
 
             console.log("map_localBase",map_localBase)
-            map_search=new Map([...map_localBase, ...map_search]) 
+            map_search=new Map([...map_localBase, ...map_search])
         } catch (error) {}
     }
 
@@ -4423,8 +4542,8 @@ async function loadReports(){
                     let obj=map_search.get(coords[i]);
                     console.log(coords[i])
                     contentHtml+= `<div>
-                    <center style="margin:10px"><input class="btn evt-confirm-btn btn-confirm-yes" type="button"onclick="$('#table`+i+`').toggle('slow')" value="`+coords[i]+`"></center>    
-    
+                    <center style="margin:10px"><input class="btn evt-confirm-btn btn-confirm-yes" type="button"onclick="$('#table`+i+`').toggle('slow')" value="`+coords[i]+`"></center>
+
                     <table  class="table_hide" id="table`+i+'"'+
                     createReport(obj)+
                     `</table></div>`;
@@ -4437,7 +4556,7 @@ async function loadReports(){
         }else{
         $("#report_view").empty()
         }
-    
+
     })
     $("#input_search").mouseout(function(){
         let current_value=$("#input_search").val()
@@ -4445,13 +4564,13 @@ async function loadReports(){
                 let coords=current_value.match(/\d+\|\d+/g)
                 $("#input_search").val(Array.from(coords).join(","))
         }
-    }) 
+    })
     console.log("infoVillages",infoVillages)
     $("#btn_off_coord").on("click",function(){
         let tribes=Array.from(document.getElementById("input_filter_tribe").value.split(",")).map(e=>e.trim().toLowerCase()).filter(element => {
             return element !== '';
           });
-        
+
         let list_output=[]
         console.log("tribes",tribes)
 
@@ -4462,10 +4581,10 @@ async function loadReports(){
                 let pop=0;
                 let time_report_home=obj["time_report_home_"+key]
                 // console.log("troopsAtHome_"+key)
-    
-    
-            
-    
+
+
+
+
                 if(troop_at_home!=undefined){
                     for(let i=0;i<troop_at_home.length;i++){
                         if(troop_at_home[i].type=="spear" || troop_at_home[i].type=="sword" || troop_at_home[i].type=="archer" || troop_at_home[i].type=="heavy"){
@@ -4476,10 +4595,10 @@ async function loadReports(){
                 else{
                     pop=-1
                     time_report_home="none"
-                }   
+                }
                 // console.log("coord: "+obj.coordAttacker)
                 // console.log(infoVillages.get(obj.coordAttacker))
-                if( tribemates.includes(obj.nameAttacker.toLowerCase())==false && obj.typeAttacker.includes("off")  && key.includes(obj.coordAttacker) && 
+                if( tribemates.includes(obj.nameAttacker.toLowerCase())==false && obj.typeAttacker.includes("off")  && key.includes(obj.coordAttacker) &&
                     (tribes.includes(infoVillages.get(obj.coordAttacker).tribeName.toLowerCase()) || tribes.length == 0  )){
                     list_output.push({
                         type:"off",
@@ -4491,7 +4610,7 @@ async function loadReports(){
                 }
                 else if( tribemates.includes(obj.nameDefender.toLowerCase())==false && obj.typeDefender.includes("off") &&  key.includes(obj.coordDefender) &&
                        (tribes.includes(infoVillages.get(obj.coordDefender).tribeName.toLowerCase()) || tribes.length == 0 )){
-                        
+
                     list_output.push({
                         type:"off",
                         coord:obj.coordDefender,
@@ -4503,7 +4622,7 @@ async function loadReports(){
             } catch (error) {
                 console.log("key: "+ key+ "not found")
             }
-    
+
 
         })
         list_output.sort((o1,o2)=>{
@@ -4513,13 +4632,13 @@ async function loadReports(){
         let text_output=""
         for(let i=0;i<list_output.length;i++){
             text_output+=`${list_output[i].type}, ${list_output[i].coord}, k${getContinent(list_output[i].coord)}, ${list_output[i].name}, ${list_output[i].pop}, ${list_output[i].date.trim()}\n`
-        
+
             if(i<list_output.length-1){
                 if(list_output[i].name!=list_output[i+1].name){
                     text_output+="\n\n"
                 }
             }
-        
+
         }
         // console.log(text_output)
 
@@ -4532,12 +4651,12 @@ async function loadReports(){
         Dialog.show("content",html_result)
 
     })
-    
+
     $("#btn_def_coord").on("click",function(){
         let tribes=Array.from(document.getElementById("input_filter_tribe").value.split(",")).map(e=>e.trim().toLowerCase()).filter(element => {
             return element !== '';
           });
-        
+
         let list_output=[]
         console.log("tribes",tribes)
 
@@ -4548,10 +4667,10 @@ async function loadReports(){
                 let pop=0;
                 let time_report_home=obj["time_report_home_"+key]
                 // console.log("troopsAtHome_"+key)
-    
-    
-            
-    
+
+
+
+
                 if(troop_at_home!=undefined){
                     for(let i=0;i<troop_at_home.length;i++){
                         if(troop_at_home[i].type=="spear" || troop_at_home[i].type=="sword" || troop_at_home[i].type=="archer" || troop_at_home[i].type=="heavy"){
@@ -4562,7 +4681,7 @@ async function loadReports(){
                 else{
                     pop=-1
                     time_report_home="none"
-                }   
+                }
                 // console.log("coord: "+obj.coordAttacker)
                 // console.log(infoVillages.get(obj.coordAttacker))
                 if( tribemates.includes(obj.nameAttacker.toLowerCase())==false && obj.typeAttacker.includes("def")  && key.includes(obj.coordAttacker) &&
@@ -4577,7 +4696,7 @@ async function loadReports(){
                 }
                 else if( tribemates.includes(obj.nameDefender.toLowerCase())==false && obj.typeDefender.includes("def") && key.includes(obj.coordDefender) &&
                         (tribes.includes(infoVillages.get(obj.coordDefender).tribeName.toLowerCase()) || tribes.length == 0 )){
-                           
+
                     list_output.push({
                         type:"def",
                         coord:obj.coordDefender,
@@ -4589,7 +4708,7 @@ async function loadReports(){
             } catch (error) {
                 console.log("key: "+ key+ "not found")
             }
-    
+
 
         })
         list_output.sort((o1,o2)=>{
@@ -4599,13 +4718,13 @@ async function loadReports(){
         let text_output=""
         for(let i=0;i<list_output.length;i++){
             text_output+=`${list_output[i].type}, ${list_output[i].coord}, k${getContinent(list_output[i].coord)}, ${list_output[i].name}, ${list_output[i].pop}, ${list_output[i].date.trim()}\n`
-        
+
             if(i<list_output.length-1){
                 if(list_output[i].name!=list_output[i+1].name){
                     text_output+="\n\n"
                 }
             }
-        
+
         }
         // console.log(text_output)
 
@@ -4618,9 +4737,9 @@ async function loadReports(){
         Dialog.show("content",html_result)
 
     })
-    
 
-   
+
+
 
 
     $("#btn_stack_coord").on("click",function(){
@@ -4633,14 +4752,14 @@ async function loadReports(){
             let tribes=Array.from(document.getElementById("input_filter_tribe").value.split(",")).map(e=>e.trim().toLowerCase()).filter(element => {
                 return element !== '';
             });
-              
+
             try {
                 let obj=map_search.get(key)
                 let troop_at_home=obj["troopsAtHome_"+key]
                 let pop=0;
                 let time_report_home=obj["time_report_home_"+key]
                 console.log("troopsAtHome_"+key)
-    
+
                 if(troop_at_home!=undefined){
                     for(let i=0;i<troop_at_home.length;i++){
                         if(troop_at_home[i].type=="spear" || troop_at_home[i].type=="sword" || troop_at_home[i].type=="archer" || troop_at_home[i].type=="heavy"){
@@ -4652,7 +4771,7 @@ async function loadReports(){
                     pop=-1
                     time_report_home="none"
                 }
-                    
+
                 if( tribemates.includes(obj.nameAttacker.toLowerCase())==false && pop>thresholdStack && key.includes(obj.coordAttacker) &&
                     (tribes.includes(infoVillages.get(obj.coordAttacker).tribeName.toLowerCase()) || tribes.length == 0)){
                     list_output.push({
@@ -4674,7 +4793,7 @@ async function loadReports(){
                     })
                 }
             } catch (error) {
-                
+
             }
 
         })
@@ -4685,13 +4804,13 @@ async function loadReports(){
         let text_output=""
         for(let i=0;i<list_output.length;i++){
             text_output+=`${list_output[i].type}, ${list_output[i].coord}, k${getContinent(list_output[i].coord)}, ${list_output[i].name}, ${list_output[i].pop}, ${list_output[i].date.trim()}\n`
-        
+
             if(i<list_output.length-1){
                 if(list_output[i].name!=list_output[i+1].name){
                     text_output+="\n\n"
                 }
             }
-        
+
         }
         console.log(text_output)
 
@@ -4709,7 +4828,7 @@ async function loadReports(){
 
 
 }
-    
+
 
 //////////////////////////////////////////////////////search reports /////////////////////////////////////////////////////////////////
 async function databaseDetails(){
@@ -4720,7 +4839,7 @@ async function databaseDetails(){
         mapSupport,
         mapAttack,
         troopsHome,
-    
+
     ]=await Promise.all([
         readFileDropbox(filename_reports),
         readFileDropbox(filename_history_upload),
@@ -4729,7 +4848,7 @@ async function databaseDetails(){
         readFileDropbox(filename_commands_attack),
         readFileDropbox(filename_troops_home),
 
-    
+
     ]).catch(err=>{alert(err)})
 
     let data_attack_batch = await Promise.all(commandsAttacksPromises).catch(err=>{alert(err)})
@@ -4740,7 +4859,7 @@ async function databaseDetails(){
     let sizeReportsCompressedDB = formatBytes(new TextEncoder().encode(await mapReports.text()).length)
     let sizeReportDecompressedDB
     try {
-        let decompressedData = await decompress(await mapReports.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await mapReports.arrayBuffer() , 'gzip');
         sizeReportDecompressedDB = formatBytes(new TextEncoder().encode(decompressedData).length)
         mapReports=new Map( JSON.parse(decompressedData));
     } catch (error) {
@@ -4753,7 +4872,7 @@ async function databaseDetails(){
     let sizeReportsHistoryCompressedDB = formatBytes(new TextEncoder().encode(await mapHistoryUpload.text()).length)
     let sizeReportHistoryDecompressedDB
     try {
-        let decompressedData = await decompress(await mapHistoryUpload.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await mapHistoryUpload.arrayBuffer() , 'gzip');
         sizeReportHistoryDecompressedDB = formatBytes(new TextEncoder().encode(decompressedData).length)
         mapHistoryUpload=new Map( JSON.parse(decompressedData));
     } catch (error) {
@@ -4765,7 +4884,7 @@ async function databaseDetails(){
     let sizeIncomingsCompressedDB = formatBytes(new TextEncoder().encode(await mapIncomings.text()).length)
     let sizeIncomingsDecompressedDB
     try {
-        let decompressedData = await decompress(await mapIncomings.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await mapIncomings.arrayBuffer() , 'gzip');
         sizeIncomingsDecompressedDB = formatBytes(new TextEncoder().encode(decompressedData).length)
         mapIncomings=new Map( JSON.parse(decompressedData));
     } catch (error) {
@@ -4777,7 +4896,7 @@ async function databaseDetails(){
     let sizeTroopsHomeCompressedDB = formatBytes(new TextEncoder().encode(await troopsHome.text()).length)
     let sizeTroopsHomeDecompressedDB
     try {
-        let decompressedData = await decompress(await troopsHome.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await troopsHome.arrayBuffer() , 'gzip');
         sizeTroopsHomeDecompressedDB = formatBytes(new TextEncoder().encode(decompressedData).length)
         troopsHome=new Map( JSON.parse(decompressedData));
     } catch (error) {
@@ -4792,9 +4911,9 @@ async function databaseDetails(){
     let countSupportCompressed = 0, countSupportDecompressed = 0
 
     try {
-        let decompressedData = await decompress(await mapSupport.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await mapSupport.arrayBuffer() , 'gzip');
         map_support_dropbox=new Map(JSON.parse(decompressedData)[0])
-        map_troops_home_dropbox =new Map(JSON.parse(decompressedData)[1])   
+        map_troops_home_dropbox =new Map(JSON.parse(decompressedData)[1])
 
         countSupportCompressed += new TextEncoder().encode(await mapSupport.text()).length
         countSupportDecompressed += new TextEncoder().encode(decompressedData).length
@@ -4805,7 +4924,7 @@ async function databaseDetails(){
     }
 
     for(let i=0;i<data_support_batch.length;i++){
-        let decompressedData = await decompress(await data_support_batch[i].arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await data_support_batch[i].arrayBuffer() , 'gzip');
 
         if(decompressedData != "[]"){
             let map_support_batch = new Map(JSON.parse(decompressedData)[0])
@@ -4816,7 +4935,7 @@ async function databaseDetails(){
 
             countSupportCompressed += new TextEncoder().encode(await data_support_batch[i].text()).length
             countSupportDecompressed += new TextEncoder().encode(decompressedData).length
-        }      
+        }
 
     }
     sizeSupportCompressedDB = formatBytes(countSupportCompressed)
@@ -4828,7 +4947,7 @@ async function databaseDetails(){
     let sizeAttackCompressedDB, sizeAttackDecompressedDB
     let countAttackCompressed = 0, countAttackDecompressed = 0
     try {
-        let decompressedData = await decompress(await data_attack.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await data_attack.arrayBuffer() , 'gzip');
         mapAttack=new Map(JSON.parse(decompressedData))
 
         countAttackCompressed += new TextEncoder().encode(await mapAttack.text()).length
@@ -4840,7 +4959,7 @@ async function databaseDetails(){
     }
 
     for(let i=0;i<data_attack_batch.length;i++){
-        let decompressedData = await decompress(await data_attack_batch[i].arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await data_attack_batch[i].arrayBuffer() , 'gzip');
 
         if(data_attack_batch[i] != "[]"){
             let map_attacks_batch = new Map(JSON.parse(decompressedData))
@@ -4848,12 +4967,12 @@ async function databaseDetails(){
 
             countAttackCompressed += new TextEncoder().encode(await data_attack_batch[i].text()).length
             countAttackDecompressed += new TextEncoder().encode(decompressedData).length
-        }   
+        }
     }
     sizeAttackCompressedDB = formatBytes(countAttackCompressed)
     sizeAttackDecompressedDB = formatBytes(countAttackDecompressed)
 
- 
+
 
 
 
@@ -4936,7 +5055,7 @@ async function databaseDetails(){
         `
     }
 
-    html_result += 
+    html_result +=
         `</table>
     </div>
     `
@@ -4950,7 +5069,7 @@ async function databaseDetails(){
 ///////////////////////////////////////////////////////create table for view report//////////////////////////////////////////////////////
 function createReport(obj){
     var tableHTML=``;
-    if(obj.attackingArmy!=undefined){    
+    if(obj.attackingArmy!=undefined){
         tableHTML=`
         <tbody>
             <tr>
@@ -4961,13 +5080,13 @@ function createReport(obj){
                 <td colspan="2" valign="top" height="160" style="border: solid 1px ; padding 4px;" class="report_ReportAttack">
                     <table id="attack_info_att" width=100% style="border: 1px solid #DED3B9">
                         <tbody>
-                            <tr> 
-                                <th style="width:20%">Attacker:</th> 
-                                <th >`+obj.nameAttacker+`</th> 
+                            <tr>
+                                <th style="width:20%">Attacker:</th>
+                                <th >`+obj.nameAttacker+`</th>
                             </tr>
-                            <tr> 
-                                <td >Origin:</td> 
-                                <td >`+obj.coordAttacker+`</td> 
+                            <tr>
+                                <td >Origin:</td>
+                                <td >`+obj.coordAttacker+`</td>
                             </tr>
                             <tr>
                                 <td colspan="2" style="padding:0px">`+
@@ -4980,18 +5099,18 @@ function createReport(obj){
             </tr>`
     }
     if(obj.defendingArmy!=undefined){
-        tableHTML+= ` 
-                <tr> 
+        tableHTML+= `
+                <tr>
                     <td colspan="2" valign="top" height="160" style="border: solid 1px ; padding 4px;"  >
                         <table id="attack_info_def" width=100% style="border: 1px solid #DED3B9">
                             <tbody>
-                                <tr> 
-                                    <th style="width:20%">Defender:</th> 
-                                    <th >`+obj.nameDefender+`</th> 
+                                <tr>
+                                    <th style="width:20%">Defender:</th>
+                                    <th >`+obj.nameDefender+`</th>
                                 </tr>
-                                <tr> 
-                                    <td >Origin:</td> 
-                                    <td >`+obj.coordDefender+`</td> 
+                                <tr>
+                                    <td >Origin:</td>
+                                    <td >`+obj.coordDefender+`</td>
                                 </tr>
                                 <tr>
                                     <td colspan="2" style="padding:0px">`+
@@ -5003,16 +5122,16 @@ function createReport(obj){
                     </td>
                 </tr>
                     `
-    } 
+    }
 
     if(obj.travelingTroops!=undefined){
-        tableHTML+= ` 
-                <tr>  
+        tableHTML+= `
+                <tr>
                     <td colspan="2" valign="top" height="160" style="border: solid 1px ; padding 4px;">
                         <table id="attack_spy_away" width=100% style="border: 1px solid #DED3B9; width:100%; margin-top:5px;">
                             <tbody>
-                                <tr> 
-                                    <th colspan="2">Units outside of village:</th> 
+                                <tr>
+                                    <th colspan="2">Units outside of village:</th>
                                 </tr>
 
                                 <tr>
@@ -5025,7 +5144,7 @@ function createReport(obj){
                     </td>
                 </tr>
                     `
-    }  
+    }
     if(obj.attackingArmy!=undefined){
         tableHTML+="</tbody>"
     }
@@ -5085,7 +5204,7 @@ function createTableTroupes(totalArmy,lostArmy){
 
 function createTableTroupesAway(totalArmy){
     let tableHTML=`
-    <table class="vis"> 
+    <table class="vis">
         <tbody>
             <tr class="center">`
 
@@ -5098,7 +5217,7 @@ function createTableTroupesAway(totalArmy){
 
         })
 
-        
+
         tableHTML+="</tr>"
         tableHTML+=`<tr>`
         Object.keys(totalArmy).forEach(key=>{
@@ -5129,7 +5248,7 @@ function createTableIncomings(list){
             <th >Arrival time</th>
             <th >Arrives in</th>
         </tr>`
-        
+
         for(let i=0;i<list.length;i++){
             // console.log(list[i])
             let labelName
@@ -5140,7 +5259,7 @@ function createTableIncomings(list){
                 labelName=`https://dsen.innogamescdn.com/asset/a9e85669/graphic/unit/tiny/${list[i].labelName}`
 
             // console.log(list[i].labelName)
-            let arrived=new Date(list[i].date_land).getTime()  
+            let arrived=new Date(list[i].date_land).getTime()
             if(arrived>date_current){
                 html_incomings+=`
                     <tr>
@@ -5161,7 +5280,7 @@ function createTableIncomings(list){
 }
 
 function counterTime(){
-    
+
     window.setInterval(()=>{
 
         $(".counterTime").each((index,item)=>{
@@ -5170,7 +5289,7 @@ function counterTime(){
             serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
             let date_current=new Date(serverDate+" "+serverTime).getTime()
             // console.log(date_current)
-            
+
             let time=parseInt(item.getAttribute("date-time"))
             let hours=("0"+parseInt((time-date_current)/(3600*1000))).slice(-3);
             let minutes=("0"+parseInt(((time-date_current)/(60*1000)%60))).slice(-2);
@@ -5179,7 +5298,7 @@ function counterTime(){
             item.innerText=result
         })
     },5000)
-    
+
 
 }
 
@@ -5222,17 +5341,17 @@ function setIntervalIncomings(){
         </td>
         <td style="text-align:center; width:auto; background-color:${headerColor}">
         <p><center style=""><input type="number" id="id_start" size="5" style="text-align:center" class=" input-nicer show" value="0"><br><br></center></p>
-        </td> 
+        </td>
         <td style="text-align:center; width:auto; background-color:${headerColor}">
         <p><center style=""><input type="number" id="id_stop" size="5" style="text-align:center" class=" input-nicer show" value="100"><br><br></center></p>
-        </td> 
+        </td>
 
-        </tr>       
+        </tr>
         </table>
         <center style="margin:10px"><u><input class="btn" type="button" id="btn_village" onclick="getTrIncomings()" value="Start"></center>
-    
 
-    
+
+
     </div>
     `;
     ////////////////////////////////////////add and remove window from page/////////////////////////////////////////////////////////////////
@@ -5269,7 +5388,7 @@ async function getTrIncomings(){
 
     /////////merge maps for reports
     try {
-        let decompressedData = await decompress(await map_reports_dropbox.arrayBuffer() , 'gzip');  
+        let decompressedData = await decompress(await map_reports_dropbox.arrayBuffer() , 'gzip');
         map_reports_dropbox=new Map( JSON.parse(decompressedData));
     } catch (error) {
         console.log("erorrr map report from dropbox")
@@ -5281,7 +5400,7 @@ async function getTrIncomings(){
         try{
             let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "reports"))
             let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
-    
+
             let map_localBase=new Map( JSON.parse(decompressedData));
             console.log("map_localBase history upload",map_localBase)
             map_reports_dropbox=new Map([...map_localBase, ...map_reports_dropbox])
@@ -5353,7 +5472,7 @@ async function getTrIncomings(){
                     },200-diff)
                 }
             })
-            
+
         }
         else
         {
@@ -5382,7 +5501,7 @@ async function getTrIncomings(){
                             let idPlayer_dropbox
                             let type_dropbox
                             let nr_troupes_dropbox
-            
+
                             var obj=map_reports_dropbox.get(coordOrigin);
                             var traveling=false
                             if(coordOrigin == obj.coordAttacker){
@@ -5402,7 +5521,7 @@ async function getTrIncomings(){
                                 type_dropbox=obj.typeSupporter;
                                 nr_troupes_dropbox=obj.nrTroupesSupporter
                             }
-            
+
                             if(idPlayer_dropbox == player_id && rows[i].children[0].getElementsByTagName("img").length==2)
                             {
 
@@ -5418,7 +5537,7 @@ async function getTrIncomings(){
                                     labelName="ram.png"
                                 else
                                     labelName=rows[i].children[0].getElementsByTagName("img")[1].src
-        
+
                                 if(labelName.includes("snob.png")){
                                     time_attack=nobleSpeed*distance
                                 }else if(labelName.includes("ram.png") || labelName.includes("catapult.png")){
@@ -5430,13 +5549,13 @@ async function getTrIncomings(){
                                 }
                                 if(traveling==false)
                                     time_attack=0;
-        
+
                                 if(type_dropbox=="off"){// do something with pop
                                     // console.log(date_land.getTime())
                                     // console.log(time_attack)
                                     // console.log(date_landing_report.getTime())
                                     let timeForRecruiting = (date_land.getTime()-time_attack)-date_landing_report.getTime()
-                                    nr_troupes_dropbox=calcProductionTroupes(timeForRecruiting, nr_troupes_dropbox)                             
+                                    nr_troupes_dropbox=calcProductionTroupes(timeForRecruiting, nr_troupes_dropbox)
                                     nr_troupes_dropbox=Math.round(nr_troupes_dropbox * 10 )/ 10
                                     // console.log("final "+nr_troupes_dropbox)
 
@@ -5447,12 +5566,12 @@ async function getTrIncomings(){
                                 if(type_dropbox.includes("def") && localStorage.getItem(game_data.world+"get_def_vills")=="true"){
                                     isFakeDef=true
                                 }
-                            
 
 
-                                  
+
+
                                 console.log(obj.time_return)
-            
+
                                 if(obj.time_return!=0 ){//do something if the attack is returning home
 
                                     let date_home=new Date(obj.time_return)
@@ -5468,23 +5587,23 @@ async function getTrIncomings(){
                                     }else if(labelName.includes("axe.png")){
                                         time_attack=axeSpeed *distance
                                     }
-                                    
+
                                     let time_land=rows[i].children[length_tr-2].innerText
                                     let dateLand=new Date(getLandTime(time_land))
-                                    
+
                                     time_attack=Math.round(time_attack/1000) * 1000
-                        
+
                                     console.log("time_attack",time_attack)
 
                                     if(time_attack + date_home.getTime()>dateLand.getTime() ){
                                         isFakeReturning=true;
                                         console.log("fake from "+coordOrigin)
                                     }
-                            
-                                   
+
+
 
                                 }
-                               
+
                                 if(isFakePop == true && isFakeReturning == true && localStorage.getItem(game_data.world+"get_only_fakes")=="true"){
                                     $(table_incomings).append(rows[i])
                                     nr_row++;
@@ -5497,19 +5616,19 @@ async function getTrIncomings(){
                                     $(table_incomings).append(rows[i])
                                     nr_row++;
                                 }
-                              
-                               
+
+
                             }
                         }
 
-                        
+
                     }
                     else{
                         $(table_incomings).append(rows[i])
                         nr_row++;
                     }
                 }
-                
+
 
             }
             table_incomings.children[0].children[0].children[0].innerText="Command ("+nr_row+")"
@@ -5560,7 +5679,7 @@ function highLightIncomings(){
                         let pop=parseFloat(table[i].getElementsByClassName("cls_pop")[0].innerText)
                         if(((type=="off" && pop>70)|| watchTower==true) && watchTowerSmall==false){//must be tested
                             hasNuke=true;
-                        }     
+                        }
                     }
                     if(hasNuke==true || watchTower==true ){
                         $(table[i]).children().each(function(){
@@ -5569,7 +5688,7 @@ function highLightIncomings(){
                         });
                     }
                 }
-        
+
                 //highlight all possible trains
                 for(let j=i+1;j<table.length;j++){
 
@@ -5578,19 +5697,19 @@ function highLightIncomings(){
                     let tr2=table[j].children[length_tr-2].innerText.match(/[0-9]{2}\:[0-9]{2}\:[0-9]{2}\:[0-9]{3}/)[0]
                     let time1=parseInt(tr1.split(":")[0])*3600*1000+parseInt(tr1.split(":")[1])*60*1000+parseInt(tr1.split(":")[2])*1000+parseInt(tr1.split(":")[3])
                     let time2=parseInt(tr2.split(":")[0])*3600*1000+parseInt(tr2.split(":")[1])*60*1000+parseInt(tr2.split(":")[2])*1000+parseInt(tr2.split(":")[3])
-        
+
                     // let tr1=table[i].children[length_tr-2].innerText.match(/[0-9]{2}\:[0-9]{2}\:[0-9]{2}/)[0]
                     // let tr2=table[j].children[length_tr-2].innerText.match(/[0-9]{2}\:[0-9]{2}\:[0-9]{2}/)[0]
                     // let time1=parseInt(tr1.split(":")[0])*3600*1000+parseInt(tr1.split(":")[1])*60*1000+parseInt(tr1.split(":")[2])*1000
                     // let time2=parseInt(tr2.split(":")[0])*3600*1000+parseInt(tr2.split(":")[1])*60*1000+parseInt(tr2.split(":")[2])*1000
-        
+
 
                     if(table[i].children[2].innerHTML==table[j].children[2].innerHTML){//if origin coord is the same
                         if(Math.abs(time1-time2)==50 || Math.abs(time1-time2)==100 || Math.abs(time1-time2)==150 || Math.abs(time1-time2)==0 ){
                             console.log(tr1+" === "+tr2)
                             console.log(time1+" === "+time2)
                             console.log("diference tr: "+(time2-time1))
-        
+
                             $(table[i]).children().each(function(){
                                 console.log("color i")
                                 $(this).css('background-color', colors.yellow);
@@ -5612,7 +5731,7 @@ function highLightIncomings(){
 
 
 
-                
+
                 // highlist if it is tagged as noble
                 if(table[i].children[0].getElementsByTagName("img").length==2){
                     let hasNoble=table[i].children[0].getElementsByTagName("img")[1].src.includes("snob.png")
@@ -5622,21 +5741,21 @@ function highLightIncomings(){
                         });
                     }
                 }
-        
+
             }
         }
         else{
             for(let i=0;i<table.length;i++){
                 $(table[i]).children().each(function(){
                     $(this).css('background-color', "");
-                });  
+                });
             }
             document.getElementById("btn_highlight").classList.remove("btn-confirm-yes")
             document.getElementById("btn_highlight").classList.add("btn-confirm-no")
         }
-    
+
     } catch (error) {
-        
+
     }
 
 
@@ -5645,8 +5764,8 @@ if(window.location.href.includes("mode=incomings"))
     highLightIncomings();
 
 
- 
-    
+
+
 
 function toggleHighLight(){
 
@@ -5720,7 +5839,7 @@ function eventGetTroops(){
 
             $.get(link_coming_troops,function(data){
                 document.getElementById("div_coming_troops").innerHTML=data
-                
+
                 let obj_troops_coming={snob:0}
                 let troops_coming=document.getElementById("div_coming_troops").querySelectorAll("#support_sum td")
                 console.log(troops_coming)
@@ -5736,31 +5855,31 @@ function eventGetTroops(){
 
                 let html=`
                 <div  style="width:600px;background-color:${backgroundColor};cursor:move;width:50%;margin:10px auto">
-        
-                <table class="" border="1" style="width: 100%;background-color:${backgroundColor};border-color:${borderColor}"> 
+
+                <table class="" border="1" style="width: 100%;background-color:${backgroundColor};border-color:${borderColor}">
                 <tr>
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}">coord </font></center></p>
-                    </td>    
+                    </td>
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.png"> </font></center></p>
-                    </td>    
+                    </td>
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/flags/small/3.png"> </font></center></p>
-                    </td>    
+                    </td>
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/snob.png"> </font></center></p>
-                    </td>    
+                    </td>
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/wall.png"> </font></center></p>
-                    </td>    
+                    </td>
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/farm.png"> </font></center></p>
-                    </td>   
+                    </td>
                     <td  style="text-align:center; width:auto; background-color:${headerColor}">
                         <p><center style="margin:10px"><font color="${titleColor}">troops </font></center></p>
-                    </td>   
-                    
+                    </td>
+
                 `;
                 for(let i=0;i<units.length-1;i++){
                     html+=`<td class="fm_unit" style="width:30px;text-align:center;width:auto; background-color:${headerColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/unit/unit_${units[i]}.png"></td>`
@@ -5771,7 +5890,7 @@ function eventGetTroops(){
                     </td>`
                 html+=`</tr>
                         <tr>`
-                
+
                 html+=`
                     <td rowspan="3" class="" style="width:30px;height:30px;text-align:center; background-color:${headerColor};color:white">${coord}</td>
                     <td rowspan="3" class="" style="width:70px;height:30px;text-align:center; background-color:${headerColor};color:white">${nrAttacks}</td>
@@ -5829,7 +5948,7 @@ function eventGetTroops(){
                 html+=`<td style="width:60px;height:30px;text-align:center; background-color:${headerColor};color:white">`+total_pop+"</td>"
 
                 html+=`</tr></table></div>`
-        
+
                 button.outerHTML=html
 
 
@@ -5851,18 +5970,18 @@ function eventGetTroops(){
     })
 }
 eventGetTroops();
-        
-     
+
+
 
 //////////////////////////////////////////////////////get data from /map/player.txt and /mapVillages.txt/////////////////////////////////////
 
 async function getInfoVillages(){
-    
+
     return new Promise(async(resolve,reject)=>{
         let filename_innoDB=game_data.world+"infoVillages"
         await insertlibraryLocalBase().catch(err=>{alert(err)})
         let data = await localBase.getItem(filename_innoDB).catch(err=>{alert(err)})
-        
+
 
         console.log("get info VIllages")
         let mapVillages=new Map();
@@ -5897,7 +6016,7 @@ async function getInfoVillages(){
                 })
             }
 
-    
+
             for(let i=0;i<dataVillage.length;i++){
                 if(mapPlayer.get(dataVillage[i].split(",")[4])!=undefined){
                     mapVillages.set(dataVillage[i].split(",")[2]+"|"+dataVillage[i].split(",")[3],{
@@ -5915,17 +6034,17 @@ async function getInfoVillages(){
 
             let data=JSON.stringify(obj)
             data=replaceSpecialCaracters(data)
-        
+
             await localBase.setItem(filename_innoDB,data)
-        
+
         }else{
-           
+
             let ino_db= JSON.parse(data)
             let db_date=ino_db.datetime
             mapVillages=new Map(ino_db.data)
 
             // console.log("mapVillages",mapVillages)
-            
+
 
 
 
@@ -5936,13 +6055,13 @@ async function getInfoVillages(){
                 let dataVillage = httpGet(url+"/map/village.txt").split(/\r?\n/);
                 let dataPlayer = httpGet(url+"/map/player.txt").split(/\r?\n/);
                 let dataAlly = httpGet(url+"/map/ally.txt").split(/\r?\n/);
-    
+
                 for(let i=0;i<dataAlly.length-1;i++){
                     // console.log(dataPlayer[i].split(",")[1])
                     let tribeName=innoReplaceSpecialCaracters(dataAlly[i].split(",")[1])
                     mapAlly.set(dataAlly[i].split(",")[0],tribeName)
                 }
-    
+
                 for(let i=0;i<dataPlayer.length-1;i++){
                     // console.log(dataPlayer[i].split(",")[1])
                     let playerName=innoReplaceSpecialCaracters(dataPlayer[i].split(",")[1])
@@ -5954,9 +6073,9 @@ async function getInfoVillages(){
                         tribeName:tribeName
                     })
                 }
-    
-    
-        
+
+
+
                 for(let i=0;i<dataVillage.length;i++){
                     if(mapPlayer.get(dataVillage[i].split(",")[4])!=undefined){
                         mapVillages.set(dataVillage[i].split(",")[2]+"|"+dataVillage[i].split(",")[3],{
@@ -5971,7 +6090,7 @@ async function getInfoVillages(){
                 }
                 obj.datetime=current_date
                 obj.data=Array.from(mapVillages.entries())
-                
+
                 let data=JSON.stringify(obj)
                 data=replaceSpecialCaracters(data)
                 await localBase.setItem(filename_innoDB,data)
@@ -6051,7 +6170,7 @@ function innoReplaceSpecialCaracters(text){
     }
 
 }
-    
+
 function replaceSpecialCaracters(data) {
     let result = ""
     for (let i = 0; i < data.length; i++) {
@@ -6117,8 +6236,8 @@ function getCommandsGoing(){
     // console.log(linkCommand)
     let datePage = await ajaxGet(linkCommand)
     const parser = new DOMParser();
-    const htmlDoc = parser.parseFromString(datePage, 'text/html'); 
-    
+    const htmlDoc = parser.parseFromString(datePage, 'text/html');
+
     //get pages for all incoming
     let list_pages=[]
     var map_outgoing_support=new Map()
@@ -6145,7 +6264,7 @@ function getCommandsGoing(){
     list_pages=list_pages.reverse();
     console.log(list_pages)
 
-    
+
     //for each page
     function ajaxRequest (urls) {
         let current_url
@@ -6162,7 +6281,7 @@ function getCommandsGoing(){
                 method: 'get',
                 success: (data) => {
                     const parser = new DOMParser();
-                    const htmlDoc = parser.parseFromString(data, 'text/html'); 
+                    const htmlDoc = parser.parseFromString(data, 'text/html');
 
                     if(htmlDoc.getElementById("commands_table")==null){//commands outgoing none
                         resolve(map_outgoing_support)
@@ -6182,7 +6301,7 @@ function getCommandsGoing(){
                                 Array.from(table_commands[i].getElementsByClassName("unit-item")).forEach((elem,index)=>{
                                     troops[game_data.units[index]]=parseInt(elem.innerText)
                                 })
-                            
+
                                 //add data for the current command into a map
                                 let type_attack=table_commands[i].getElementsByTagName("img")[0].src.split("command/")[1]
                                 if(type_attack.includes("support")){
@@ -6208,7 +6327,7 @@ function getCommandsGoing(){
                                     serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
                                     let date_current=new Date(serverDate+" "+serverTime)
                                     date_current.setDate(date_current.getDate()+7)
-                
+
 
                                     map_outgoing_attack.set(commandId,{
                                         coord_destination:coord_destination,
@@ -6235,7 +6354,7 @@ function getCommandsGoing(){
                     }
                 }
             })
-           
+
         }
         else//append all rows into table
         {
@@ -6268,7 +6387,7 @@ function getSupportsAndAttacks(){
 
         let datePage = await ajaxGet(incomings_href)
         const parser = new DOMParser();
-        const htmlDoc = parser.parseFromString(datePage, 'text/html'); 
+        const htmlDoc = parser.parseFromString(datePage, 'text/html');
 
 
 
@@ -6308,8 +6427,8 @@ function getSupportsAndAttacks(){
         console.log(incomings_href)
         let datePage2 = await ajaxGet(incomings_href)
         const parser2 = new DOMParser();
-        const htmlDoc2 = parser2.parseFromString(datePage2, 'text/html'); 
-          
+        const htmlDoc2 = parser2.parseFromString(datePage2, 'text/html');
+
 
         if(htmlDoc2.getElementsByClassName("vis")[1].getElementsByTagName("select").length>0){
             Array.from(htmlDoc2.getElementsByClassName("vis")[1].getElementsByTagName("select")[0].options).forEach(el=>{
@@ -6342,7 +6461,7 @@ function getSupportsAndAttacks(){
 
 
         console.log(list_href)
-    
+
 
         var indexIncoming=1;
         var url_length=list_href.length
@@ -6377,16 +6496,16 @@ function getSupportsAndAttacks(){
                     method: 'get',
                     success: (data) => {
                         const parser = new DOMParser();
-                        const htmlDoc = parser.parseFromString(data, 'text/html'); 
+                        const htmlDoc = parser.parseFromString(data, 'text/html');
 
                         if(htmlDoc.getElementById("incomings_table")==null)
                             alert("turn off the filters");
                         let table_incomings=htmlDoc.getElementById("incomings_table").getElementsByTagName("tbody")[0].children
                         for(let i=1;i<table_incomings.length-1;i++){
-                            
+
                             if(table_incomings[i].children[0].innerText!="--"){
                                 let commandId=table_incomings[i].getElementsByClassName("quickedit")[0].getAttribute("data-id")
-                                
+
                                 // console.log(commandId)
                                 list_incomingId.push(commandId)
                                 let coord_destination=table_incomings[i].children[1].innerText.match(/\d+\|\d+/)[0]
@@ -6397,7 +6516,7 @@ function getSupportsAndAttacks(){
                                 let troops={}
                                 let player_origin_name=table_incomings[i].children[length_tr-4].innerText.trim()
                                 let player_origin_id=table_incomings[i].children[length_tr-4].getElementsByTagName("a")[0].href.split("id=")[1]
-                                
+
 
                                 let labelName="none"
                                 let type_attack=table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[0].src.split("command/")[1]
@@ -6420,7 +6539,7 @@ function getSupportsAndAttacks(){
                                 //add new command id to localstorage and save data to map_going_support
                                 if(!map_exist_support.has(commandId)){
 
-                                    
+
                                     if(!map_outgoing_support.has(coord_destination)){
                                         map_outgoing_support.set(coord_destination,[{
                                             coord_destination:coord_destination,
@@ -6461,8 +6580,8 @@ function getSupportsAndAttacks(){
                                         playerId:game_data.player.id.toString()
                                     })
                                 }
-                                
-                                
+
+
                             }
                         }
 
@@ -6476,14 +6595,14 @@ function getSupportsAndAttacks(){
                         },200-dif_time)
                     }
                 })
-            
+
             }
             else
             {
                 if(htmlDoc.getElementById("incomings_table")!=null){
                     // showButtons();
                 }
-            
+
                 if( htmlDoc.getElementsByClassName("g-recaptcha").length>0){//recaptcha
                     console.log("recapthca")
                     UI.ErrorMessage("recapthca, upload again")
@@ -6520,218 +6639,562 @@ function getSupportsAndAttacks(){
         else
             reject("error on incomings")
         }
-       
+
     })
 }
 
 
 /////////////////////////////////////////////main function for getting all supports and attacks//////////////////////////////////////////
 
-async function uploadSupports() {
-    document.getElementById("progress_support").innerText = "Loading…";
+async function uploadSupports(){
+    document.getElementById("progress_support").innerText="Getting data...";
 
-    // ===============================
-    // BASIC CONTEXT
-    // ===============================
-    const world = game_data.world;
-    const tribe = game_data.player.ally;
-    const playerId = String(game_data.player.id);
-
-    const serverTime = document.getElementById("serverTime").innerText;
-    const serverDateParts = document.getElementById("serverDate").innerText.split("/");
-    const serverDate = `${serverDateParts[1]}/${serverDateParts[0]}/${serverDateParts[2]}`;
-    const nowTs = new Date(`${serverDate} ${serverTime}`).getTime();
-
-    // ===============================
-    // LOAD STATIC DATA
-    // ===============================
-    const [
-        mapVillages,
-        mapCommandsSharing,
-        resultSupport,
-        [mapGoing, mapGoingAttacks],
-    ] = await Promise.all([
+    var mapCommandsSharing = await getCommandsSharing()
+    var [mapVillages, data_support,data_attack,mapStatus]=await Promise.all([
         getInfoVillages(),
-        getCommandsSharing(),
-        getSupportsAndAttacks(),
-        getCommandsGoing(),
-    ]);
+        readFileDropbox(filename_support),
+        readFileDropbox(filename_commands_attack),
+        readFileDropbox(filename_status_upload),
+    ]).catch(err=>{alert(err)})
 
-    let mapComing = resultSupport.map_outgoing_support; // Map<coord, list>
+    let data_attack_batch = await Promise.all(commandsAttacksPromises).catch(err=>{alert(err)})
+    let data_support_batch = await Promise.all(supportPromises).catch(err=>{alert(err)})
 
-    // ===============================
-    // LOAD EXISTING DB STATE
-    // ===============================
-    const [
-        supportRows,
-        troopsHomeRows,
-        attackRows,
-        statusRows,
-    ] = await Promise.all([
-        sb.from("support").select("coord, data").eq("world", world).eq("tribe", tribe),
-        sb.from("troops_home").select("coord, data").eq("world", world).eq("tribe", tribe),
-        sb.from("commands_attack").select("command_id, data").eq("world", world).eq("tribe", tribe),
-        sb.from("status").select("player_id, data").eq("world", world).eq("tribe", tribe),
-    ]);
+    var result_commands=await getCommandsGoing().catch(err=>{alert(err);throw err})
+    // console.log("result_commands",result_commands)
+    var map_going=result_commands[0]
+    var map_going_attacks=result_commands[1]
 
-    const mapSupportDB = new Map(supportRows.data?.map(r => [r.coord, r.data]) || []);
-    const mapTroopsHomeDB = new Map(troopsHomeRows.data?.map(r => [r.coord, r.data]) || []);
-    const mapAttackDB = new Map(attackRows.data?.map(r => [r.command_id, r.data]) || []);
-    const mapStatus = new Map(statusRows.data?.map(r => [r.player_id, r.data]) || []);
+    let map_support_dropbox,map_troops_home_dropbox
+    try {
+        let decompressedData = await decompress(await data_support.arrayBuffer() , 'gzip');
+        map_support_dropbox=new Map(JSON.parse(decompressedData)[0])
+        map_troops_home_dropbox =new Map(JSON.parse(decompressedData)[1])
+    } catch (error) {
+        console.log("erorrrrrrrrrrrrrrrr map report from dropbox")
+        map_support_dropbox=new Map()
+        map_troops_home_dropbox=new Map()
+    }
 
-    // ===============================
-    // COLLECT MISSING TROOPS
-    // ===============================
-    for (const [coord, list] of mapComing.entries()) {
-        for (const cmd of list) {
+    //merge batch commands attacks (EXTRA files)
+    for(let i=0;i<data_support_batch.length;i++){
+        let decompressedData = await decompress(await data_support_batch[i].arrayBuffer() , 'gzip');
 
-            // SUPPORT TROOPS COMING
-            if (
-                cmd.type_attack.includes("support") &&
-                !cmd.troops &&
-                mapCommandsSharing.has(cmd.player_origin_name.trim())
-            ) {
-                try {
-                    cmd.troops = await ajaxTroopsComing(cmd.commandId);
-                } catch {}
+        if(decompressedData != "[]"){
+            let map_support_batch = new Map(JSON.parse(decompressedData)[0])
+            let map_troops_home_batch = new Map(JSON.parse(decompressedData)[1])
+
+            map_support_dropbox = new Map([...map_support_dropbox, ...map_support_batch])
+            map_troops_home_dropbox = new Map([...map_troops_home_dropbox, ...map_troops_home_batch])
+        }
+
+        let fileName = `${databaseName}/Support${i}.txt`
+        if(await localBase.getItem(fileName) != undefined){
+            try {
+                let decompressedDataBase64 = base64ToBlob(await localBase.getItem(fileName))
+                let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+                let map_localBase=new Map( JSON.parse(decompressedData));
+
+                // console.log("map_localBase_support",map_localBase)
+                map_support_dropbox=new Map([...map_localBase, ...map_support_dropbox])
+            } catch (error) {
+
             }
+        }
+        fileName = `${databaseName}/Support${i}.txtHome`
+        if(await localBase.getItem(fileName) != undefined){
+            try {
+                let decompressedDataBase64 = base64ToBlob(await localBase.getItem(fileName))
+                let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+                let map_localBase=new Map( JSON.parse(decompressedData));
 
-            // TROOPS HOME (ATTACK CASE)
-            if (cmd.type_attack.includes("attack")) {
-                try {
-                    if (!mapTroopsHomeDB.has(coord)) {
-                        const villageId = mapVillages.get(coord)?.villageId;
-                        if (!villageId) continue;
+                // console.log("map_localBase_troops home",map_localBase)
+                map_troops_home_dropbox=new Map([...map_localBase, ...map_troops_home_dropbox])
+            } catch (error) {
 
-                        const troops = await ajaxTroopsStationed(villageId);
-                        troops.uploadTime = nowTs + 7 * 24 * 3600 * 1000;
-                        mapTroopsHomeDB.set(coord, troops);
+            }
+        }
+    }
+
+    // console.log("first: map_support_dropbox", map_support_dropbox)
+
+
+    //if  database is stored locally
+    if(await localBase.getItem(game_data.world+"map_support_dropbox")!=undefined){
+        try{
+            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "map_support_dropbox"))
+            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+
+            let map_localBase=new Map( JSON.parse(decompressedData));
+            // console.log("map_support_dropbox history upload",map_localBase)
+            map_support_dropbox=new Map([...map_localBase, ...map_support_dropbox])
+        } catch (error) {
+            let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "map_support_dropbox"))));
+            map_support_dropbox=new Map([...map_localBase, ...map_support_dropbox])
+        }
+
+    }
+    if(await localBase.getItem(game_data.world+"map_troops_home_dropbox")!=undefined){
+        try{
+            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "map_troops_home_dropbox"))
+            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+
+            let map_localBase=new Map( JSON.parse(decompressedData));
+            // console.log("map_troops_home_dropbox history upload",map_localBase)
+            map_troops_home_dropbox=new Map([...map_localBase, ...map_troops_home_dropbox])
+        } catch (error) {
+            let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "map_troops_home_dropbox"))));
+            map_troops_home_dropbox=new Map([...map_localBase, ...map_troops_home_dropbox])
+        }
+    }
+
+    try {
+        let decompressedData = await decompress(await mapStatus.arrayBuffer() , 'gzip');
+        mapStatus=new Map( JSON.parse(decompressedData));
+    } catch (error) {
+        console.log("erorrr map report from dropbox")
+        mapStatus=new Map()
+    }
+
+    let map_support_uploaded=new Map()
+    Array.from(map_support_dropbox.keys()).forEach(key=>{
+        let list_coming=map_support_dropbox.get(key)
+        for(let i=0;i<list_coming.length;i++){
+            if(list_coming[i].type_attack.includes("support")){
+                map_support_uploaded.set(list_coming[i].commandId,list_coming[i].troops)
+            }
+        }
+    })
+    // console.log("map_support_uploaded", map_support_uploaded)
+
+    // console.log("getSupportAndAttacks")
+    var resultSupport = await getSupportsAndAttacks().catch(err=>{alert(err);throw err})
+    // console.log(" finish getSupportAndAttacks")
+    // console.log("map_going: " + map_going)
+    // console.log("resultSupport", resultSupport)
+
+    // console.log("second: map_support_dropbox", map_support_dropbox)
+
+
+    var map_coming = resultSupport.map_outgoing_support
+    var map_troops_home=new Map()
+    // console.log("map_coming",map_coming)
+    // console.log("map_support_dropbox",map_support_dropbox)
+
+    //for each support coming get all troops
+    var keys=Array.from(map_coming.keys())
+    let start_get_troops=new Date().getTime()
+
+    // console.log(keys)
+    // console.log("mapCommandsSharing", mapCommandsSharing)
+    const run = async () => {
+        console.log("Starting...");
+        for (let i = 0; i < keys.length; i++) {
+            let list_support=map_coming.get(keys[i])
+            console.log(list_support)
+            for(let j=0;j<list_support.length;j++){
+                console.log(list_support[j].player_origin_name.trim())
+
+                //get troops coming
+                if(list_support[j].type_attack.includes("support") &&
+                    !map_support_uploaded.has(list_support[j].commandId) &&
+                    !map_going.has(list_support[j].commandId) &&
+                    (mapCommandsSharing.has(list_support[j].player_origin_name.trim()))
+                 ){
+                    let troops = await ajaxTroopsComing(list_support[j].commandId)
+                    console.log("troops comming")
+                    console.log(troops)
+                    list_support[j].troops = troops
+                    UI.SuccessMessage("info coord: "+(keys.length-i)+" , get troops coming "+(list_support.length-j))
+                }
+                else if(list_support[j].type_attack.includes("support") &&
+                        map_support_uploaded.has(list_support[j].commandId)
+                ){//update support comming if already exists in dropbox
+                    console.log("update troops coming")
+                    let objTroops = map_support_uploaded.get(list_support[j].commandId)
+                    list_support[j].troops = objTroops
+
+                }
+                else if (list_support[j].type_attack.includes("attack")) {//type_attack=="attack"
+                    try {//in case a barb is taken and tw database is not yet updated will throw an error
+                        let villageId=mapVillages.get(list_support[j].coord_destination).villageId
+                        if(!map_troops_home.has(list_support[j].coord_destination)){
+                            let obj = await ajaxTroopsStationed(villageId)
+                            console.log("troops home")
+                            console.log(obj)
+
+                            let serverTime=document.getElementById("serverTime").innerText
+                            let serverDate=document.getElementById("serverDate").innerText.split("/")
+                            serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
+                            let date_current=new Date(serverDate+" "+serverTime)
+                            date_current.setDate(date_current.getDate()+7)
+
+                            obj.uploadTime=date_current.getTime()
+                            map_troops_home.set(list_support[j].coord_destination,obj)
+                            UI.SuccessMessage("info coord: "+(keys.length-i)+" , get troops home "+(list_support.length-j))
+
+                        }
+                    } catch (error) {
+                        console.log(error)
                     }
-                } catch {}
+
+                }
+            }
+            map_coming.set(keys[i],list_support)
+
+        }
+        console.log("Done!");
+    };
+    await run();
+    var stop_get_troops=new Date().getTime()
+    console.log("time get troops "+(stop_get_troops-start_get_troops))
+
+    console.log("support outgoing")
+    console.log(map_going)
+    console.log("support coming")
+    console.log(map_coming)
+    console.log("troops home")
+    console.log(map_troops_home)
+
+    //merge map_going and map_coming
+    if(map_going !=undefined){// no commands going
+        Array.from(map_going.keys()).forEach(key=>{
+            let obj_going=map_going.get(key)
+            if(map_coming.has(obj_going.coord_destination)){
+                // console.log("map coming update coord")
+                let list_coming=map_coming.get(obj_going.coord_destination)
+                for(let i=0;i<list_coming.length;i++){
+                    if(key==list_coming[i].commandId){
+                        list_coming[i].troops = obj_going.troops
+                        map_coming.set(obj_going.coord_destination, list_coming)
+                        break;
+                    }
+                }
+            }else{
+                map_coming.set(obj_going.coord_destination,[obj_going])
+                // console.log("map coming add coord")
+
+            }
+
+        })
+        console.log("support coming after merge")
+        // console.log(map_coming)
+
+    }
+
+
+
+    let map_attack_dropbox = new Map()
+    /////////////////////////////////////////////////////////////////////////get and prelucrate  map commands attacks//////////////
+    try {
+        let decompressedData = await decompress(await data_attack.arrayBuffer() , 'gzip');
+        map_attack_dropbox=new Map(JSON.parse(decompressedData))
+
+    } catch (error) {
+        console.log("erorrrrr map attack from dropbox")
+        map_attack_dropbox=new Map()
+    }
+
+    //if  database is stored locally
+    if(await localBase.getItem(game_data.world+"map_attack_dropbox")!=undefined){
+        try{
+            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "map_attack_dropbox"))
+            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+
+            let map_localBase=new Map( JSON.parse(decompressedData));
+            // console.log("map_attack_dropbox upload",map_localBase)
+            map_attack_dropbox=new Map([...map_localBase, ...map_attack_dropbox])
+        } catch (error) {
+            let map_localBase=new Map( JSON.parse(lzw_decode(await localBase.getItem(game_data.world + "map_attack_dropbox"))));
+            map_attack_dropbox=new Map([...map_localBase, ...map_attack_dropbox])
+        }
+    }
+    console.log("map_attack_dropbox", map_attack_dropbox)
+
+
+    // console.log(data_attack_batch.length)
+    //merge batch commands attacks
+    for(let i=0;i<data_attack_batch.length;i++){
+        let decompressedData = await decompress(await data_attack_batch[i].arrayBuffer() , 'gzip');
+
+        if(data_attack_batch[i] != "[]"){
+            let map_attacks_batch = new Map(JSON.parse(decompressedData))
+            map_attack_dropbox = new Map([...map_attack_dropbox, ...map_attacks_batch])
+        }
+
+        let fileName = `${databaseName}/Commands_attack${i}.txt`
+        if(await localBase.getItem(fileName) != undefined){
+            try {
+                let decompressedDataBase64 = base64ToBlob(await localBase.getItem(fileName))
+                let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
+                let map_localBase=new Map( JSON.parse(decompressedData));
+                // console.log("map_localBase_attacks",map_localBase)
+                map_attack_dropbox=new Map([...map_localBase, ...map_attack_dropbox])
+            } catch (error) {
             }
         }
     }
+    // console.log("map_attack_dropbox", map_attack_dropbox)
 
-    // ===============================
-    // MERGE SUPPORT DATA
-    // ===============================
-    for (const [coord, list] of mapComing.entries()) {
-        const existing = mapSupportDB.get(coord) || [];
-        const merged = [...existing, ...list];
 
-        // Deduplicate by commandId
-        const unique = [
-            ...new Map(merged.map(o => [o.commandId, o])).values()
-        ].filter(o => new Date(o.landing_time).getTime() > nowTs);
 
-        if (unique.length) {
-            unique.sort((a, b) =>
-                new Date(a.landing_time) - new Date(b.landing_time)
-            );
-            mapSupportDB.set(coord, unique);
-        } else {
-            mapSupportDB.delete(coord);
+    console.log("map_going_attacks",map_going_attacks)
+
+    if(map_going_attacks !=undefined){// no commands going
+        Array.from(map_going_attacks.keys()).forEach(key=>{
+            try {
+                let obj=map_going_attacks.get(key)
+                obj.coord_destination_id=mapVillages.get(obj.coord_destination).villageId
+                obj.player_destination_name=mapVillages.get(obj.coord_destination).playerName
+                obj.player_destination_id=mapVillages.get(obj.coord_destination).playerId
+                map_attack_dropbox.set(key,obj)
+            } catch (error) {
+                console.log("command attack to barb")
+                console.log(error)
+            }
+        })
+    }
+
+
+
+
+
+
+
+
+    return new Promise(async(resolve,reject)=>{
+
+        // console.log("map_dropbox_coming")
+        // console.log(map_support_dropbox)
+        // console.log("map_dropbox_home")
+        // console.log(map_troops_home_dropbox)
+
+
+        let serverTime=document.getElementById("serverTime").innerText
+        let serverDate=document.getElementById("serverDate").innerText.split("/")
+        serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
+        let date_current=new Date(serverDate+" "+serverTime).getTime()
+        let date_current_commands=serverDate+" "+serverTime
+
+
+
+        map_troops_home_dropbox=new Map([...map_troops_home_dropbox, ...map_troops_home])
+        // console.log("map_troops_home_dropbox merge")
+        // console.log(map_troops_home_dropbox)
+        //delete from map troops home if it's older than a week
+        Array.from(map_troops_home_dropbox.keys()).forEach(key=>{
+            if(date_current>map_troops_home_dropbox.get(key).uploadTime){
+                map_troops_home_dropbox.delete(key)
+            }
+        })
+
+
+        // update map from dropbox with the new data
+        Array.from(map_coming.keys()).forEach(key=>{
+            let list_coming=map_coming.get(key)
+            if(map_support_dropbox.has(key)){
+                let list_dropbox=map_support_dropbox.get(key)
+                list_dropbox=list_dropbox.concat(list_coming)
+                console.log(list_dropbox)
+                var list_concat =[...new Map(list_dropbox.map(item => [item["commandId"], item])).values()]
+                // console.log("list concat")
+                list_concat.sort((o1,o2)=>{
+                    return (new Date(o1.landing_time).getTime()>new Date(o2.landing_time).getTime())?1:
+                    (new Date(o1.landing_time).getTime()<new Date(o2.landing_time).getTime())?-1:0
+                })
+                // console.log(list_concat)
+                if(list_concat.length==0){
+                    map_support_dropbox.delete(key)
+                    console.log("list is empty, removed")
+                }
+                else
+                    map_support_dropbox.set(key,list_concat)
+            }
+            else{
+                console.log("list coming")
+                list_coming.sort((o1,o2)=>{
+                    return (new Date(o1.landing_time).getTime()>new Date(o2.landing_time).getTime())?1:
+                    (new Date(o1.landing_time).getTime()<new Date(o2.landing_time).getTime())?-1:0
+                })
+                // console.log(list_coming)
+                map_support_dropbox.set(key,list_coming)
+            }
+        })
+        // console.log("map_support_dropbox", map_support_dropbox)
+
+        //if a command arrived  delete from map
+        Array.from(map_support_dropbox.keys()).forEach(key=>{
+            let list_support=map_support_dropbox.get(key)
+            // console.log(list_support)
+            if(list_support.length==0){
+                console.log(map_support_dropbox.has(key))
+                map_support_dropbox.delete(key)
+                // console.log(map_support_dropbox.has(key))
+
+                console.log(key)
+                console.log("delete coord from map support dropbox")
+            }
+            else{
+                for(let i=0;i<list_support.length;i++){
+                    let date_land=new Date(list_support[i].landing_time).getTime()
+                    if(date_current>date_land || list_support[i].landing_time == ""){
+                        list_support.splice(i,1)
+                        i--;
+                    }
+
+                }
+                map_support_dropbox.set(key,list_support)
+            }
+
+        })
+        // console.log(map_support_dropbox)
+        //delete  map commands attacks if it's older than 1 week
+        Array.from(map_attack_dropbox.keys()).forEach(key=>{
+            let obj=map_attack_dropbox.get(key)
+            let date_upload=new Date(obj.uploadTime).getTime()
+
+            if(date_current > date_upload)
+                map_attack_dropbox.delete(key)
+        })
+
+        //update status map
+        let obj_status={
+            name:game_data.player.name,
+            command_date:date_current_commands,
         }
-    }
 
-    // ===============================
-    // MERGE ATTACK COMMANDS
-    // ===============================
-    for (const [id, obj] of mapGoingAttacks?.entries() || []) {
-        try {
-            const v = mapVillages.get(obj.coord_destination);
-            if (!v) continue;
 
-            obj.coord_destination_id = v.villageId;
-            obj.player_destination_name = v.playerName;
-            obj.player_destination_id = v.playerId;
-            obj.uploadTime = nowTs + 7 * 24 * 3600 * 1000;
-
-            mapAttackDB.set(id, obj);
-        } catch {}
-    }
-
-    // Cleanup old attacks
-    for (const [id, obj] of mapAttackDB.entries()) {
-        if (nowTs > obj.uploadTime) {
-            mapAttackDB.delete(id);
+        if(mapStatus.has(game_data.player.id.toString())){
+            let obj_update=mapStatus.get(game_data.player.id.toString())
+            mapStatus.set(game_data.player.id.toString(), {...obj_update, ...obj_status} )
         }
-    }
+        else{
+            mapStatus.set(game_data.player.id.toString(),obj_status)
+        }
 
-    // ===============================
-    // UPDATE STATUS
-    // ===============================
-    mapStatus.set(playerId, {
-        ...(mapStatus.get(playerId) || {}),
-        name: game_data.player.name,
-        command_date: `${serverDate} ${serverTime}`,
-    });
 
-    // ===============================
-    // SAVE TO SUPABASE
-    // ===============================
-    document.getElementById("progress_support").innerText = "Saving…";
+        UI.SuccessMessage("compressing database, wait few seconds",2000)
 
-    const upserts = [];
+        let timeStartUpload = new Date().getTime()
+        let data_status=JSON.stringify(Array.from(mapStatus.entries()))
 
-    for (const [coord, data] of mapSupportDB.entries()) {
-        upserts.push(
-            sb.from("support").upsert({
-                coord, data, world, tribe,
-                updated_at: new Date().toISOString()
+        let commandsAttacks = Array.from(map_attack_dropbox.entries())
+        let commandsSupport = Array.from(map_support_dropbox.entries())
+        let troopsHome = Array.from(map_troops_home_dropbox.entries())
+
+        let sizeCommandsAttacksDB = formatBytes(new TextEncoder().encode(JSON.stringify(commandsAttacks)).length)
+        let sizeCommandsSupportDB = formatBytes(new TextEncoder().encode(JSON.stringify(commandsSupport)).length)
+        let sizeTroopsHomeDB = formatBytes(new TextEncoder().encode(JSON.stringify(troopsHome)).length)
+
+
+        console.log("----------------------------------------------------")
+        // console.log(commandsSupport)
+        let splitByAttacks = Math.ceil(commandsAttacks.length /nrFiles)
+        let splitBySupport = Math.ceil(commandsSupport.length /nrFiles)
+        let splitByTroopsHome = Math.ceil(troopsHome.length /nrFiles)
+
+
+        const run = async () => {
+            console.log("Starting...");
+            for (let i = 0; i < nrFiles; i++) {
+                //save command attacks
+                let subList = commandsAttacks.slice(i * splitByAttacks, (i+1) * splitByAttacks)
+
+                let compressedData = await compress(JSON.stringify(subList), 'gzip')
+                let base64CompressedData = await blobToBase64(compressedData)
+
+                let fileName = `${databaseName}/Commands_attack${i}.gz`
+                let fileNameLocal = `${databaseName}/Commands_attack${i}.txt`
+
+                await Promise.all([
+                    uploadFile(compressedData,fileName,dropboxToken).catch(err=>alert(err)),
+                    localBase.setItem(fileNameLocal, base64CompressedData)
+                ])
+
+                //save support
+                let subListSupport = commandsSupport.slice(i * splitBySupport, (i+1) *splitBySupport)
+                let subListTroopsHome = troopsHome.slice(i * splitByTroopsHome, (i+1) *splitByTroopsHome)
+
+                let data_list=[subListSupport,subListTroopsHome]
+
+                compressedData =  await compress(JSON.stringify(data_list), 'gzip')
+                base64CompressedData = await blobToBase64(compressedData)
+                fileName = `${databaseName}/Support${i}.gz`
+                fileNameLocal = `${databaseName}/Support${i}.txt`
+
+                let base64CompressedDataSupport = await blobToBase64(await compress(JSON.stringify(subListSupport), 'gzip'))
+                let base64CompressedDataSupportHome = await blobToBase64(await compress(JSON.stringify(subListTroopsHome), 'gzip'))
+                await Promise.all([
+                    uploadFile(compressedData,fileName,dropboxToken).catch(err=>alert(err)),
+                    localBase.setItem(fileNameLocal, base64CompressedDataSupport),
+                    localBase.setItem(fileNameLocal+"Home", base64CompressedDataSupportHome),
+
+                ])
+            }
+        }
+        await run();
+
+
+
+        let compressedData = await compress(data_status, 'gzip')
+        let result_Status=await uploadFile(compressedData, filename_status_upload,dropboxToken).catch(err=>alert(err))
+
+        if(result_Status=="succes"){
+            console.log("here save status")
+            document.getElementById("progress_support").innerText=map_coming.size+" coords"
+            document.getElementById("progress_all").innerText="done";
+            var data=JSON.stringify(Array.from(resultSupport.map_exist_support.entries()))
+            localStorage.setItem(game_data.world+"map_exist_support",data)
+
+            let timeStopUpload = new Date().getTime();
+            let totalTimeUpload =  Math.round(((timeStopUpload - timeStartUpload) / 1000) * 100) / 100
+            UI.SuccessMessage(`<b>Upload commands done </b> <br> <br>
+                                Upload time: ${totalTimeUpload} sec <br>
+
+                                <center>
+                                    <table style ="border: 1px solid black;border-collapse: collapse">
+                                        <tr>
+                                            <td colspan="3" style = "text-align: center;border: 1px solid black;border-collapse: collaps;font-weight: bold;padding:10px">
+                                                Database details
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Type</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Total Number</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Size DB</td>
+                                        </tr>
+                                        <tr>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Commands attack</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${commandsAttacks.length}</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collaps;padding:5px">${sizeCommandsAttacksDB}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Commands support</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${commandsSupport.length}</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${sizeCommandsSupportDB}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">Troops Home</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${troopsHome.length}</td>
+                                            <td style = "text-align: center;border: 1px solid black;border-collapse: collapse;padding:5px">${sizeTroopsHomeDB}</td>
+                                        </tr>
+                                </table>
+                              </center>
+
+                                `,10000)
+
+            resolve({
+                totalTimeUpload:totalTimeUpload,
+                status: "success"
             })
-        );
-    }
+        }
+        else{
+            reject("error upload commands")
+        }
+    })
 
-    for (const [coord, data] of mapTroopsHomeDB.entries()) {
-        upserts.push(
-            sb.from("troops_home").upsert({
-                coord, data, world, tribe,
-                updated_at: new Date().toISOString()
-            })
-        );
-    }
-
-    for (const [id, data] of mapAttackDB.entries()) {
-        upserts.push(
-            sb.from("commands_attack").upsert({
-                command_id: id, data, world, tribe,
-                updated_at: new Date().toISOString()
-            })
-        );
-    }
-
-    for (const [pid, data] of mapStatus.entries()) {
-        upserts.push(
-            sb.from("status").upsert({
-                player_id: pid, data, world, tribe,
-                updated_at: new Date().toISOString()
-            })
-        );
-    }
-
-    await Promise.all(upserts);
-
-    // ===============================
-    // UI DONE
-    // ===============================
-    document.getElementById("progress_support").innerText =
-        `${mapSupportDB.size} coords`;
-
-    UI.SuccessMessage(
-        `<b>Upload supports completed</b><br>
-         Supports: ${mapSupportDB.size}<br>
-         Attacks: ${mapAttackDB.size}<br>
-         Troops home: ${mapTroopsHomeDB.size}`,
-        8000
-    );
-
-    return {
-        status: "success",
-        totalTimeUpload: 0
-    };
 }
-
+window.uploadSupports=uploadSupports;
 
 /////////////////////////////////////////////get troops coming from each village on incomings page//////////////////////////////////////////
 
@@ -6813,7 +7276,7 @@ function ajaxTroopsStationed(villageId){
                 obj_result.flagName=flagName
                 obj_result.LoyaltyLevel=LoyaltyLevel
 
-    
+
                 let stopAjax=new Date().getTime()
                 let difAjax=stopAjax-startAjax
                 console.log("wait ",difAjax)
@@ -6834,9 +7297,7 @@ function ajaxTroopsStationed(villageId){
 
 
 //////////////////////////////////////////////main table + all the logic for creating main table///////////////////////////////////////////////
-let mapAttacksVillageId = new Map();
-let map_playerId = new Map();
-let map_history_upload = new Map();
+var mapAttacksVillageId=new Map()
 
 async function viewSupport(){
     if(document.getElementById("div_container")!=null)
@@ -6864,7 +7325,7 @@ async function viewSupport(){
             <div id="div_rank_defender" style="margin:10px" hidden> </div>
             <div id="div_upload_time" style="margin:10px" hidden> </div>
             <div id="div_get_coords" style="margin:10px" hidden> </div>
-    
+
             <div style="display:flex;justify-content: center;width:100%">
                 <div style="width: 45%;margin:15px">
                     <table id="table_search"  border="1" style="width: 100%;background-color:${backgroundColor};border-color:${borderColor};">
@@ -6892,7 +7353,7 @@ async function viewSupport(){
                             </td>
                             <td rowspan="4" style="text-align:center; width:auto; background-color:${headerColor}">
                                 <center><input class="btn evt-confirm-btn btn-confirm-yes" type="button" id="btn_show_info" style="margin:10px" value="Show Map"></center>
-                            </td>                        
+                            </td>
                         </tr>
                         <tr>
                             <td style="text-align:center; width:auto; background-color:${headerColor};text-align:center">
@@ -6903,7 +7364,7 @@ async function viewSupport(){
                                     <font color="${titleColor}" style="margin-top:8px;margin-right:5px"><p>Tribe Info</p></font>
                                     <a href="#" onclick="UI.InfoMessage('Show information on the map for all tribe villages, except yours',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a>
                                 </div>
-                            </td>                    
+                            </td>
                         </tr>
                         <tr>
                             <td style="text-align:center; width:auto; background-color:${headerColor};text-align:center">
@@ -6914,7 +7375,7 @@ async function viewSupport(){
                                     <font color="${titleColor}" style="margin-top:8px;margin-right:5px"><p>Enemy Info</p></font>
                                     <a href="#" onclick="UI.InfoMessage('Show information on the map for all enemy villages',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a>
                                 </div>
-                            </td>                    
+                            </td>
                         </tr>
                         <tr>
                             <td style="text-align:center; width:auto; background-color:${headerColor};text-align:center">
@@ -6925,7 +7386,7 @@ async function viewSupport(){
                                     <font color="${titleColor}" style="margin-top:8px;margin-right:5px"><p>All Info</p></font>
                                     <a href="#" onclick="UI.InfoMessage('Show information on the map for all villages (allies + enemies)',5000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.png" style="width: 13px; height: 13px"/></a>
                                 </div>
-                            </td>                    
+                            </td>
                         </tr>
                     </table>
                 </div>
@@ -6958,7 +7419,7 @@ async function viewSupport(){
                             <p id="header_snipes">(0/0)</p>
                             </font>
                         </center>
-                    
+
                 </td>
                 <td style="text-align:center; width:auto; background-color:${headerColor}">
                     <center style="margin:1px;font-size:16px">
@@ -6976,9 +7437,9 @@ async function viewSupport(){
             </table>
         </div>
         </div>
-        
+
         `;
-    
+
 
 
    ////////////////////////////////////// //delete/////////////////////////////////////////////////////////////////////
@@ -6997,7 +7458,7 @@ async function viewSupport(){
     $("#contentContainer").eq(0).prepend(html_info);
     $("#mobileContent").eq(0).prepend(html_info);
 
-    
+
     $("#div_minimize").on("click",()=>{
         if($('#div_container_view').width() == widthInterfaceOverview){
             $('#div_container_view').css({'width' : '120px'});
@@ -7026,107 +7487,77 @@ async function viewSupport(){
 
     UI.SuccessMessage("Loading data..", 5000)
 
-// ===============================
-// DOWNLOAD DATA (SUPABASE ONLY)
-// ===============================
- timeDownloadStart = Date.now();
 
-const [
-    mapVillages,
-    reportsRes,
-    incomingsRes,
-    supportRes,
-    attacksRes,
-    statusRes,
-    troopsHomeRes,
-    status_chart
-] = await Promise.all([
-    getInfoVillages(),
+    let timeDownloadStart = new Date().getTime()
+    var [mapVillages, map_reports, map_incomings,data_support, map_attacks,map_status, map_history_upload, map_troops_home ,status_chart]=await Promise.all([
+            getInfoVillages(),
+            readFileDropbox(filename_reports),
+            readFileDropbox(filename_incomings),
+            readFileDropbox(filename_support),
+            readFileDropbox(filename_commands_attack),
+            readFileDropbox(filename_status_upload),
+            readFileDropbox(filename_history_upload),
+            readFileDropbox(filename_troops_home),
+            insertChartLibrary()])
+        .catch(err=>{alert(err)})
 
-    sb.from("reports")
-        .select("coord, data")
-        .eq("world", game_data.world)
-        .eq("tribe", game_data.player.ally),
 
-    sb.from("incomings")
-        .select("coord, data")
-        .eq("world", game_data.world)
-        .eq("tribe", game_data.player.ally),
+        var [map_reports, map_incomings, map_attacks, map_status, map_history_upload, data_support, map_troops_home] = await Promise.all([
+            decompress(await map_reports.arrayBuffer(), 'gzip'),
+            decompress(await map_incomings.arrayBuffer(), 'gzip'),
+            decompress(await map_attacks.arrayBuffer(), 'gzip'),
+            decompress(await map_status.arrayBuffer(), 'gzip'),
+            decompress(await map_history_upload.arrayBuffer(), 'gzip'),
+            decompress(await data_support.arrayBuffer(), 'gzip'),
+            decompress(await map_troops_home.arrayBuffer(), 'gzip'),
+        ]).catch(err=>{alert(err)})
 
-    sb.from("support")
-        .select("coord, data")
-        .eq("world", game_data.world)
-        .eq("tribe", game_data.player.ally),
 
-    sb.from("commands_attack")
-        .select("command_id, data")
-        .eq("world", game_data.world)
-        .eq("tribe", game_data.player.ally),
+        map_reports=new Map(JSON.parse(map_reports))
+        map_incomings=new Map(JSON.parse(map_incomings))
+        map_attacks=new Map(JSON.parse(map_attacks))
+        map_status=new Map(JSON.parse(map_status))
+        map_history_upload=new Map(JSON.parse(map_history_upload))
 
-    sb.from("status")
-        .select("player_id, data")
-        .eq("world", game_data.world)
-        .eq("tribe", game_data.player.ally),
+        map_troops_home=new Map(JSON.parse(map_troops_home))
 
-    sb.from("troops_home")
-        .select("coord, data")
-        .eq("world", game_data.world)
-        .eq("tribe", game_data.player.ally),
+        let map_coming=new Map(JSON.parse(data_support)[0])
+        let map_home=new Map(JSON.parse(data_support)[1])
 
-    insertChartLibrary()
-]);
-    // 👇 ADD HERE
- mapVillageById = new Map();
-Array.from(mapVillages.values()).forEach(v => {
-    if (v && v.villageId != null) {
-        mapVillageById.set(v.villageId, v);
+        console.log(mapVillages)
+        console.log(map_troops_home)
+
+    let map_playerId=new Map()
+    // console.log("first",map_home);
+    let commandAttacksBatch = await Promise.all(commandsAttacksPromises).catch(err=>{alert(err)})
+    let supportBatch = await Promise.all(supportPromises).catch(err=>{alert(err)})
+
+    const run = async () => {
+        console.log("Starting...");
+        for (let i = 0; i < commandAttacksBatch.length; i++) {
+            let [decompressedAttackBatch, decompressedSupportBatch]=await Promise.all([
+                    decompress(await commandAttacksBatch[i].arrayBuffer(), 'gzip'),
+                    decompress(await supportBatch[i].arrayBuffer(), 'gzip'),
+                ]).catch(err=>{alert(err)})
+
+            let map_attacks_batch = new Map(JSON.parse(decompressedAttackBatch))
+            map_attacks = new Map([...map_attacks, ...map_attacks_batch])
+
+            let map_support_batch = new Map(JSON.parse(decompressedSupportBatch)[0])
+            let map_troops_home_batch = new Map(JSON.parse(decompressedSupportBatch)[1])
+
+
+            map_coming = new Map([...map_coming, ...map_support_batch])
+            map_home = new Map([...map_home, ...map_troops_home_batch])
+
+
+        }
     }
-
-});
-        console.log("mapVillageById size:", mapVillageById.size);
-
-
-// ===============================
-// CONVERT TO MAPS (SAME SHAPE)
-// ===============================
-let map_reports = new Map(
-    (reportsRes.data || []).map(r => [r.coord, r.data])
-);
-
-let map_incomings = new Map(
-    (incomingsRes.data || []).map(r => [r.coord, r.data])
-);
-
-let map_attacks = new Map(
-    (attacksRes.data || []).map(r => [r.command_id, r.data])
-);
-
-let map_status = new Map(
-    (statusRes.data || []).map(r => [r.player_id, r.data])
-);
-
-let map_troops_home = new Map(
-    (troopsHomeRes.data || []).map(r => [r.coord, r.data])
-);
-
-// replaces old data_support blob
-let map_coming = new Map(
-    (supportRes.data || []).map(r => [r.coord, r.data])
-);
-
-// alias kept for compatibility
-let map_home = map_troops_home;
-
-console.log("Villages:", mapVillages);
-console.log("Troops home:", map_troops_home);
-
- timeDownloadStop = Date.now();
-console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
+    await run();
 
 
 
-
-     timeDownloadStop = new Date().getTime()
+    let timeDownloadStop = new Date().getTime()
     console.log("time download DB: " + (timeDownloadStop - timeDownloadStart))
 
 
@@ -7160,10 +7591,10 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
     //filters
     let list_filters=[]
     $('#div_settings input[type=checkbox]:checked').each(function (index,elem) {
-        
+
         list_filters.push(elem.value)
         // console.log(elem.value)
-        
+
     });
     // console.log("list_filters",list_filters)
 
@@ -7174,7 +7605,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
             // console.log(playerId)
             let villageId=mapVillages.get(key).villageId
             let playerName=mapVillages.get(key).playerName
-            
+
             let list_coming=map_coming.get(key)
             let hasAttacks=false
             let nrAttacks=0,nr_supports=0,nrNobles=0;
@@ -7182,7 +7613,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
             if(tribemates.includes(playerName.toLowerCase())){
                 // console.log("list_coming",list_coming)
-                //filter incomings 
+                //filter incomings
                 for(let i=0;i<list_coming.length;i++){
                     let landing_time=new Date(list_coming[i].landing_time).getTime()
                     let deleteIncoming=false
@@ -7210,10 +7641,10 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                             deleteIncoming=true
                             console.log("delete support")
                         }
-                        
 
 
-                    }   
+
+                    }
                     // remove if there is an attack/support further than x hours away
                     if(list_filters.includes("hide_further_attacks")){
                         let hours=parseInt(document.getElementById("settings_further").value)*3600*1000
@@ -7223,7 +7654,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                             deleteIncoming=true
                             console.log("delete further attacks")
                         }
-                    }   
+                    }
                     // remove if there is an attack/support closer than x hours away
                     if(list_filters.includes("hide_closer_attacks")){
                         let hours=parseInt(document.getElementById("settings_closer").value)*3600*1000
@@ -7233,8 +7664,8 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                             deleteIncoming=true
                             console.log("delete closer attacks")
                         }
-                    }  
-                    
+                    }
+
                     //remove if an attack/def was sent and uploaded to dropbox but then the attacker withdrawn his command
                     if(playerId==game_data.player.id.toString()){
                         let map_exist_command=new Map(JSON.parse(localStorage.getItem(game_data.world+"map_exist_support")))
@@ -7246,7 +7677,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                         }
                     }
 
-                        
+
                         //check if is a small/medium/big attack or a support
                         let coord_origin=list_coming[i].coord_origin
                         let playerId_origin=list_coming[i].player_origin_id
@@ -7255,7 +7686,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                             let idPlayer_dropbox
                             let type_dropbox
                             let nr_troupes_dropbox
-            
+
                             let obj_report=map_reports.get(coord_origin);
                             var traveling=false
                             if(coord_origin == obj_report.coordAttacker){
@@ -7275,10 +7706,10 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                                 type_dropbox=obj_report.typeSupporter;
                                 nr_troupes_dropbox=obj_report.nrTroupesSupporter
                             }
-            
+
                             if(idPlayer_dropbox == playerId_origin)
                             {
-                    
+
                                 //calculate population
                                 let date_landing_report=new Date(obj_report.time_report)
                                 let distance=calcDistance(coord_origin,list_coming[i].coord_destination)
@@ -7306,7 +7737,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                                     let timeForRecruiting = (date_land.getTime()-time_attack)-date_landing_report.getTime()
                                     let pop_small_attack=(parseInt(document.getElementById("settings_small_attack").value)/20000)*100
                                     let pop_medium_attack=(parseInt(document.getElementById("settings_medium_attack").value)/20000)*100
-                                    
+
                                     if(pop_medium_attack<pop_small_attack)
                                         alert("pop for medium attacks must be higher than pop for small attacks")
                                     if(Number.isNaN(pop_small_attack))
@@ -7316,10 +7747,10 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
                                     // console.log("time for recruiting",timeForRecruiting)
                                     // console.log("nr_troupes_dropbox",nr_troupes_dropbox)
-                                    nr_troupes_dropbox=calcProductionTroupes(timeForRecruiting,nr_troupes_dropbox)     
+                                    nr_troupes_dropbox=calcProductionTroupes(timeForRecruiting,nr_troupes_dropbox)
                                     // console.log("nr_troupes_dropbox",nr_troupes_dropbox)
                                     // console.log(list_coming[i])
-                                    if(nr_troupes_dropbox <= pop_small_attack)               
+                                    if(nr_troupes_dropbox <= pop_small_attack)
                                         newTypeAttack="attack_small.png"
                                     else if(nr_troupes_dropbox >pop_small_attack && nr_troupes_dropbox <= pop_medium_attack )
                                         newTypeAttack="attack_medium.png"
@@ -7346,9 +7777,9 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
 
                 //counting attacks,supports, nobles, snipes, recaps
-    
+
                 for(let i=0;i<list_coming.length;i++){
-              
+
 
                     let landing_time=new Date(list_coming[i].landing_time).getTime()
                     if(landing_time>date_current){
@@ -7357,7 +7788,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                             hasAttacks=true
                         }
                         else{
-                            nr_supports++   
+                            nr_supports++
                         }
                         if(list_coming[i].labelName.includes("snob")){
                             nrNobles++
@@ -7416,7 +7847,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                             }
                         }
                     }
-  
+
 
                 }
 
@@ -7436,7 +7867,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
                 obj_output.nr_supports=nr_supports
                 obj_output.nrNobles=nrNobles
-                
+
                 obj_output.nrSnipes=nrSnipes
                 obj_output.nrSniped=nrSniped
                 obj_output.nrRecaps=nrRecaps
@@ -7466,7 +7897,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                     let obj_update=map_playerId.get(playerId)
                     let list=obj_update.list_coords
                     list.push(obj_output)
-                    
+
                     obj_update.list_coords=list
                     obj_update.nr_attacks_total+=nrAttacks
                     obj_update.nr_supports_total+=nr_supports
@@ -7479,17 +7910,17 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                     map_playerId.set(playerId,obj_update)
 
                 }
-        
+
             }
         } catch (error) {
             console.log(error)
         }
 
-            
-        
+
+
     })
     // console.log(map_playerId)
-    
+
 
 
 
@@ -7514,7 +7945,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
             map_playerId.delete(key)
         }
     })
-    
+
 
 
 
@@ -7558,16 +7989,16 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
     //create a map with commands attacks, every coord has number of fangs,nukes,nobles
     //this part is for Enemy Info
-    
-    
-     mapVillageByIdFinal=new Map()
+
+
+    let mapVillageByIdFinal=new Map()
     let mapAttacksPlayersIdFinal=new Map()
 
     Array.from(map_reports.keys()).forEach(key=>{
 
         try {//if a village become a barb
             let obj_report=map_reports.get(key)
-  
+
             let villageId=mapVillages.get(key).villageId
             let player_destination_name=mapVillages.get(key).playerName
             let player_destination_id=mapVillages.get(key).playerId
@@ -7580,8 +8011,8 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                 time_report_home=obj_report["time_report_home_"+key]
 
             }
-        
-            
+
+
             //get troops away
             let troopsAway=[]
             let type_village=null
@@ -7591,7 +8022,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                         type:obj_report.attackingArmy[i].type,
                         count:obj_report.attackingArmy[i].count - obj_report.attackingArmyLosses[i].count
                     })
-                }  
+                }
                 //type_village
                 if(obj_report.typeAttacker.includes("off")){
                     type_village="light"
@@ -7626,7 +8057,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                     type_village="sword"
                 }
             }
-    
+
 
             mapVillageByIdFinal.set(villageId,{
                 nr_fangs:0,
@@ -7647,10 +8078,10 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
             console.log(error)
         }
-        
+
 
     })
-    
+
     let map_ranking_attacker=new Map()
     let map_ranking_defender=new Map()
     // let mapAttacksVillageId=new Map()
@@ -7659,7 +8090,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
         let obj=map_attacks.get(key)
         let date_landing=new Date(obj.landing_time).getTime()
         let type_attack=obj.type_attack
-        
+
         let coord=obj.coord_destination
         let villageId=obj.coord_destination_id
 
@@ -7672,7 +8103,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
         let troops = obj.troops
         let fang=0,nuke=0,noble=0,fake=0
 
-        
+
         let troopsAtHome=null,time_report_home=null
         let troopsAway=null, time_report=null
         let type_village=null
@@ -7687,7 +8118,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                 time_report_home=obj_report["time_report_home_"+coord]
             }
 
-            
+
             //troops away
             time_report=obj_report.time_report
             if(coord==obj_report.coordAttacker){//get troops attack
@@ -7708,7 +8139,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                 else if(obj_report.typeAttacker.includes("def")){
                     type_village="sword"
                 }
-                
+
             }else if(coord==obj_report.coordDefender){//get troops away if it's defensive
                 troopsAway=[]
                 if(obj_report.travelingTroops != undefined){
@@ -7731,17 +8162,17 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                 }
 
             }
-           
+
         }
 
         // fangs_cat=30;
-   
+
         if(troops.axe + troops.light*4 + troops.ram*5 + troops.catapult*8 > pop_medium_attack)     //check for nuke
             nuke=1
         else if(troops.axe + troops.light*4 < pop_small_attack && troops.catapult >= fangs_cat )        //check for fang
             fang=1
 
-        
+
         //check for noble
         if(troops.snob>0)
             noble=1
@@ -7756,7 +8187,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
 
 
-        
+
         ////map for show info on the map
         if(!tribemates.includes(player_destination_name)){
 
@@ -7789,7 +8220,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                     mapAttacksPlayersId.set(player_destination_id,player_destination_name)
             }
 
-            
+
             //map for show ranking attackers with fangs/nukes/fakes
             player_origin_id = player_origin_id.toString()
 
@@ -7799,9 +8230,9 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                 obj_update.nrNobles+=noble
                 obj_update.nr_fangs+=fang
                 obj_update.nr_fakes+=fake
-                map_ranking_attacker.set(player_origin_id,obj_update) 
+                map_ranking_attacker.set(player_origin_id,obj_update)
 
-         
+
 
             }
             else{
@@ -7810,7 +8241,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                     nr_nukes:nuke,
                     nrNobles:noble,
                     nr_fangs:fang,
-                    nr_fakes:fake 
+                    nr_fakes:fake
                 })
             }
             player_destination_id = player_destination_id.toString()
@@ -7821,7 +8252,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                 obj_update.nrNobles+=noble
                 obj_update.nr_fangs+=fang
                 obj_update.nr_fakes+=fake
-                map_ranking_defender.set(player_destination_id,obj_update) 
+                map_ranking_defender.set(player_destination_id,obj_update)
             }
             else{
                 map_ranking_defender.set(player_destination_id,{
@@ -7829,14 +8260,14 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
                     nr_nukes:nuke,
                     nrNobles:noble,
                     nr_fangs:fang,
-                    nr_fakes:fake 
+                    nr_fakes:fake
                 })
             }
 
 
 
         }
-        
+
 
 
     })
@@ -7860,7 +8291,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
 
     //this part is for Ally Info
-     mapVillageById=new Map()
+    let mapVillageById=new Map()
     Array.from(map_playerId.keys()).forEach(key=>{
         let list_coords = map_playerId.get(key).list_coords
 
@@ -7916,7 +8347,7 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
             obj_result.nrSnipes = list_coords[i].nrSnipes
             obj_result.nrSniped = list_coords[i].nrSniped
-            
+
             obj_result.nrRecaps = list_coords[i].nrRecaps
             obj_result.nrRecaped = list_coords[i].nrRecaped
 
@@ -7933,113 +8364,63 @@ console.log("Time download DB:", timeDownloadStop - timeDownloadStart);
 
 
     //add troops home for own villages that don't have incomings
-   // vault.js ~8120 (PATCH START)
-    function normalizeTroopsHome(troopsHomeDetails) {
-    if (!troopsHomeDetails) return null;
+    Array.from(map_troops_home.keys()).forEach(coord=>{
+        let villageDetails = mapVillages.get(coord)
+        let troopsHomeDetails = map_troops_home.get(coord)
+        let totalPop = 0, totalPopOff = 0, totalPopDef = 0
 
-    // Already correct format
-    if (troopsHomeDetails.troopInVillage && troopsHomeDetails.troopsOwn) {
-        return troopsHomeDetails;
-    }
 
-    // Supabase flat format → convert
-    const troopInVillage = {};
-    const troopsOwn = {};
+        Object.keys(troopsHomeDetails.troopInVillage).forEach(troopName=>{
+            if(["spear", "sword", "archer", "heavy"].includes(troopName)){
+                totalPop += troopsHomeDetails.troopInVillage[troopName] * troopsPop[troopName]
+                totalPopDef += troopsHomeDetails.troopsOwn[troopName] * troopsPop[troopName]
+            }
+            if(["axe", "light", "marcher", "ram", "catapult"].includes(troopName)){
+                totalPopOff += troopsHomeDetails.troopsOwn[troopName] * troopsPop[troopName]
+            }
 
-    Object.keys(troopsPop).forEach(troop => {
-        const val = troopsHomeDetails[troop];
-        if (typeof val === "number") {
-            troopInVillage[troop] = val;
-            troopsOwn[troop] = val;
+        })
+        let typeVillage = (totalPopDef > totalPopOff) ? "def" : "off"
+        typeVillage = (troopsHomeDetails.troopsOwn['spy'] > 4000) ? "spy" : typeVillage
+
+        let hasNoble = (troopsHomeDetails.troopsOwn['snob'] > 0) ? true : false
+
+        totalPop = Math.round( totalPop / 1000)
+        totalPopOff = Math.round( totalPopOff / 1000)
+        totalPopDef = Math.round( totalPopDef / 1000)
+
+        if(!mapVillageById.has(villageDetails.villageId)){
+            mapVillageById.set(villageDetails.villageId + "", {
+                "villageId": villageDetails.villageId,
+                "playerId": villageDetails.playerId,
+                // "nrAttacks": randomIntFromInterval(0,30),
+                // "nrNobles": randomIntFromInterval(0,4),
+                "nrAttacks": 0,
+                "nrNobles": 0,
+                "nrSnipes": 0,
+                "nrSniped": 0,
+                "nrRecaps": 0,
+                "nrRecaped": 0,
+                "pop": totalPop,
+                "typeVillage": typeVillage,
+                "wallLevel": troopsHomeDetails.wallLvl,
+                "farmLevel": troopsHomeDetails.farmLvl,
+                "totalPopOff": totalPopOff,
+                "totalPopDef": totalPopDef,
+                "hasNoble": hasNoble
+            })
         }
-    });
+        else{
+            let updateObj = mapVillageById.get(villageDetails.villageId)
+            updateObj["typeVillage"] = typeVillage
+            updateObj["totalPopOff"] = totalPopOff
+            updateObj["totalPopDef"] = totalPopDef
+            updateObj["hasNoble"] = hasNoble
+            mapVillageById.set(villageDetails.villageId, updateObj)
 
-    if (Object.keys(troopInVillage).length === 0) return null;
-
-    return {
-        troopInVillage,
-        troopsOwn,
-        wallLvl: troopsHomeDetails.wallLvl || 0,
-        farmLvl: troopsHomeDetails.farmLvl || 0
-    };
-}
-
-Array.from(map_troops_home.keys()).forEach(coord => {
-
-    const villageDetails = mapVillages.get(coord);
-    if (!villageDetails || villageDetails.villageId === undefined) {
-        return;
-    }
-
-    // ✅ NORMALIZE HERE
-    let troopsHomeDetails = normalizeTroopsHome(map_troops_home.get(coord));
-    if (!troopsHomeDetails) {
-        return;
-    }
-
-    let totalPop = 0;
-    let totalPopOff = 0;
-    let totalPopDef = 0;
-
-    Object.keys(troopsHomeDetails.troopInVillage).forEach(troopName => {
-
-        const countVillage = troopsHomeDetails.troopInVillage[troopName] || 0;
-        const countOwn = troopsHomeDetails.troopsOwn[troopName] || 0;
-
-        if (["spear", "sword", "archer", "heavy"].includes(troopName)) {
-            totalPop += countVillage * troopsPop[troopName];
-            totalPopDef += countOwn * troopsPop[troopName];
         }
 
-        if (["axe", "light", "marcher", "ram", "catapult"].includes(troopName)) {
-            totalPopOff += countOwn * troopsPop[troopName];
-        }
-    });
-
-    let typeVillage = totalPopDef > totalPopOff ? "def" : "off";
-    if ((troopsHomeDetails.troopsOwn.snob || 0) > 0) {
-        typeVillage = "noble";
-    }
-    if ((troopsHomeDetails.troopsOwn.spy || 0) > 4000) {
-        typeVillage = "spy";
-    }
-
-    totalPop = Math.round(totalPop / 1000);
-    totalPopOff = Math.round(totalPopOff / 1000);
-    totalPopDef = Math.round(totalPopDef / 1000);
-
-    const villageIdKey = String(villageDetails.villageId);
-
-    if (!mapVillageById.has(villageIdKey)) {
-        mapVillageById.set(villageIdKey, {
-            villageId: villageDetails.villageId,
-            playerId: villageDetails.playerId,
-            nrAttacks: 0,
-            nrNobles: 0,
-            nrSnipes: 0,
-            nrSniped: 0,
-            nrRecaps: 0,
-            nrRecaped: 0,
-            pop: totalPop,
-            typeVillage,
-            wallLevel: troopsHomeDetails.wallLvl || 0,
-            farmLevel: troopsHomeDetails.farmLvl || 0,
-            totalPopOff,
-            totalPopDef,
-            hasNoble: (troopsHomeDetails.troopsOwn.snob || 0) > 0
-        });
-    } else {
-        const updateObj = mapVillageById.get(villageIdKey);
-        updateObj.typeVillage = typeVillage;
-        updateObj.totalPopOff = totalPopOff;
-        updateObj.totalPopDef = totalPopDef;
-        updateObj.hasNoble = (troopsHomeDetails.troopsOwn.snob || 0) > 0;
-        mapVillageById.set(villageIdKey, updateObj);
-    }
-});
-
-// PATCH END
-
+    })
     console.log("mapVillageByIdAfter",mapVillageById)
 
 
@@ -8056,7 +8437,7 @@ Array.from(map_troops_home.keys()).forEach(coord => {
             UI.ErrorMessage("Select at least one of the checkboxes to view data on the map",2000)
         }
         //filter information
-        
+
         if(enemyInfo == true || allInfo == true ){
             // console.log("mapAttacksVillageId",mapAttacksVillageId)
             let drawInfo=true
@@ -8082,7 +8463,7 @@ Array.from(map_troops_home.keys()).forEach(coord => {
                                         let obj=mapAttacksVillageId.get(villageId[0])
                                         createMapInfoOffensiveSmall(obj)
                                         console.log("draw offensive for every player")
-                                        
+
 
                                     }
                                 }
@@ -8098,7 +8479,7 @@ Array.from(map_troops_home.keys()).forEach(coord => {
         }
 
         if(myInfo == true || tribeInfo == true || allInfo == true){
-            
+
             // console.log("mapVillageById",mapVillageById)
             let drawInfo=true
             let originalSpawnSector = TWMap.mapHandler.spawnSector;
@@ -8177,7 +8558,7 @@ Array.from(map_troops_home.keys()).forEach(coord => {
         let nrReports=map_counter_reports.get(key)
         if(nrReports==undefined)
             nrReports=0
-            
+
         obj.name=obj.name+` (${nrReports})`
     })
 
@@ -8192,7 +8573,7 @@ Array.from(map_troops_home.keys()).forEach(coord => {
     for(let i=0;i<list_incomings_merge.length;i++){
         list_incomings_merge[i].date_launch=calculateDateLaunch(list_incomings_merge[i])
     }
-  
+
     //sort by attackers name and then launch time
     list_incomings_merge.sort((o1,o2)=>{
         return (o1.player_off > o2.player_off)?1:(o1.player_off < o2.player_off)?-1:
@@ -8246,7 +8627,7 @@ Array.from(map_troops_home.keys()).forEach(coord => {
 
     // console.log("map_nr_incs_hour",map_nr_incs_hour)
     let list_spotter=Array.from(map_nr_incs_hour.entries())
-    
+
 
 
 
@@ -8275,7 +8656,7 @@ Array.from(map_troops_home.keys()).forEach(coord => {
         createTableRankingDefenders(map_ranking_defender)
     })
     document.getElementById("btn_upload_time").addEventListener("click",()=>{
-        createTableUploadTime(map_status)  
+        createTableUploadTime(map_status)
     })
     document.getElementById("btn_get_coords").addEventListener("click",()=>{
         createTableGetCoords(mapVillages)
@@ -8283,7 +8664,7 @@ Array.from(map_troops_home.keys()).forEach(coord => {
     document.getElementById("btn_op_spotter").addEventListener("click",()=>{
         let html_spotter=`<div id="div_op_spotter" style="height:500px;width:800px;overflow:auto" > </div>`
         Dialog.show("content",html_spotter)
-    
+
         createChart(list_spotter,"div_op_spotter")
     })
 
@@ -8297,14 +8678,14 @@ Array.from(map_troops_home.keys()).forEach(coord => {
     timeDownload = parseInt(timeDownload * 100) / 100
     UI.SuccessMessage(`
             Time loading data: <b>${timeDownload} s </b> <br>
-            Time processing data: <b>${timeProcessed} s </b> 
+            Time processing data: <b>${timeProcessed} s </b>
     `, 3000)
-    
+
 
 }
 
 
-function randomIntFromInterval(min, max) { // min and max included 
+function randomIntFromInterval(min, max) { // min and max included
     return Math.floor(Math.random() * (max - min + 1) + min)
   }
 
@@ -8356,10 +8737,10 @@ function createMapInfoDefensiveSmall(obj){
 
             if(obj.nrSnipes==1)
                 colorBorder=`background-color:rgba(255, 10, 10, 0.14);outline:rgba(255, 51, 0, 0.7) solid 1px`// red border
-            
+
             if(obj.nrRecaps==1)
                 colorBorder=`background-color:rgba(127,5,5, 0.14);outline:rgba(127,5,5, 0.7) solid 1px`// dark red border
-            
+
             if(obj.nrSniped==1 || obj.nrRecaped==1)
                 colorBorder=`background-color:rgba(155, 252, 10, 0.14);outline:rgba(51, 255, 0, 0.7) solid 1px`// green border
 
@@ -8405,13 +8786,13 @@ function createMapInfoDefensiveSmall(obj){
                 html_info += `<img style="position:absolute;left:${leftImg};top:${topImg};width:13px;height:13px;z-index:4;margin-left:7px;"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic//map/incoming_attack.png">
                     <center><font color="${colorIncomings}"  class="shadow20" style="position:absolute;left:${leftImg};top:${topImg};width:14px;height:14px;z-index:4;margin-left:18px; font-size: 11px">${obj.nrAttacks}</font></center>`
             }
-  
+
             //nobles coming as incs
             if(obj.nrNobles > 0){
                 html_info+=`<center><font color="${redColor}"  class="shadow20" style="position:absolute;left:${leftImg};top:${topImg};width:14px;height:14px;z-index:4;;margin-left:7px;margin-top:11px; font-size: 11px">${obj.nrNobles}</font></center>`
             }
 
-            //containing own noble in village 
+            //containing own noble in village
             if(obj.hasNoble == true){
                 html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:10px;height:10px;z-index:4;margin-top:15px;margin-left:40px;background-color:white"  src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.png">`
             }
@@ -8420,7 +8801,7 @@ function createMapInfoDefensiveSmall(obj){
             if(obj.LoyaltyLevel < 100){
                 html_info+=`<center><font color="${colorLoyalty}" class="shadow20" style="position:absolute;left:${leftImg};top:${topImg};width:14px;height:14px;z-index:4;margin-top:23px;margin-left:34px;font-size: 11px;">${obj.LoyaltyLevel}</font></center>`
             }
-            
+
             if((obj.LoyaltyLevel == 100 || obj.LoyaltyLevel == undefined || obj.LoyaltyLevel == 'none') && obj.wallLevel < 20){
                 html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:10px;height:10px;z-index:4;margin-top:26px;margin-left:41px;background-color:#471212"  src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/wall.png">`
             }
@@ -8432,7 +8813,7 @@ function createMapInfoDefensiveSmall(obj){
                 html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:14px;height:14px;z-index:4;margin-left:37px;background-color:${colorType}"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${typeVillage}.png">`
             }
 
-            
+
             $(html_info).appendTo(parent);
         }
 
@@ -8464,7 +8845,7 @@ function createMapInfoOffensiveSmall(obj){
             let colorBorder="background-color:rgba(20, 20, 20, 0.34)"//no border
 
             var noBorder=`background-color:rgba(40, 40, 40, 0.34)`
-            
+
             while(document.getElementById(`map_icons_${obj.villageId}`)!=null){
                 document.getElementById(`map_icons_${obj.villageId}`).remove()
             }
@@ -8487,7 +8868,7 @@ function createMapInfoOffensiveSmall(obj){
                     colorTypeAttack="background-color:rgb(255, 132, 5)"
                 else if(obj.type_village=="spy")
                     colorTypeAttack="background-color:rgb(255,255,255)"
-                
+
 
             }
 
@@ -8502,7 +8883,7 @@ function createMapInfoOffensiveSmall(obj){
                     }
                     if(type =="snob" && count > 0){
                         has_noble=true
-                    } 
+                    }
                 }
                 stacks_home=parseInt(Math.round(stacks_home/1000))
             }
@@ -8512,7 +8893,7 @@ function createMapInfoOffensiveSmall(obj){
 
             if(has_noble==false && obj.troopsAway!=null && obj.troopsAway!=undefined){
                 if(obj.troopsAway.length>0){
-                    let nobleInfo=obj.troopsAway.slice(-1)[0] 
+                    let nobleInfo=obj.troopsAway.slice(-1)[0]
                     if(nobleInfo.type=="snob" && nobleInfo.count>0){
                         has_noble=true
                     }
@@ -8522,7 +8903,7 @@ function createMapInfoOffensiveSmall(obj){
 
             let html_info
             //info for small img village  on the map
-         
+
 
             if(obj.nr_nukes>0 || obj.nrNobles>0 || obj.nr_fangs >0 ){
                 if(obj.type_village!=null){
@@ -8530,9 +8911,9 @@ function createMapInfoOffensiveSmall(obj){
                     let borderMain=(obj.type_village=="light") ? blueBorder : lighBlueBorder
                     html_info=`
                         <div id="info_extra${obj.villageId}" style="position:absolute;left:${leftImg};top:${topImg};width:51px;height:36px;z-index:3; ${borderMain}"></div>`
-                    
+
                     html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:35px;${border}"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${obj.type_village}.png">`
-                    
+
                     if(stacks_home>=0){
                         html_info+=`<center><font color="${"#FFFFF1"}" class="shadow20" style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:8px;font-size: 10px;">${stacks_home}k</font></center>`
 
@@ -8553,11 +8934,11 @@ function createMapInfoOffensiveSmall(obj){
                     html_info+=`
                     <center><font color="${redColor}" class="shadow20" style="position:absolute;left:${leftImg};top:${topImg};width:14px;height:14px;z-index:4;margin-top:22px;margin-left:34px;font-size: 12px;background-color:black;">${obj.nrNobles}</font></center>`
                 }
-         
+
 
             }
             else{
-          
+
 
 
                 if(obj.type_village!=null){
@@ -8565,9 +8946,9 @@ function createMapInfoOffensiveSmall(obj){
                     let borderMain=(obj.type_village=="light")?blueBorder : lighBlueBorder
                     html_info=`
                         <div id="info_extra${obj.villageId}" style="position:absolute;left:${leftImg};top:${topImg};width:51px;height:36px;z-index:3; ${borderMain}"></div>`
-                    
+
                     html_info+=`<img style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:35px;${border}"  src="https://dsen.innogamescdn.com/asset/c2dee33a/graphic/unit/unit_${obj.type_village}.png">`
-                    
+
                     if(stacks_home>=0){
                         html_info+=`<center><font color="${"#FFFFF1"}" class="shadow20" style="position:absolute;left:${leftImg};top:${topImg};width:16px;height:16px;z-index:4;margin-left:8px;font-size: 10px;">${stacks_home}k</font></center>`
 
@@ -8615,7 +8996,7 @@ function showPopupInfo(mapAttacksVillageId){
                     <td style="text-align:center; width:auto;background-color:#c1a264" >
                         <center style="margin:0px;"><b>seen</b></center>
                     </td>`
-                
+
 
             for(let i=0;i<units.length-militia;i++){
                 html_popup+=`
@@ -8729,7 +9110,7 @@ function createTablePlayers(map_playerId,mapVillages){
             <td style="text-align:center; width:auto; background-color:${headerColor}">
                 <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/ultraviolet/20/000000/horror.png"/>(${obj.nr_recaped_total}/${obj.nr_recap_total})</font></center>
             </td>
-            
+
         </tr>
         `
 
@@ -8797,7 +9178,7 @@ function createTablePlayers(map_playerId,mapVillages){
                     </td>
                     <td style="text-align:center; width:auto; background-color:${headColorRecap}">
                         <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/ultraviolet/20/000000/horror.png"/></font></center>
-                    </td>             
+                    </td>
                 </tr>
                 `
             }
@@ -8818,7 +9199,7 @@ function createTablePlayers(map_playerId,mapVillages){
             window.setTimeout(()=>{
                 $(".tr_table_coord").remove()
             },delay+10)
-            
+
         }
         else{
 
@@ -8836,7 +9217,7 @@ function createTablePlayers(map_playerId,mapVillages){
             $(cell).append(div)
             $(cell).hide()
             $(cell).show(delay)
-            
+
             createEventCoord(map_playerId,mapVillages,playerId)
 
         }
@@ -8862,7 +9243,7 @@ function createTableCoordTroops(obj,admin){
                     troopsSupportComing[key]+=obj.list_coming[i].troops[key]
             })
         }
-        
+
     }
     troopsSupportComing.snob=0;
 
@@ -8886,26 +9267,26 @@ function createTableCoordTroops(obj,admin){
 
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:5px"><font color="${titleColor}">coord </font></center>
-            </td>    
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:5px;padding;"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/unit/att.png"> </font></center>
-            </td>    
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/4ba99e83/graphic/flags/small/3.png"> </font></center>
-            </td>    
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/snob.png"> </font></center>
-            </td>    
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:5x"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/wall.png"> </font></center>
-            </td>    
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/1d2499b/graphic/buildings/farm.png"> </font></center>
-            </td>   
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:5px"><font color="${titleColor}">troops </font></center></p>
-            </td>   
-            
+            </td>
+
         `;
     /////////////////////////////////////////////////////////////////////////////Add info village//////////////////////////////////////////////////
 
@@ -8918,7 +9299,7 @@ function createTableCoordTroops(obj,admin){
             </td>`
         html_table_coord+=`</tr>
                 <tr>`
-        
+
         html_table_coord+=`
             <td rowspan="3" class="" style="width:30px;height:30px;text-align:center; background-color:${headerColorCoords};color:white">${obj.list_coming[0].coord_destination}</td>
             <td rowspan="3" class="" style="width:70px;height:30px;text-align:center; background-color:${headerColorCoords};color:white">${obj.nrAttacks}</td>
@@ -8985,7 +9366,7 @@ function createTableCoordTroops(obj,admin){
 
 function createEventCoord(map_playerId,mapVillages,playerId){
     $(".infoCoord").on("click",(event)=>{
-        
+
         // console.log(this.parentElement)
         // console.log($(this).parent())
 
@@ -9009,7 +9390,7 @@ function createEventCoord(map_playerId,mapVillages,playerId){
         // console.log(coordId)
         // console.log(numberTrCoord)
         // console.log(event.target)
-        
+
         console.log("objbaaa",obj)
         let admin=true
         let html_table_coord=`<tr><td >`
@@ -9040,7 +9421,7 @@ function createEventCoord(map_playerId,mapVillages,playerId){
                 $(".tr_table_coord_info").remove()
                 // $("#div_incomingsInfo").remove()
             },delay+10)
-            
+
         }
         else{
 
@@ -9081,26 +9462,26 @@ function createTableCoordIncomings(list,mapVillages){
         <tr>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:5px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/056b9c0b/graphic/unit/att.png"> </font></center>
-            </td>  
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:0px"><font color="${titleColor}">speed/pop </font></center>
-            </td>    
+            </td>
             <td colspan="2" style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                <center style="margin:0px"><font color="${titleColor}">destination </font></center>
-            </td>    
+            </td>
             <td colspan="2" style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:0px"><font color="${titleColor}">origin </font></center>
-            </td>    
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:0px"><font color="${titleColor}">Arrival time </font></center>
-            </td>    
+            </td>
             <td style="text-align:center; width:auto; background-color:${headerColorFirstRow}">
                 <center style="margin:0px"><font color="${titleColor}">Arrives in </font></center>
-            </td>    
+            </td>
 
 
         </tr>`
-        
+
         for(let i=0;i<list.length;i++){
             // console.log("aici baa")
             // console.log(list[i])
@@ -9153,7 +9534,7 @@ function createTableCoordIncomings(list,mapVillages){
             }
 
             // console.log(list[i].labelName)
-            let arrived=new Date(list[i].landing_time).getTime()  
+            let arrived=new Date(list[i].landing_time).getTime()
             if(arrived>date_current){
                 let date=list[i].landing_time.split(" ")[0]
                 let time=list[i].landing_time.split(" ")[1].split(":")
@@ -9164,10 +9545,10 @@ function createTableCoordIncomings(list,mapVillages){
                     <tr style="white-space:nowrap;" >
                         <td  style="text-align:center; width:auto; background-color:${headerNoble}">
                             <center style="margin:0px;padding:0px"><font color="${titleColor}"><img src="${type_attack}"> </font></center>
-                        </td> 
+                        </td>
                         <td  style="text-align:center; width:auto; background-color:${headerNoble}">
                            <center style="margin:0px;padding:0px"><font color="${titleColor}">${labelName}</font></center>
-                        </td> 
+                        </td>
                         <td style="text-align:center; width:auto; background-color:${headerNoble}">
                             <a href="${game_data.link_base_pure}info_village&id=${villageId}"style="margin:0px;padding:0px"><center><font color="${titleColor}">${list[i].coord_destination}</font></center></a>
                         </td>
@@ -9182,11 +9563,11 @@ function createTableCoordIncomings(list,mapVillages){
                         </td>
                         <td style="text-align:center; width:auto; background-color:${headerNoble}">
                             <center style="margin:0px;padding:0px"><font color="${titleColor}">${date} <b>${time} <font color="${titleColorNoble}"> ${milisec}</font></b> </font></center>
-                        </td>   
+                        </td>
                         <td style="text-align:center; width:auto; background-color:${headerNoble}" >
                             <center style="margin:0px;padding:0px"><font color="${titleColor}" >${convertBuildTime(arrived-date_current)}</font></center>
-                        </td>    
-                        
+                        </td>
+
                     </tr>
                 `
             }
@@ -9289,7 +9670,7 @@ function createTableSettings(){
         $("#div_upload_time").hide()
         $("#div_get_coords").hide(500)
         $("#div_settings").toggle(500)
-    }    
+    }
 
 
     //initialize settings only if it's visible
@@ -9351,14 +9732,14 @@ function createTableSettings(){
         localStorage.removeItem(game_data.world+"map_exist_support")
         UI.SuccessMessage("local storage is cleared",1000)
     })
-   
+
 }
 
 /////////////////////////////////////////////////////////////////create table ranking atackers//////////////////////////////////////////////////////
 
 function createTableRankingAttackers(map_ranking){
 
-    
+
     let html=`
     <center>
     <div style="height:400px;overflow: auto">
@@ -9412,7 +9793,7 @@ function createTableRankingAttackers(map_ranking){
                     <center><font style="margin:0px" color="${titleColor}">${obj_attacks.nrNobles}</font></center>
                 </td>
             </tr>
-        
+
         `
     })
     html+=`
@@ -9480,7 +9861,7 @@ function createTableRankingAttackers(map_ranking){
 
 function createTableRankingDefenders(map_ranking){
 
-    
+
     let html=`
         <center>
             <div style="height:400px;overflow: auto">
@@ -9534,7 +9915,7 @@ function createTableRankingDefenders(map_ranking){
                     <center><font style="margin:0px" color="${titleColor}">${obj_attacks.nrNobles}</font></center>
                 </td>
             </tr>
-        
+
         `
     })
     html+=`
@@ -9602,7 +9983,7 @@ function createTableRankingDefenders(map_ranking){
 
 function createTableUploadTime(map_upload_time){
 
-    
+
     let html=`
         <center>
             <div style="height:400px;overflow: auto">
@@ -9652,7 +10033,7 @@ function createTableUploadTime(map_upload_time){
                     <center><font style="margin:0px" color="${titleColor}">${convertDate(obj_upload.troops_date)}</font></center>
                 </td>
             </tr>
-        
+
         `
     })
     html+=`
@@ -9782,7 +10163,7 @@ function sortInfoIncomings(map_playerId,mapVillages){
         createTablePlayers(map_playerId,mapVillages)
     })
     //////////////////////////////////////////////////////////////sort by snipes///////////////////////////////////////////
-    
+
     document.getElementById("sort_by_snipes").addEventListener("click",()=>{
         map_playerId= new Map([...map_playerId.entries()].sort((o1,o2) =>{
             return (o1[1].nr_snipe_total>o2[1].nr_snipe_total)?-1:(o1[1].nr_snipe_total<o2[1].nr_snipe_total)?1:0;
@@ -9906,7 +10287,7 @@ function createTableGetCoords(mapVillages){
         $("#div_upload_time").hide()
         $("#div_settings").hide(500)
         $("#div_get_coords").toggle(500)
-    }    
+    }
 
 
     // //initialize settings only if it's visible
@@ -10001,7 +10382,7 @@ function createTableGetCoords(mapVillages){
                     if(found==false)
                         isValid=false
                 }
-                
+
                 //check for tribes names
                 if(tribesName.length>0){
                     let found=false
@@ -10012,9 +10393,9 @@ function createTableGetCoords(mapVillages){
                         }
                     }
                     if(found==false)
-                        isValid=false 
+                        isValid=false
                 }
-                
+
                 //check for continents
                 if(continents.length>0){
                     let found=false
@@ -10025,10 +10406,10 @@ function createTableGetCoords(mapVillages){
                         }
                     }
                     if(found==false)
-                        isValid=false 
+                        isValid=false
                 }
-                
-  
+
+
                 let[x,y]=coord.split("|")
                 //for x min
                 if(Number.isNaN(xMin)==false && isValid==true){
@@ -10056,10 +10437,10 @@ function createTableGetCoords(mapVillages){
 
                 if(isValid==true){
                     result_coords.push(coord)
-                } 
+                }
 
             } catch (error) {}
-            
+
         })
         console.log(result_coords)
         document.getElementById("input_get_coords").value=result_coords.join(" ")
@@ -10067,9 +10448,9 @@ function createTableGetCoords(mapVillages){
 
     })
 
-    
 
- 
+
+
     // console.log(mapVillages)
 }
 
@@ -10145,7 +10526,7 @@ function getNameTroops() { //Get troops name
         else { //Get data from xml and save it in localStorage to avoid excessive XML requests to server
                 let currentHtml=document.body.innerHTML
                 document.body.innerHTML = await ajaxGet(game_data.link_base_pure+"place") //go to rally point
-                
+
                 let obj={}
                 Array.from($("#command-data-form .unit_link")).forEach(elem=>{
                     let value=$(elem).find("img").attr("title")
@@ -10180,22 +10561,22 @@ function showIncomings(list){
         <tr style=" position: sticky;top: 0;z-index: 10;">
             <td colspan="2" style="text-align:center; width:auto; background-color:${headerColorCoords}">
                 <center style="margin:10px"><font color="${titleColor}">destination</font></center>
-            </td>    
+            </td>
             <td colspan="2" style="text-align:center; width:auto; background-color:${headerColorCoords}">
                <center style="margin:10px"><font color="${titleColor}">origin </font></center>
-            </td>    
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorCoords}">
                 <center style="margin:10px"><font color="${titleColor}">Launch time </font></center>
-            </td>    
+            </td>
             <td  style="text-align:center; width:auto; background-color:${headerColorCoords}">
                 <center style="margin:10px"><font color="${titleColor}">arrival time </font></center>
-            </td>    
+            </td>
             <td style="text-align:center; width:auto; background-color:${headerColorCoords}">
                 <center style="margin:10px"><font color="${titleColor}">type </font></center>
-            </td>    
+            </td>
             <td style="text-align:center; width:auto; background-color:${headerColorCoords}">
                 <center style="margin:10px"><font color="${titleColor}">arrives in </font></center>
-            </td>    
+            </td>
 
 
 
@@ -10204,12 +10585,12 @@ function showIncomings(list){
 
         for(let i=0;i<list.length;i++){
 
-            let arrived=new Date(list[i].date_land).getTime()  
+            let arrived=new Date(list[i].date_land).getTime()
             let type_attack_landed= (list[i].type_attack_landed !=undefined)?list[i].type_attack_landed:"?"
 
             let headerColorIncs= (list[i].colorRow == true)?headerColor:getColorDarker(headerColor,50)
-                
-            
+
+
                 html_incomings+=`
                     <tr style="white-space:nowrap;" >
                         <td style="text-align:center; width:auto; background-color:${headerColorIncs}">
@@ -10226,36 +10607,36 @@ function showIncomings(list){
                         </td>
                         <td style="text-align:center; width:auto; background-color:${headerColorIncs}">
                             <center style="margin:3px;padding:0px"><font color="${titleColor}"> ${list[i].date_launch.split(" ")[0]} <b>${list[i].date_launch.split(" ")[1]}</b>  </font> </center>
-                        </td>   
+                        </td>
                         <td style="text-align:center; width:auto; background-color:${headerColorIncs}">
                             <center style="margin:3px;padding:0px"><font color="${titleColor}"> ${list[i].date_land.split(" ")[0]} <b>${list[i].date_land.split(" ")[1]}</b>  </font> </center>
-                        </td>   
+                        </td>
                         <td style="text-align:center; width:auto; background-color:${headerColorIncs}">
                             <center style="margin:3px;padding:0px"><font color="${titleColor}">${type_attack_landed} </font> </center>
-                        </td>`   
-                
+                        </td>`
+
                     if(arrived>date_current){
                         html_incomings+=
                         `<td style="text-align:center; width:auto; background-color:${headerColorIncs}" >
                             <center style="margin:3px;padding:0px"><font color="${titleColor}" date-time=${arrived} class="counterTime1">${convertBuildTime(arrived-date_current)}</font></center>
-                        </td>`    
+                        </td>`
                     }else{
                         html_incomings+=
                         `<td style="text-align:center; width:auto; background-color:${headerColorIncs}" >
                             <center style="margin:3px;padding:0px"><font color="${titleColor}">landed</font></center>
-                        </td>`    
-                    }   
+                        </td>`
+                    }
                     html_incomings+=`</tr>`
-                
-            
+
+
         }
         html_incomings+=`</table></div></center></div>`
         // Dialog.show("content",html_incomings)
         $("#div_container_incs").remove()
         $("#contentContainer").eq(0).prepend(html_incomings);
         $("#mobileContent").eq(0).prepend(html_incomings);
-    
-       
+
+
         $("#div_container_incs").css("position","fixed");
         $("#div_container_incs").draggable();
 }
@@ -10294,54 +10675,25 @@ function convertBuildTime(milliseconds){
     hours = ("000"+hours).slice(-3)
 
     return hours+":"+minutes+":"+seconds
-} 
-
-    
-
-// vault.js ~10664 (SAFE PATCH)
-function convertDate(date){
-
-    if (!date || typeof date !== "string") {
-        return "";
-    }
-
-    let months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-    // If already formatted like "Jan 12 12:30:00"
-    if (/^[A-Za-z]{3} \d{1,2}/.test(date)) {
-        return date;
-    }
-
-    let datePart, timePart;
-
-    // Expected formats:
-    // "MM/DD HH:MM:SS"
-    // "MM/DD/YYYY HH:MM:SS"
-    if (date.includes(" ")) {
-        [datePart, timePart] = date.split(" ");
-    } else {
-        return "";
-    }
-
-    if (!datePart || !timePart) {
-        return "";
-    }
-
-    let parts = datePart.split("/");
-    if (parts.length < 2) {
-        return "";
-    }
-
-    let monthIndex = parseInt(parts[0], 10) - 1;
-    let dayIndex = parts[1];
-
-    if (months[monthIndex] === undefined) {
-        return "";
-    }
-
-    return `${months[monthIndex]} ${dayIndex} ${timePart}`;
 }
 
+
+
+function convertDate(date){
+    let months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    let monthIndex = date.split("/")[0]-1
+    let dayIndex = date.split("/")[1]
+    let time = date.split(" ")[1]
+    console.log(date)
+    console.log(`${months[monthIndex]} ${dayIndex} ${time}` )
+
+    if (months[monthIndex] == undefined)
+        return ""
+    else
+        return `${months[monthIndex]} ${dayIndex} ${time}`
+
+
+}
 
 ////////////////////////////////////////////// get commands sharing settings ///////////////////////////////////////
 
@@ -10356,18 +10708,18 @@ async function getCommandsSharing(){
 
         }
         if (mapResult == null){
-            
+
             let commandsSharingHref= game_data.link_base_pure + "settings&mode=command_sharing";
             let data = await ajaxGet(commandsSharingHref);
-        
-        
+
+
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(data, 'text/html');
-        
+
             mapResult = new Map()
             Array.from($(htmlDoc).find("form table tr")).forEach(elem=>{
                 let tds = elem.getElementsByTagName("td")
-            
+
                 if(tds.length > 0){
                     let playerName = tds[0].innerText
                     let viewCommands = (tds[2].getElementsByTagName("input")[0].checked == true) ? true : false
@@ -10377,13 +10729,13 @@ async function getCommandsSharing(){
                             sharedCommands = true
                         }
                     }
-            
+
                     if(viewCommands == true && sharedCommands == true){
                         mapResult.set(playerName, true)
                     }
                 }
             })
-    
+
             let saveMapResult = Array.from(mapResult.entries())
             localStorage.setItem(game_data.world + "commandSharing",JSON.stringify({
                 mapResult: saveMapResult,
@@ -10406,16 +10758,16 @@ async function getOwnTroopsInfo(){
     return new Promise(async(resolve, reject)=>{
         if(document.getElementsByClassName("info").length>0)
         $(".info").remove()
-    
+
         let troopsHref= game_data.link_base_pure+"overview_villages&mode=units&group=0&page=-1";
-    
+
         console.log(troopsHref)
         let data = await ajaxGet(troopsHref);
-    
-    
+
+
         const parser = new DOMParser();
         const htmlDoc = parser.parseFromString(data, 'text/html');
-    
+
         let listHref=[];
         if(htmlDoc.getElementsByClassName("vis")[1].getElementsByTagName("select").length>0){
             Array.from(htmlDoc.getElementsByClassName("vis")[1].getElementsByTagName("select")[0].options).forEach(el=>{
@@ -10430,7 +10782,7 @@ async function getOwnTroopsInfo(){
         }
         else{
             listHref.push(troopsHref)
-    
+
         }
         console.log(listHref)
         let mapResult = new Map();
@@ -10440,9 +10792,9 @@ async function getOwnTroopsInfo(){
                 let pageHTML= await ajaxGet(listHref[i])
                 const parser = new DOMParser();
                 const htmlDoc = parser.parseFromString(pageHTML, 'text/html');
-    
+
                 let tableTroops = Array.from($(htmlDoc).find(".row_a, .row_b"))
-    
+
                 //each village has 5 rows with different type of troops
                 for(let j=0;j<tableTroops.length;j++){
                     let rows = Array.from($(tableTroops[j]).find("tr"))
@@ -10469,7 +10821,7 @@ async function getOwnTroopsInfo(){
                     // console.log("troopsOutWards",troopsOutWards)
                     // console.log("troopsInTransit",troopsInTransit)
                     // console.log("troopsTotal",troopsTotal)
-    
+
                     mapResult.set(coord,{
                         troopsOwn: troopsOwn,
                         troopInVillage: troopInVillage,
@@ -10479,8 +10831,8 @@ async function getOwnTroopsInfo(){
                         playerId: game_data.player.id
                     })
                 }
-                UI.SuccessMessage(`get link page ${i+1}/${listHref.length}`) 
-            }  
+                UI.SuccessMessage(`get link page ${i+1}/${listHref.length}`)
+            }
         }
         await run();
 
@@ -10495,16 +10847,16 @@ async function getVillagesBuildings(){
     return new Promise(async(resolve, reject)=>{
         if(document.getElementsByClassName("info").length>0)
         $(".info").remove()
-    
+
         let buildingHref= game_data.link_base_pure+"overview_villages&mode=buildings&group=0&page=-1";
-    
+
         console.log(buildingHref)
         let data = await ajaxGet(buildingHref);
-    
-    
+
+
         const parser = new DOMParser();
         const htmlDoc = parser.parseFromString(data, 'text/html');
-    
+
         let listHref=[];
         if(htmlDoc.getElementsByClassName("vis")[1].getElementsByTagName("select").length>0){
             Array.from(htmlDoc.getElementsByClassName("vis")[1].getElementsByTagName("select")[0].options).forEach(el=>{
@@ -10519,7 +10871,7 @@ async function getVillagesBuildings(){
         }
         else{
             listHref.push(buildingHref)
-    
+
         }
         console.log(listHref)
         let mapResult = new Map();
@@ -10529,9 +10881,9 @@ async function getVillagesBuildings(){
                 let pageHTML= await ajaxGet(listHref[i])
                 const parser = new DOMParser();
                 const htmlDoc = parser.parseFromString(pageHTML, 'text/html');
-    
+
                 let rows = Array.from($(htmlDoc).find(".row_a, .row_b"))
-    
+
                 for(let j=0;j<rows.length;j++){
                     let coord = $(rows[j]).find(".quickedit-label").text().match(/\d+\|\d+/)[0]
                     let wallLvl = parseInt($(rows[j]).find(".b_wall").text())
@@ -10544,8 +10896,8 @@ async function getVillagesBuildings(){
                         farmLvl: farmLvl
                     })
                 }
-                UI.SuccessMessage(`get link page ${i+1}/${listHref.length}`) 
-            }  
+                UI.SuccessMessage(`get link page ${i+1}/${listHref.length}`)
+            }
         }
         await run();
 
@@ -10556,145 +10908,157 @@ async function getVillagesBuildings(){
 
 }
 
-async function uploadOwnTroops() {
+async function uploadOwnTroops(){
+    document.getElementById("progress_troops_home").innerText="Getting data...";
 
-    document.getElementById("progress_troops_home").innerText = "Getting data...";
+    let [mapVillages, troopsHomeData, statusUploadData,status]=await Promise.all([
+        getInfoVillages(),
+        readFileDropbox(filename_troops_home),
+        readFileDropbox(filename_status_upload),
+        insertlibraryLocalBase()
+    ]).catch(err=>{alert(err)})
 
-    // ===========================
-    // LOAD DATA FROM SUPABASE
-    // ===========================
-    const mapVillages = await getInfoVillages();
 
-    let mapTroopsHome = await loadTroopsHomeDB(
-        game_data.world,
-        game_data.player.ally
-    );
 
-    let mapStatus = await loadStatusDB(
-        game_data.world,
-        game_data.player.ally
-    );
+    /////////////////////////////////////////////////////////////////////////Get current troops home from dropbox database/////////////////////////
+    let mapTroopsHomeDropbox = new Map()
+    try {
+        let decompressedData = await decompress(await troopsHomeData.arrayBuffer() , 'gzip');
+        mapTroopsHomeDropbox=new Map(JSON.parse(decompressedData))
 
-    // ===========================
-    // GET CURRENT TROOPS
-    // ===========================
-    let troopsHome = await getOwnTroopsInfo();
-    let mapVillagesWall = await getVillagesBuildings();
-
-    troopsHome.forEach((val, coord) => {
-        if (mapVillagesWall.has(coord)) {
-            val.wallLvl = mapVillagesWall.get(coord).wallLvl;
-            val.farmLvl = mapVillagesWall.get(coord).farmLvl;
-        }
-    });
-
-    // ===========================
-    // MERGE TROOPS
-    // ===========================
-    mapTroopsHome = new Map([...mapTroopsHome, ...troopsHome]);
-
-    // remove villages no longer owned
-    mapTroopsHome.forEach((val, coord) => {
-        if (mapVillages.has(coord)) {
-            if (mapVillages.get(coord).playerId !== val.playerId) {
-                mapTroopsHome.delete(coord);
-            }
-        }
-    });
-
-    // ===========================
-    // UPDATE STATUS
-    // ===========================
-    let serverTime = document.getElementById("serverTime").innerText;
-    let serverDate = document.getElementById("serverDate").innerText.split("/");
-    serverDate = `${serverDate[1]}/${serverDate[0]}/${serverDate[2]}`;
-    let date_current = `${serverDate} ${serverTime}`;
-
-    mapStatus.set(game_data.player.id.toString(), {
-        name: game_data.player.name,
-        troops_date: date_current
-    });
-
-    // ===========================
-    // SAVE TO SUPABASE
-    // ===========================
-    for (const [coord, troopsData] of mapTroopsHome.entries()) {
-        await saveTroopsHomeDB(
-            coord,
-            troopsData,
-            game_data.world,
-            game_data.player.ally
-        );
+    } catch (error) {
+        console.log("erorr map troops home from dropbox: " + error)
     }
 
-    await saveStatusDB(
-        game_data.player.id.toString(),
-        mapStatus.get(game_data.player.id.toString()),
-        game_data.world,
-        game_data.player.ally
-    );
+    //if  database is stored locally
+    if(await localBase.getItem(game_data.world+"troops_home")!=undefined){
+        try{
+            let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "troops_home"))
+            let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
 
-    // ===========================
-    // UI
-    // ===========================
-    document.getElementById("progress_troops_home").innerText =
-        `${mapTroopsHome.size} coords`;
+            let map_localBase=new Map( JSON.parse(decompressedData));
+            mapTroopsHomeDropbox=new Map([...map_localBase, ...mapTroopsHomeDropbox])
+        } catch (error) {
+            console.log("erorr map troops home from localbase: " + error)
+        }
+    }
 
-    UI.SuccessMessage(
-        `Troops home uploaded<br>
-         Villages: <b>${mapTroopsHome.size}</b>`,
-        8000
-    );
+    /////////////////////////////////////////////////////////////////////////Get map status from dropbox database/////////////////////////
+    let mapStatus = new Map();
+    try {
+        let decompressedData = await decompress(await statusUploadData.arrayBuffer() , 'gzip');
+        mapStatus=new Map( JSON.parse(decompressedData));
+    } catch (error) {
+        console.log("erorr map status from dropbox: " + error)
+    }
 
-    return { status: "success" };
+
+    // console.log(mapTroopsHomeDropbox)
+    // console.log(mapStatus)
+    /////////////////////////////////////////////////////////////////////////Get current troops home for all villages/////////////////////////
+
+    let troopsHome=await getOwnTroopsInfo().catch(err=>{alert(err);throw err})
+    let mapVillagesWall=await getVillagesBuildings().catch(err=>{alert(err);throw err})
+
+    console.log(troopsHome)
+    //add villages wall
+    Array.from(troopsHome.keys()).forEach(coord=>{
+        if(mapVillagesWall.has(coord)){
+            let updateObj = troopsHome.get(coord);
+            updateObj.wallLvl = mapVillagesWall.get(coord).wallLvl
+            updateObj.farmLvl = mapVillagesWall.get(coord).farmLvl
+            troopsHome.set(coord, updateObj)
+        }
+    })
+
+    // console.log(mapVillages)
+    // console.log(mapTroopsHomeDropbox)
+
+    //update map from dropbox
+    mapTroopsHomeDropbox=new Map([...mapTroopsHomeDropbox, ...troopsHome])
+
+    //remove old coords
+    Array.from(mapTroopsHomeDropbox.keys()).forEach(coord=>{
+        if(mapVillages.has(coord)){
+            if(mapVillages.get(coord).playerId != mapTroopsHomeDropbox.get(coord).playerId){//old information-> needs to be removed
+                mapTroopsHomeDropbox.delete(coord)
+            }
+        }
+    })
+
+
+
+
+
+
+
+
+    //update status troops home
+    let serverTime=document.getElementById("serverTime").innerText
+    let serverDate=document.getElementById("serverDate").innerText.split("/")
+    serverDate=serverDate[1]+"/"+serverDate[0]+"/"+serverDate[2]
+    let date_current=serverDate+" "+serverTime
+    console.log(date_current)
+    let obj_status={
+        name:game_data.player.name,
+        troops_date:date_current,
+    }
+    if(mapStatus.has(game_data.player.id.toString())){
+        let obj_update=mapStatus.get(game_data.player.id.toString())
+        mapStatus.set(game_data.player.id.toString(), {...obj_update, ...obj_status} )
+    }
+    else{
+        mapStatus.set(game_data.player.id.toString(),obj_status)
+    }
+
+
+    return new Promise(async(resolve, reject)=>{
+        let timeStartUpload = new Date().getTime();
+        let nr_start=new Date().getTime()
+
+        //upload troops home
+        let data=JSON.stringify(Array.from(mapTroopsHomeDropbox.entries()))
+        let length_data = data.length
+        let sizeTroopsHomeDB = formatBytes(new TextEncoder().encode(data).length)
+
+        let compressedData = await compress(data,'gzip')
+        let compressedDataBase64 = await blobToBase64(compressedData);
+        let length_data_compressed=compressedData.size;
+
+        let nr_stop=new Date().getTime()
+
+        console.log("compressing data Troops home: "+(nr_stop-nr_start))
+        console.log("length before: "+length_data+" length after compression: "+length_data_compressed)
+        console.log("compression factor: "+(length_data/length_data_compressed))
+
+
+        await localBase.setItem(game_data.world + "troops_home",compressedDataBase64)
+        let result=await uploadFile(compressedData, filename_troops_home, dropboxToken).catch(err=>alert(err))
+
+
+
+        let data_status=JSON.stringify(Array.from(mapStatus.entries()))
+        let dataCompressed = await compress(data_status, "gzip")
+        let resultStatus=await uploadFile(dataCompressed, filename_status_upload, dropboxToken).catch(err=>alert(err))
+
+        console.log(resultStatus)
+        if(resultStatus == "succes"){
+            let timeStopUpload = new Date().getTime();
+            let totalTimeUpload =  Math.round(((timeStopUpload - timeStartUpload) / 1000) * 100) / 100
+            let nrCoord = mapTroopsHomeDropbox.size
+            document.getElementById("progress_troops_home").innerText = `${nrCoord} coords`;
+            UI.SuccessMessage(`Troops home done <br>
+                                Upload time: <b>${totalTimeUpload} sec</b> <br>
+                                Size DB: <b>${sizeTroopsHomeDB} </b>`, 10000)
+            resolve({
+                totalTimeUpload: totalTimeUpload,
+                status: "success"
+            })
+        }
+        else{
+            reject("error upload troops info")
+        }
+    })
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+window.uploadOwnTroops=uploadOwnTroops;
