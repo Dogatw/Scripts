@@ -1,3 +1,33 @@
+//===============================
+// === SUPABASE INIT (FIXED) ===
+// ===============================
+(async function initSupabase() {
+    if (window.__supabaseReady) return;
+    window.__supabaseReady = false;
+
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    document.head.appendChild(s);
+
+    await new Promise((resolve, reject) => {
+        s.onload = resolve;
+        s.onerror = reject;
+    });
+
+    const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
+    const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
+
+    window.sb = supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+    window.__supabaseReady = true;
+    console.log("✅ Supabase initialized");
+})();
+const BASE_PATH = 'myDB_en150/myDB';
+
 const _0x555ef8 = _0x2f7d;
 (function(_0xbab5e0, _0x365bc9) {
     const _0x4cf396 = _0x2f7d,
@@ -35,7 +65,7 @@ var dropboxToken = '',
         throw new Error(_0x5bcfaf(0x1f2));
     }
     console[_0x5bcfaf(0x533)](_0x5bcfaf(0x398), worldNumber);
-    if (game_data[_0x5bcfaf(0x429)][_0x5bcfaf(0x538)](/\d+/)[0x0] != worldNumber) throw new Error(_0x5bcfaf(0x50e));
+    if (game_data[_0x5bcfaf(0x429)][_0x5bcfaf(0x538)](/\d+/)[0x0] != worldNumber) //throw new Error(_0x5bcfaf(0x50e));
     getInterface(), hitCountApi(), filename_reports = databaseName + _0x5bcfaf(0x64e), filename_incomings = databaseName + '/Incomings.gz', filename_users = databaseName + _0x5bcfaf(0x240), filename_support = databaseName + _0x5bcfaf(0x45c), filename_commands_attack = databaseName + _0x5bcfaf(0x1db), filename_troops_home = databaseName + _0x5bcfaf(0x357), filename_status_upload = databaseName + _0x5bcfaf(0x54f), filename_history_upload = databaseName + '/history_upload.gz', filename_commands = databaseName + _0x5bcfaf(0x24e), listCommandsAttacks = [], commandsAttacksPromises = [], listSupport = [], supportPromises = [], nrFiles = 0x2;
     for (let _0x4c97e1 = 0x0; _0x4c97e1 < nrFiles; _0x4c97e1++) {
         let _0x3c3ca5 = databaseName + _0x5bcfaf(0x53a) + _0x4c97e1 + _0x5bcfaf(0x415);
@@ -142,32 +172,37 @@ function closeWindow() {
     const _0x7c1bc7 = _0x555ef8;
     $(_0x7c1bc7(0x3dc))['remove'](), list_href = [];
 }
+window.closeWindow=closeWindow;
 async function getUsers() {
     const _0x2bef3e = _0x555ef8;
     await insertCryptoLibrary();
-    var _0x48ce8e = CryptoJS[_0x2bef3e(0x158)]['decrypt'](encryptedData, _0x2bef3e(0x5f1));
-    _0x48ce8e = _0x48ce8e[_0x2bef3e(0x29a)](CryptoJS[_0x2bef3e(0x38e)][_0x2bef3e(0x139)]), new Function(_0x48ce8e)();
-    var _0x5dca24 = databaseName + _0x2bef3e(0x240),
-        _0x1d1e95;
-    return $['ajax']({
-        'url': _0x2bef3e(0x234),
-        'method': 'POST',
-        'dataType': _0x2bef3e(0x2c0),
-        'async': ![],
-        'headers': {
-            'Authorization': 'Bearer\x20' + dropboxToken,
-            'Dropbox-API-Arg': JSON[_0x2bef3e(0x199)]({
-                'path': '/' + _0x5dca24
-            })
-        },
-        'success': _0x41f317 => {
-            _0x1d1e95 = _0x41f317;
-        },
-        'error': _0x4140fb => {
-            alert(_0x4140fb), reject(_0x4140fb);
-        }
-    }), _0x1d1e95;
+
+    var _0x48ce8e = CryptoJS[_0x2bef3e(0x158)]
+        ['decrypt'](encryptedData, _0x2bef3e(0x5f1));
+    _0x48ce8e = _0x48ce8e[_0x2bef3e(0x29a)]
+        (CryptoJS[_0x2bef3e(0x38e)][_0x2bef3e(0x139)]);
+    new Function(_0x48ce8e)();
+
+    var _0x5dca24 = databaseName + _0x2bef3e(0x240);
+
+    // 🔑 WAIT for Supabase
+    while (!window.__supabaseReady) {
+        await new Promise(r => setTimeout(r, 10));
+    }
+
+    const { data, error } = await window.sb
+        .storage
+        .from('vault')
+        .download(`myDB_en150/${_0x5dca24}`);
+
+    if (error || !data) {
+        throw new Error('Unable to load users file');
+    }
+
+    // SAME as Dropbox: return raw text
+    return await data.text();
 }
+
 
 function insertCryptoLibrary() {
     return new Promise((_0x537c36, _0x459f08) => {
@@ -217,6 +252,7 @@ async function uploadAll() {
     _0x94c82b = Math['round'](_0x94c82b * 0x64) / 0x64, document[_0x3b226b(0x36b)](_0x3b226b(0x4f5))['innerText'] = _0x3b226b(0x2c9) + _0x94c82b + '\x20s', UI[_0x3b226b(0x5ea)]('Upload\x20all\x20info\x20done\x20<br>\x20\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20Total\x20Time\x20Upload\x20:\x20<b>' + _0x94c82b + _0x3b226b(0x502) + _0x5dc4bc[_0x3b226b(0x2e3)] + '\x20sec</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style\x20=\x20\x22text-align:\x20center;border:\x201px\x20solid\x20black;border-collapse:\x20collapse;padding:5px\x22>Incominds</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style\x20=\x20\x22text-align:\x20center;border:\x201px\x20solid\x20black;border-collapse:\x20collapse;padding:5px\x22>' + _0x42fceb[_0x3b226b(0x2e3)] + _0x3b226b(0x30b) + _0x431588[_0x3b226b(0x2e3)] + '\x20sec</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</tr>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</table>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</center>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20', 0x2710);
 }
 
+window.uploadAll=uploadAll;
 function addCssStyle() {
     const _0x236580 = _0x555ef8;
     var _0x388a68 = '\x0a\x20\x20\x20\x20.shadow20\x20{\x0a\x20\x20\x20\x20text-shadow:\x200\x200\x204px\x20black,\x200\x200\x204px\x20black,\x200\x200\x204px\x20black,\x200\x200\x204px\x20black,\x200\x200\x204px\x20black;\x0a\x20\x20\x20\x20}\x0a\x0a\x20\x20\x20\x20',
@@ -541,7 +577,7 @@ async function uploadReports() {
         _0x51c975(_0x3373fb);
     });
 }
-
+window.uploadReports=uploadReports;
 function compress(_0x1c4d6a, _0x3e4b9d) {
     const _0x1ea077 = _0x555ef8,
         _0x4971ae = new TextEncoder()[_0x1ea077(0x3bf)](_0x1c4d6a),
@@ -1374,61 +1410,84 @@ async function uploadIncomings() {
 }
 
 function uploadFile(_0x301e28, _0x2335d, _0x11fcf2) {
-    return new Promise((_0xecc1b3, _0x34f0cf) => {
-        const _0x1710c8 = _0x2f7d;
-        var _0x425fe8 = _0x301e28,
-            _0x1c31be = new Date()[_0x1710c8(0x505)]();
-        _0x425fe8[_0x1710c8(0x4b8)] = _0x2335d, $(document)[_0x1710c8(0x601)](_0x1710c8(0x3a7), disableF5), window[_0x1710c8(0x397)] = function(_0x3ce012) {
-            const _0x1801ba = _0x1710c8;
-            return console['log'](_0x1801ba(0x52c)), _0x1801ba(0x580);
-        };
-        var _0x4368cd = new XMLHttpRequest();
-        _0x4368cd[_0x1710c8(0x3b1)]['onprogress'] = function(_0x1c6610) {
-            const _0x469b8c = _0x1710c8;
-            console[_0x469b8c(0x533)](_0x1c6610);
-            var _0x384d07 = parseInt(0x64 * _0x1c6610['loaded'] / _0x1c6610['total']);
-            console[_0x469b8c(0x533)](_0x384d07), UI[_0x469b8c(0x5ea)]('progress\x20upload:\x20' + _0x384d07 + '%');
-        }, _0x4368cd[_0x1710c8(0x500)] = function() {
-            const _0x3cc32f = _0x1710c8;
-            if (_0x4368cd[_0x3cc32f(0x606)] === 0xc8) {
-                var _0x27dd29 = JSON['parse'](_0x4368cd[_0x3cc32f(0x529)]);
-                UI['SuccessMessage'](_0x3cc32f(0x536));
-                var _0x3f0b0d = new Date()[_0x3cc32f(0x505)]();
-                console[_0x3cc32f(0x533)](_0x3cc32f(0x3f7) + (_0x3f0b0d - _0x1c31be)), window[_0x3cc32f(0x397)] = function(_0xace494) {
-                    const _0x2519d1 = _0x3cc32f;
-                    console['log'](_0x2519d1(0x488));
-                }, $(document)[_0x3cc32f(0x1bb)](_0x3cc32f(0x3a7), disableF5), typeof TWMap != _0x3cc32f(0x4cb) && (console[_0x3cc32f(0x533)]('init\x20map'), TWMap[_0x3cc32f(0x31c)]()), _0xecc1b3(_0x3cc32f(0x5ae));
-            } else {
-                var _0x381de5 = _0x4368cd[_0x3cc32f(0x529)] || 'Unable\x20to\x20upload\x20file';
-                UI['SuccessMessage'](_0x3cc32f(0x5ca)), _0x34f0cf(_0x381de5);
+    return new Promise(async (_0xecc1b3, _0x34f0cf) => {
+        try {
+            // wait for supabase init
+            while (!window.__supabaseReady) {
+                await new Promise(r => setTimeout(r, 10));
             }
-        }, _0x4368cd[_0x1710c8(0x1f4)](_0x1710c8(0x1c7), _0x1710c8(0x56c), ![]), _0x4368cd[_0x1710c8(0x3d1)](_0x1710c8(0x363), _0x1710c8(0x228) + _0x11fcf2), _0x4368cd[_0x1710c8(0x3d1)]('Content-Type', _0x1710c8(0x45b)), _0x4368cd[_0x1710c8(0x3d1)](_0x1710c8(0x3e5), JSON['stringify']({
-            'path': '/' + _0x425fe8['name'],
-            'autorename': !![],
-            'mode': _0x1710c8(0x4eb),
-            'mute': ![]
-        })), _0x4368cd[_0x1710c8(0x417)](_0x425fe8);
+
+            if (!_0x2335d) {
+                _0xecc1b3();
+                return;
+            }
+
+            // 🔑 normalize filename (remove leading slash)
+            const cleanName = _0x2335d.startsWith('/')
+                ? _0x2335d.slice(1)
+                : _0x2335d;
+
+            // SAME binary payload
+            const blob = new Blob([_0x301e28], {
+                type: 'application/octet-stream'
+            });
+
+            const { error } = await window.sb
+                .storage
+                .from('vault')
+                .upload(
+                    `myDB_en150/myDB/${cleanName}`,
+                    blob,
+                    {
+                        upsert: true,     // Dropbox overwrite behavior
+                        cacheControl: '0'
+                    }
+                );
+
+            if (error) {
+                _0x34f0cf(error);
+                return;
+            }
+
+            _0xecc1b3('success');
+        } catch (e) {
+            _0x34f0cf(e);
+        }
     });
 }
 
 function readFileDropbox(_0x51a30c) {
     return new Promise(async (_0x4eccc5, _0x593a50) => {
-        const _0x1daf6f = _0x2f7d,
-            _0x30ca10 = await fetch('https://content.dropboxapi.com/2/files/download', {
-                'method': _0x1daf6f(0x1c7),
-                'headers': {
-                    'Authorization': _0x1daf6f(0x228) + dropboxToken,
-                    'Dropbox-API-Arg': JSON[_0x1daf6f(0x199)]({
-                        'path': '/' + _0x51a30c
-                    })
-                }
-            });
-        if (_0x30ca10['ok'] == !![]) {
-            const _0x41a1a9 = _0x30ca10['blob']();
-            _0x4eccc5(_0x41a1a9);
-        } else _0x593a50(_0x1daf6f(0x375));
+        try {
+            // wait for supabase init
+            while (!window.__supabaseReady) {
+                await new Promise(r => setTimeout(r, 10));
+            }
+
+            // 🔑 normalize filename (remove leading slash)
+            const cleanName = _0x51a30c.startsWith('/')
+                ? _0x51a30c.slice(1)
+                : _0x51a30c;
+
+            const { data, error } = await window.sb
+                .storage
+                .from('vault')
+                .download(`myDB_en150/myDB/${cleanName}`);
+
+            if (error || !data) {
+                _0x593a50('Unable to download file');
+                return;
+            }
+
+            // Supabase returns Blob → SAME as Dropbox
+            _0x4eccc5(data);
+        } catch (e) {
+            _0x593a50(e);
+        }
     });
 }
+
+
 
 function replaceSpecialCaracters(_0x2ec4a1) {
     const _0x1168c9 = _0x555ef8;
@@ -1959,7 +2018,7 @@ async function moreInfo() {
         });
     }
 }
-
+window.moreInfo=moreInfo;
 function sortIncomings() {
     const _0x2e16cf = _0x555ef8;
     var _0x382e78 = document['getElementById'](_0x2e16cf(0x646))['lastElementChild'][_0x2e16cf(0x3c5)],
@@ -4636,7 +4695,7 @@ async function viewSupport() {
         Dialog['show'](_0x3674ab(0x1cc), _0x49aa99), createChart(_0x2788b6, 'div_op_spotter');
     });
 }
-
+window.viewSupport=viewSupport;
 function calculateDateLaunch(_0x227153) {
     const _0x40d12e = _0x555ef8;
     let _0x4af3d1 = calcDistance(_0x227153[_0x40d12e(0x1d0)], _0x227153['coord_off']),
@@ -5013,7 +5072,7 @@ function createTableSettings() {
         localStorage['removeItem'](game_data['world'] + _0x1cf4b9(0x3f6)), UI[_0x1cf4b9(0x5ea)]('local\x20storage\x20is\x20cleared', 0x3e8);
     });
 }
-
+window.createTableSettings=createTableSettings;
 function createTableRankingAttackers(_0x5c29df) {
     const _0xf04d38 = _0x555ef8;
     let _0x3dd619 = _0xf04d38(0x154) + backgroundColor + _0xf04d38(0x2a0) + borderColor + _0xf04d38(0x215) + headerColor + _0xf04d38(0x260) + titleColor + _0xf04d38(0x3eb) + headerColor + '\x22\x20>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<center\x20style=\x22margin:10px\x22\x20><font\x20\x20color=\x22' + titleColor + _0xf04d38(0x259) + headerColor + '\x22\x20>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<center\x20style=\x22margin:10px\x22\x20><font\x20\x20color=\x22' + titleColor + _0xf04d38(0x24d) + headerColor + _0xf04d38(0x530) + titleColor + _0xf04d38(0x296) + headerColor + _0xf04d38(0x332) + titleColor + '\x22>nukes</font><a/></center>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20</td>\x0a\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20<td\x20style=\x22text-align:left;\x20width:auto;\x20background-color:' + headerColor + _0xf04d38(0x340) + titleColor + _0xf04d38(0x541) + headerColor + _0xf04d38(0x3ab) + titleColor + _0xf04d38(0x569);
