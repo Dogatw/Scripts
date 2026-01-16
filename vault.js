@@ -9992,37 +9992,77 @@ Array.from(map_upload_time.keys()).forEach((key,index)=>{
     // 🛑 STOP if object does not exist
     if (!obj_upload || typeof obj_upload !== "object") return;
 
-    // 🛡️ normalize date fields (string ONLY)
-    ["incoming_date", "command_date", "troops_date"].forEach(k => {
-        if (obj_upload[k] instanceof Date) {
-            obj_upload[k] = parseDate(obj_upload[k].getTime());
-        } else if (obj_upload[k] === undefined) {
-            obj_upload[k] = null;
+  // 🛡️ normalize date fields (FINAL, SAFE)
+["report_date", "incoming_date", "command_date", "troops_date"].forEach(k => {
+    const v = obj_upload[k];
+
+    // Date object → string
+    if (v instanceof Date) {
+        obj_upload[k] = parseDate(v.getTime());
+        return;
+    }
+
+    // Supabase / legacy object → try to convert
+    if (v && typeof v === "object") {
+        // try common formats
+        if (typeof v.time === "string") {
+            obj_upload[k] = v.time;
+            return;
         }
-    });
+        if (typeof v.seconds === "number") {
+            obj_upload[k] = parseDate(v.seconds * 1000);
+            return;
+        }
+
+        // unknown object → discard safely
+        obj_upload[k] = null;
+        return;
+    }
+
+    // undefined → null
+    if (v === undefined) {
+        obj_upload[k] = null;
+    }
+});
+
+
 
 
             html+=`
-            <tr>
-                <td style="text-align:left; width:auto; background-color:${headerColor}" >
-                    <center><font style="margin:0px" color="${titleColor}">${index+1}</font></center>
-                </td>
-                <td style="text-align:left; width:auto; background-color:${headerColor}" >
-                    <center><font style="margin:0px" color="${titleColor}">${obj_upload.name}</font></center>
-                </td>
-                <td style="text-align:left; width:auto; background-color:${headerColor}" >
-                    <center><font style="margin:0px" color="${titleColor}">${convertDate(obj_upload.report_date)}</font></center>
-                </td>
-                <td style="text-align:left; width:auto; background-color:${headerColor}" >
-                    <center><font style="margin:0px" color="${titleColor}">${convertDate(obj_upload.incoming_date)}</font></center>
-                </td>
-                <td style="text-align:left; width:auto; background-color:${headerColor}" >
-                    <center><font style="margin:0px" color="${titleColor}">${convertDate(obj_upload.command_date)}</font></center>
-                </td>
-                <td style="text-align:left; width:auto; background-color:${headerColor}" >
-                    <center><font style="margin:0px" color="${titleColor}">${convertDate(obj_upload.troops_date)}</font></center>
-                </td>
-            </tr>
+           <tr>
+    <td style="text-align:left; background-color:${headerColor}">
+        <center><font color="${titleColor}">${index + 1}</font></center>
+    </td>
+
+    <td style="text-align:left; background-color:${headerColor}">
+        <center><font color="${titleColor}">${obj_upload.name ?? ""}</font></center>
+    </td>
+
+    <td style="text-align:left; background-color:${headerColor}">
+        <center><font color="${titleColor}">
+            ${typeof obj_upload.report_date === "string" ? convertDate(obj_upload.report_date) : ""}
+        </font></center>
+    </td>
+
+    <td style="text-align:left; background-color:${headerColor}">
+        <center><font color="${titleColor}">
+            ${typeof obj_upload.incoming_date === "string" ? convertDate(obj_upload.incoming_date) : ""}
+        </font></center>
+    </td>
+
+    <td style="text-align:left; background-color:${headerColor}">
+        <center><font color="${titleColor}">
+            ${typeof obj_upload.command_date === "string" ? convertDate(obj_upload.command_date) : ""}
+        </font></center>
+    </td>
+
+    <td style="text-align:left; background-color:${headerColor}">
+        <center><font color="${titleColor}">
+            ${typeof obj_upload.troops_date === "string" ? convertDate(obj_upload.troops_date) : ""}
+        </font></center>
+    </td>
+</tr>
+
 
         `
     })
@@ -11077,6 +11117,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
