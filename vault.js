@@ -8277,13 +8277,15 @@ let villageId = villageObj.villageId;
     // console.log("map_ranking_attacker",map_ranking_attacker)
 
 
-    //this part is for Ally Info
-    let mapVillageById=new Map()
-   Array.from(map_playerId.keys()).forEach(key=>{
-    let playerObj = map_playerId.get(key);
+// this part is for Ally Info
+let mapVillageById = new Map();
+
+Array.from(map_playerId.keys()).forEach(key => {
+
+    const playerObj = map_playerId.get(key);
     if (!playerObj || !Array.isArray(playerObj.list_coords)) return;
 
-    let list_coords = playerObj.list_coords;
+    const list_coords = playerObj.list_coords;
 
 
         for(let i=0;i<list_coords.length;i++){
@@ -9133,7 +9135,10 @@ function createTablePlayers(map_playerId,mapVillages){
         let playerId=event.target.getAttribute("player-id")
         let numberTr=event.target.getAttribute("number-tr")
         // console.log(event.target)
-        let list_coords=map_playerId.get(playerId).list_coords
+const playerObj = map_playerId.get(playerId);
+if (!playerObj || !Array.isArray(playerObj.list_coords)) return;
+
+const list_coords = playerObj.list_coords;
 
     /////////// ///////////////////////////////////////////////////////////////////coords table//////////////////////////////////////////////////////////
     // red: '#ff8080',
@@ -9365,27 +9370,24 @@ function createTableCoordTroops(obj,admin){
 
 //////////////////////////////////////////add click event for coord and when it's pressed show table with troops and incomings////////////////////
 
-function createEventCoord(map_playerId,mapVillages,playerId){
-    $(".infoCoord").on("click",(event)=>{
+function createEventCoord(list_coords, mapVillages, playerId){
+    $(".infoCoord").on("click", (event) => {
+        const coordId = event.target.getAttribute("coord-id");
+        const numberTrCoord = event.target.getAttribute("number-tr-coord");
 
-        // console.log(this.parentElement)
-        // console.log($(this).parent())
+        let obj = null;
 
-        // console.log("event infoCoord")
-        let coordId=event.target.getAttribute("coord-id")
-        let numberTrCoord=event.target.getAttribute("number-tr-coord")
-        let obj={}
-        let list_coords=map_playerId.get(playerId).list_coords
-        // console.log(playerId)
-        // console.log(list_coords)
-        for(let i=0;i<list_coords.length;i++){
-            if(coordId==list_coords[i].coord_destination_id){
-                obj=list_coords[i]
+        for (let i = 0; i < list_coords.length; i++) {
+            if (coordId == list_coords[i].coord_destination_id) {
+                obj = list_coords[i];
                 break;
             }
         }
-        console.log("obj",obj)
-        console.log("mapVillages",mapVillages)
+
+        if (!obj) return;
+
+        console.log("obj", obj);
+        console.log("mapVillages", mapVillages);
 
         // console.log(obj)
         // console.log(coordId)
@@ -11142,6 +11144,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
