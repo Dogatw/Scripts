@@ -22,16 +22,24 @@
     const playerName = gameData.player?.name;
     const worldName  = gameData.world;
 
-    // 🚫 HARD BLOCK
-    if (
-        !playerName ||
-        !worldName ||
-        !ALLOWED_PLAYERS.includes(playerName) ||
-        !ALLOWED_WORLDS.includes(worldName)
-    ) {
-        console.warn('⛔ ACCESS DENIED', { playerName, worldName });
-        throw new Error('Unauthorized player or world — script stopped');
-    }
+    // 🚫 HARD BLOCK (POPUP + STOP)
+if (
+    !playerName ||
+    !worldName ||
+    !ALLOWED_PLAYERS.includes(playerName) ||
+    !ALLOWED_WORLDS.includes(worldName)
+) {
+    alert(
+        '⛔ YOU ARE NOT ALLOWED - Contact SAM\n\n' +
+        'This script is restricted.\n\n' +
+        'Player: ' + (playerName || 'Unknown') + '\n' +
+        'World: ' + (worldName || 'Unknown')
+    );
+
+    console.error('⛔ ACCESS DENIED', { playerName, worldName });
+
+    throw new Error('Unauthorized player or world — script stopped');
+}
 
     console.log('✅ ACCESS GRANTED', { playerName, worldName });
    /* ================= LOGGING ================= */
