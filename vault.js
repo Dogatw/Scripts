@@ -10649,13 +10649,16 @@ function convertDate(date) {
         throw new Error("convertDate: date must be a string, got " + typeof date);
     }
 
-    // Expected: MM/DD HH:MM:SS
-    const match = date.match(/^(\d{2})\/(\d{2})\s(\d{2}:\d{2}:\d{2})$/);
+    // Expected: MM/DD/YYYY HH:MM:SS
+    const match = date.match(
+        /^(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}:\d{2}:\d{2})$/
+    );
+
     if (!match) {
         throw new Error("convertDate: invalid date format → " + date);
     }
 
-    const [, mm, dd, time] = match;
+    const [, mm, dd, yyyy, time] = match;
 
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const monthIndex = Number(mm) - 1;
@@ -10664,8 +10667,10 @@ function convertDate(date) {
         throw new Error("convertDate: invalid month → " + mm);
     }
 
+    // Year is intentionally dropped (your UI never used it)
     return `${months[monthIndex]} ${dd} ${time}`;
 }
+
 
 
 ////////////////////////////////////////////// get commands sharing settings ///////////////////////////////////////
@@ -11035,6 +11040,7 @@ async function uploadOwnTroops(){
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
