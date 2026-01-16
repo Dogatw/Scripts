@@ -7869,23 +7869,44 @@ if (!Array.isArray(list_coming)) return;
                         nr_recaped_total:nrRecaped
                     })
                 }
-                else{
-                    let obj_update=map_playerId.get(playerId)
-                    let list=obj_update.list_coords
-                    list.push(obj_output)
+              else {
+    let obj_update = map_playerId.get(playerId);
 
-                    obj_update.list_coords=list
-                    obj_update.nr_attacks_total+=nrAttacks
-                    obj_update.nr_supports_total+=nr_supports
-                    obj_update.nr_nobles_total+=nrNobles
-                    obj_update.nr_snipe_total+=nrSnipes,
-                    obj_update.nr_sniped_total+=nrSniped,
-                    obj_update.nr_recap_total+=nrRecaps,
-                    obj_update.nr_recaped_total+=nrRecaped
+    // 🛑 FINAL HARD GUARD (THIS WAS MISSING)
+    if (!obj_update || typeof obj_update !== "object") {
+        obj_update = {
+            nr_attacks_total: 0,
+            nr_supports_total: 0,
+            nr_nobles_total: 0,
+            list_coords: [],
+            player_destination_name: playerName,
+            player_destination_id: playerId,
+            nr_snipe_total: 0,
+            nr_sniped_total: 0,
+            nr_recap_total: 0,
+            nr_recaped_total: 0
+        };
+    }
 
-                    map_playerId.set(playerId,obj_update)
+    // 🛑 ENSURE ARRAY EXISTS (CRITICAL)
+    if (!Array.isArray(obj_update.list_coords)) {
+        obj_update.list_coords = [];
+    }
 
-                }
+    obj_update.list_coords.push(obj_output);
+
+    obj_update.nr_attacks_total += nrAttacks;
+    obj_update.nr_supports_total += nr_supports;
+    obj_update.nr_nobles_total += nrNobles;
+    obj_update.nr_snipe_total += nrSnipes;
+    obj_update.nr_sniped_total += nrSniped;
+    obj_update.nr_recap_total += nrRecaps;
+    obj_update.nr_recaped_total += nrRecaped;
+
+    map_playerId.set(playerId, obj_update);
+}
+
+
 
             }
         } catch (error) {
@@ -9131,14 +9152,17 @@ function createTablePlayers(map_playerId,mapVillages){
     document.getElementById("header_snipes").innerText=`(${nr_sniped_total}/${nr_snipe_total})`
     document.getElementById("header_recaps").innerText=`(${nr_recaped_total}/${nr_recap_total})`
 
-    $(".infoPlayer").on("click",(event)=>{
-        let playerId=event.target.getAttribute("player-id")
-        let numberTr=event.target.getAttribute("number-tr")
-        // console.log(event.target)
-const playerObj = map_playerId.get(playerId);
-if (!playerObj || !Array.isArray(playerObj.list_coords)) return;
+$(".infoPlayer").on("click", (event) => {
+    const playerId = event.target.getAttribute("player-id");
+    const numberTr = event.target.getAttribute("number-tr");
 
-const list_coords = playerObj.list_coords;
+    const playerObj = map_playerId.get(playerId);
+    if (!playerObj || !Array.isArray(playerObj.list_coords)) return;
+
+    const list_coords = playerObj.list_coords;
+
+    // ✅ PASS DATA DOWN — do NOT refetch later
+    createEventCoord(list_coords, mapVillages, playerId, numberTr);
 
     /////////// ///////////////////////////////////////////////////////////////////coords table//////////////////////////////////////////////////////////
     // red: '#ff8080',
@@ -11144,6 +11168,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
