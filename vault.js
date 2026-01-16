@@ -91,7 +91,6 @@ var widthInterface, widthInterfaceOverview
     addCssStyle()
     getInterface()
     showButtons();
-    hitCountApi()
     filename_reports=`${databaseName}/Reports.gz`;
     filename_incomings=`${databaseName}/Incomings.gz`;
     filename_users=`${databaseName}/Users.txt`;
@@ -204,12 +203,6 @@ var axeTime=Math.round( ((1320/100.0)/speedWorld) * 15.58823529 ) *1000//milisec
 var lhTime=Math.round( ((1800/100.0)/speedWorld) * 20.88235294 ) *1000//milisec
 var ramTime=Math.round( ((4800/100.0)/speedWorld) * 27.84313725 ) *1000//milisec
 
-var countApiKey = "taggingScript";
-var countNameSpace="madalinoTribalWarsScripts"
-
-
-
-
 
 var troopsPop = {
     spear : 1,
@@ -227,34 +220,6 @@ var troopsPop = {
 };
 {/* <img src="https://img.icons8.com/officel/16/000000/long-arrow-right.png"/> */}
 {/* <img src="https://img.icons8.com/officel/16/000000/long-arrow-left.png"/> */}
-
-function hitCountApi(){
-    $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}/up`, response=>{
-        console.log(`This script has been run: ${response.count} times`);
-    });
-    if(game_data.device !="desktop"){
-        $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_phone/up`, response=>{
-            console.log(`This script has been run on mobile: ${response.count} times`);
-        });
-    }
-
-    $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_id${game_data.player.id}/up`, response=>{
-        console.log(response)
-        if(response.count == 1){
-            console.log("here")
-            $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_users/up`, response=>{});
-        }
-
-    });
-
-    try {
-        $.getJSON(`https://api.counterapi.dev/v1/${countNameSpace}/${countApiKey}_users`, response=>{
-            console.log(`Total number of users: ${response.count}`);
-        });
-
-    } catch (error) {}
-
-}
 
 
 function getInterface(){
@@ -11062,4 +11027,5 @@ async function uploadOwnTroops(){
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
