@@ -809,6 +809,6 @@ if (attackClicked && !confirmDone) {
 })();
 
 
-
+})();
 
 
