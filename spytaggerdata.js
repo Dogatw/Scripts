@@ -144,6 +144,68 @@ el.style.cssText = `
             el.querySelector('#tagspy-btn').onclick = fn
     };
 })();
+function hookRenameSuffix() {
+    if (window.__renameSuffixEnabled) return;
+    window.__renameSuffixEnabled = true;
+
+    const observer = new MutationObserver(mutations => {
+        for (const m of mutations) {
+            for (const node of m.addedNodes) {
+
+                if (
+                    node.nodeType === 1 &&
+                    (
+                        node.matches?.('input[type="text"]') ||
+                        node.getAttribute?.('contenteditable') === 'true'
+                    )
+                ) {
+                    suffixRenameEditor(node);
+                }
+            }
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    console.log('🟢 Rename suffix hook enabled');
+}
+
+function suffixRenameEditor(editor) {
+    const row = editor.closest('tr');
+    if (!row) return;
+
+    const link = row.querySelector('a[href*="info_command"]');
+    if (!link) return;
+
+    const m = link.href.match(/id=(\d+)/);
+    if (!m) return;
+
+    const commandId = m[1];
+    const entry = window.extraDataCommands?.get(commandId);
+    if (!entry) return;
+
+    const size =
+        entry.type.includes('small') ? 'small' :
+        entry.type.includes('medium') ? 'medium' :
+        entry.type.includes('large') ? 'large' :
+        null;
+
+    if (!size) return;
+
+    const getVal = () => editor.value ?? editor.textContent ?? '';
+    const setVal = v => {
+        if ('value' in editor) editor.value = v;
+        else editor.textContent = v;
+    };
+
+    const current = getVal();
+    if (current.includes(`(${size})`)) return;
+
+    setVal(`${current.trim()} (${size})`);
+}
 
 // ===============================
 // === MAIN ======================
@@ -233,7 +295,10 @@ tagspyUI.setStatus(
 
 
 await new Promise(r => setTimeout(r, 500)); // allow DOM to settle
-tagspyUI.onClick(() => applyIncomingTags());
+tagspyUI.onClick(() => {
+    hookRenameSuffix();      // 🔑 enable rename suffixing
+    applyIncomingTags();     // existing behavior
+});
 console.log('🚀 calling applyIncomingTags');
 
 
