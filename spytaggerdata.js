@@ -102,6 +102,49 @@ async function loadUsersPermissions() {
     return usersMap;
 }
 
+const tagspyUI = (() => {
+    const el = document.createElement('div');
+el.style.cssText = `
+    position:fixed;
+    top:80px;
+    right:20px;
+    z-index:999999;
+    background:#111;
+    color:#fff;
+    padding:12px;
+    border-radius:8px;
+    font:12px Arial;
+    min-width:230px;
+    box-shadow:0 0 10px #000;
+`;
+
+
+    el.innerHTML = `
+        <div style="font-weight:bold;margin-bottom:6px;">🏷 SpyTagger by SAM </div>
+        <button id="tagspy-btn" style="width:100%;margin-bottom:6px;">
+            Tag Incoming
+        </button>
+        <div id="tagspy-status">Idle</div>
+        <div id="tagspy-stats" style="margin-top:6px;line-height:1.4">
+            Checked: 0<br>
+            Matched: 0<br>
+            Tagged: 0
+        </div>
+    `;
+
+    document.body.appendChild(el);
+
+    return {
+        setStatus: txt =>
+            el.querySelector('#tagspy-status').textContent = txt,
+        setStats: (c, m, t) =>
+            el.querySelector('#tagspy-stats').innerHTML =
+                `Checked: ${c}<br>Matched: ${m}<br>Tagged: ${t}`,
+        onClick: fn =>
+            el.querySelector('#tagspy-btn').onclick = fn
+    };
+})();
+
 // ===============================
 // === MAIN ======================
 // ===============================
@@ -125,15 +168,39 @@ if (!checkUserPermission()) {
 
   if (!location.search.includes('incomings')) { alert('Run this script on Incoming screen'); location.href = game_data.link_base_pure + 'overview_villages&mode=incomings'; }
 
+////////////////////////META DATA FETCH /////////////////////
+
+const FILE_PATH = `${BASE_PATH}/extraDataCommands.txt`;
+
+// 1️⃣ create short-lived signed URL
+const { data: signed, error: signErr } = await window.sb
+  .storage
+  .from(SUPABASE_BUCKET)
+  .createSignedUrl(FILE_PATH, 60);
+
+if (signErr) {
+  console.warn('signed url error', signErr);
+} else {
+  // 2️⃣ HEAD request to read Last-Modified (REAL value)
+  const headRes = await fetch(signed.signedUrl, { method: 'HEAD' });
+  const lastModified = headRes.headers.get('Last-Modified');
+
+  // 🔒 store ONCE (this matches dashboard)
+  window.__extraUpdatedAtLocal =
+    new Date(lastModified).toLocaleString();
+
+tagspyUI.setStatus(
+  `Spy uploaded at ${window.__extraUpdatedAtLocal}`
+);
+}
 
 
-    const FILE_PATH = `${BASE_PATH}/extraDataCommands.txt`;
-    console.log('🟡 downloading', FILE_PATH);
+// 2️⃣ download file (UNCHANGED logic)
+const { data, error } = await window.sb
+    .storage
+    .from(SUPABASE_BUCKET)
+    .download(FILE_PATH);
 
-    const { data, error } = await window.sb
-        .storage
-        .from(SUPABASE_BUCKET)
-        .download(FILE_PATH);
 
     // ===============================
 // === DECODE extraDataCommands ===
@@ -154,6 +221,10 @@ console.log(
     '🟢 extraDataCommands loaded:',
     window.extraDataCommands.size
 );
+tagspyUI.setStatus(
+  `Spy uploaded at ${window.__extraUpdatedAtLocal}`
+);
+
 
     console.log(
   `📦 extraDataCommands loaded → ${window.extraDataCommands.size} stored command IDs`
@@ -162,7 +233,7 @@ console.log(
 
 
 await new Promise(r => setTimeout(r, 500)); // allow DOM to settle
-   applyIncomingTags();
+tagspyUI.onClick(() => applyIncomingTags());
 console.log('🚀 calling applyIncomingTags');
 
 
@@ -212,6 +283,15 @@ function lzw_decode(input) {
 }
 
 function applyIncomingTags() {
+    let checked = 0;
+let matched = 0;
+let tagged = 0;
+
+tagspyUI.setStatus(
+  `Spy uploaded at ${window.__extraUpdatedAtLocal}`
+);
+
+
     if (!(window.extraDataCommands instanceof Map)) {
         console.warn('extraDataCommands missing');
         return;
@@ -235,15 +315,16 @@ function applyIncomingTags() {
     function processBatch() {
         const batch = links.slice(index, index + BATCH_SIZE);
 
-   batch.forEach(link => {
+ batch.forEach(link => {
     const m = link.href.match(/id=(\d+)/);
-
     if (!m) {
         console.warn('❌ incoming link without command id', link.href);
         return;
     }
 
+    // ✅ MUST come first
     const commandId = m[1];
+    checked++;
 
     const entry = window.extraDataCommands.get(commandId);
 
@@ -261,6 +342,8 @@ function applyIncomingTags() {
         );
         return;
     }
+
+    matched++;
 
     console.log(
         `✅ MATCHED → incoming id=${commandId} | type=${entry.type}`
@@ -284,16 +367,24 @@ function applyIncomingTags() {
         container.textContent =
             prefix + container.textContent.trim();
         applied++;
+        tagged++;
     }
 });
 
 
+
         index += BATCH_SIZE;
+tagspyUI.setStats(checked, matched, tagged);
 
         if (index < links.length) {
             setTimeout(processBatch, BATCH_DELAY);
         } else {
+tagspyUI.setStatus(
+  `Spy uploaded at ${window.__extraUpdatedAtLocal}`
+);
+
 console.log(
+
   `🏷️ tagging complete → ${applied} incoming commands tagged`
 );
         }
