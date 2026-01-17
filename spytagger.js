@@ -1456,42 +1456,43 @@ function uploadFile(_0x301e28, _0x2335d, _0x11fcf2) {
     });
 }
 
-function readFileDropbox(_0x51a30c) {
-    return new Promise(async (_0x4eccc5, _0x593a50) => {
+function readFileDropbox(name) {
+    return new Promise(async (resolve, reject) => {
         try {
-            // wait for supabase init
             while (!window.__supabaseReady) {
                 await new Promise(r => setTimeout(r, 10));
             }
 
-            // 🔒 HARD GUARD (THIS FIXES THE ERROR)
-            if (typeof _0x51a30c !== 'string' || !_0x51a30c.length) {
-                _0x593a50('Invalid filename');
+            if (typeof name !== 'string' || !name.length) {
+                reject('Invalid filename');
                 return;
             }
 
-            // 🔑 normalize filename
-            const cleanName = _0x51a30c.startsWith('/')
-                ? _0x51a30c.slice(1)
-                : _0x51a30c;
+            const clean = name.startsWith('/') ? name.slice(1) : name;
 
             const { data, error } = await window.sb
                 .storage
                 .from('vault')
-                .download(`myDB_en150/myDB/${cleanName}`);
+                .download(`myDB_en150/myDB/${clean}`);
 
             if (error || !data) {
-                _0x593a50('Unable to download file');
+                reject('Unable to download file');
                 return;
             }
 
-            // Supabase returns Blob (same as Dropbox)
-            _0x4eccc5(data);
+            // ✅ MATCH DROPBOX BEHAVIOR
+            if (clean.endsWith('.txt')) {
+                resolve(await data.text());
+            } else {
+                resolve(data); // Blob for .gz
+            }
+
         } catch (e) {
-            _0x593a50(e);
+            reject(e);
         }
     });
 }
+
 
 
 
