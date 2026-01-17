@@ -361,14 +361,31 @@ tagspyUI.setStatus(
         return;
     }
 
-    const prefix = `${entry.type} | `;
+// find command label element (this is what persists)
+const label =
+    container.querySelector('.quickedit-label') ||
+    container.querySelector('.command-label') ||
+    container.querySelector('span');
 
-    if (!container.textContent.startsWith(prefix)) {
-        container.textContent =
-            prefix + container.textContent.trim();
-        applied++;
-        tagged++;
-    }
+if (!label) return;
+
+// normalize type → small / medium / large
+const size =
+    entry.type.includes('small') ? 'small' :
+    entry.type.includes('medium') ? 'medium' :
+    entry.type.includes('large') ? 'large' :
+    null;
+
+if (!size) return;
+
+// already suffixed? stop
+if (label.textContent.includes(`(${size})`)) return;
+
+// ✅ append suffix ONLY
+label.textContent = `${label.textContent.trim()} (${size})`;
+
+tagged++;
+
 });
 
 
