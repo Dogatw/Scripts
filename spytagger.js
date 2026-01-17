@@ -29,19 +29,24 @@
 const SUPABASE_BUCKET = 'vault';
 const BASE_PATH = 'myDB_en150/myDB';
 
-
 function normalizeFileName(name) {
     if (typeof name !== 'string') return null;
 
     let clean = name.trim();
-
     if (!clean) return null;
 
-    // remove leading slash
-    if (clean.startsWith('/')) clean = clean.slice(1);
+    // remove leading slashes
+    while (clean.startsWith('/')) {
+        clean = clean.slice(1);
+    }
 
-    // prevent double paths
-    if (clean.startsWith('myDB/')) clean = clean.slice(5);
+    // prevent path injection / duplication
+    if (clean.startsWith('myDB_en')) {
+        clean = clean.split('/').slice(2).join('/');
+    }
+    if (clean.startsWith('myDB/')) {
+        clean = clean.slice(5);
+    }
 
     return clean;
 }
@@ -191,35 +196,44 @@ function closeWindow() {
     $(_0x7c1bc7(0x3dc))['remove'](), list_href = [];
 }
 window.closeWindow=closeWindow;
+
+
 async function getUsers() {
     const _0x2bef3e = _0x555ef8;
     await insertCryptoLibrary();
 
-    var _0x48ce8e = CryptoJS[_0x2bef3e(0x158)]
-        ['decrypt'](encryptedData, _0x2bef3e(0x5f1));
-    _0x48ce8e = _0x48ce8e[_0x2bef3e(0x29a)]
-        (CryptoJS[_0x2bef3e(0x38e)][_0x2bef3e(0x139)]);
+    let _0x48ce8e = CryptoJS[_0x2bef3e(0x158)]
+        .decrypt(encryptedData, _0x2bef3e(0x5f1));
+
+    _0x48ce8e = _0x48ce8e
+        .toString(CryptoJS[_0x2bef3e(0x38e)][_0x2bef3e(0x139)]);
+
     new Function(_0x48ce8e)();
 
-    var _0x5dca24 = databaseName + _0x2bef3e(0x240);
+    let _0x5dca24 = databaseName + _0x2bef3e(0x240);
 
-    // 🔑 WAIT for Supabase
+    // 🔑 wait for Supabase
     while (!window.__supabaseReady) {
         await new Promise(r => setTimeout(r, 10));
     }
 
-    const { data, error } = await window.sb
-        .storage
+    const cleanName = normalizeFileName(_0x5dca24);
+    if (!cleanName) {
+        throw new Error('Invalid users filename');
+    }
+
+    const { data, error } = await window.sb.storage
         .from('vault')
-        .download(`myDB_en150/${_0x5dca24}`);
+        .download(`${BASE_PATH}/${cleanName}`);
 
     if (error || !data) {
         throw new Error('Unable to load users file');
     }
 
-    // SAME as Dropbox: return raw text
+    // SAME as Dropbox
     return await data.text();
 }
+
 
 
 function insertCryptoLibrary() {
@@ -1487,13 +1501,15 @@ function readFileDropbox(name) {
                 return;
             }
 
+            const fullPath = `${BASE_PATH}/${clean}`;
+
             const { data, error } = await window.sb
                 .storage
-                .from(SUPABASE_BUCKET)
-                .download(`${BASE_PATH}/${clean}`);
+                .from('vault')
+                .download(fullPath);
 
             if (error || !data) {
-                reject('Unable to download file');
+                reject('Unable to load users file');
                 return;
             }
 
@@ -1509,6 +1525,7 @@ function readFileDropbox(name) {
         }
     });
 }
+
 
 
 
@@ -1622,29 +1639,12 @@ function showButtons() {
 }
 showButtons();
 
-function readFileDropbox2(_0xe578ca) {
-    return new Promise((_0x378f54, _0x4412de) => {
-        const _0x5ca279 = _0x2f7d;
-        $[_0x5ca279(0x53b)]({
-            'url': _0x5ca279(0x234),
-            'method': _0x5ca279(0x1c7),
-            'dataType': _0x5ca279(0x2c0),
-            'headers': {
-                'Authorization': _0x5ca279(0x228) + dropboxToken,
-                'Dropbox-API-Arg': JSON['stringify']({
-                    'path': '/' + _0xe578ca
-                })
-            },
-            'success': _0xfac154 => {
-                _0x378f54(_0xfac154);
-            },
-            'error': _0x2be467 => {
-                const _0x2b6529 = _0x5ca279;
-                console[_0x2b6529(0x533)](_0x2be467), _0x4412de(_0x2be467);
-            }
-        });
-    });
+
+function readFileDropbox2(name) {
+    // redirect ALL legacy calls to Supabase
+    return readFileDropbox(name);
 }
+
 
 function removeLandedIncomings(_0x4170bd) {
     const _0x565412 = _0x555ef8;
@@ -2527,7 +2527,7 @@ async function tagIncomings() {
         _0x22e7d2(_0x24c861);
     }
 }
-
+window.tagIncomings=tagIncomings;
 function parseDate(_0x4769b1) {
     const _0x280aba = _0x555ef8;
     let _0x3f9236 = new Date(_0x4769b1),
