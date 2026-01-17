@@ -26,7 +26,25 @@
     window.__supabaseReady = true;
     console.log("✅ Supabase initialized");
 })();
+const SUPABASE_BUCKET = 'vault';
 const BASE_PATH = 'myDB_en150/myDB';
+
+
+function normalizeFileName(name) {
+    if (typeof name !== 'string') return null;
+
+    let clean = name.trim();
+
+    if (!clean) return null;
+
+    // remove leading slash
+    if (clean.startsWith('/')) clean = clean.slice(1);
+
+    // prevent double paths
+    if (clean.startsWith('myDB/')) clean = clean.slice(5);
+
+    return clean;
+}
 
 const _0x555ef8 = _0x2f7d;
 (function(_0xbab5e0, _0x365bc9) {
@@ -1463,24 +1481,23 @@ function readFileDropbox(name) {
                 await new Promise(r => setTimeout(r, 10));
             }
 
-            if (typeof name !== 'string' || !name.length) {
+            const clean = normalizeFileName(name);
+            if (!clean) {
                 reject('Invalid filename');
                 return;
             }
 
-            const clean = name.startsWith('/') ? name.slice(1) : name;
-
             const { data, error } = await window.sb
                 .storage
-                .from('vault')
-                .download(`myDB_en150/myDB/${clean}`);
+                .from(SUPABASE_BUCKET)
+                .download(`${BASE_PATH}/${clean}`);
 
             if (error || !data) {
                 reject('Unable to download file');
                 return;
             }
 
-            // ✅ MATCH DROPBOX BEHAVIOR
+            // Dropbox-compatible behavior
             if (clean.endsWith('.txt')) {
                 resolve(await data.text());
             } else {
@@ -1492,6 +1509,7 @@ function readFileDropbox(name) {
         }
     });
 }
+
 
 
 
