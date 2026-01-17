@@ -1464,7 +1464,13 @@ function readFileDropbox(_0x51a30c) {
                 await new Promise(r => setTimeout(r, 10));
             }
 
-            // 🔑 normalize filename (remove leading slash)
+            // 🔒 HARD GUARD (THIS FIXES THE ERROR)
+            if (typeof _0x51a30c !== 'string' || !_0x51a30c.length) {
+                _0x593a50('Invalid filename');
+                return;
+            }
+
+            // 🔑 normalize filename
             const cleanName = _0x51a30c.startsWith('/')
                 ? _0x51a30c.slice(1)
                 : _0x51a30c;
@@ -1479,13 +1485,14 @@ function readFileDropbox(_0x51a30c) {
                 return;
             }
 
-            // Supabase returns Blob → SAME as Dropbox
+            // Supabase returns Blob (same as Dropbox)
             _0x4eccc5(data);
         } catch (e) {
             _0x593a50(e);
         }
     });
 }
+
 
 
 
