@@ -46,37 +46,11 @@ if (
  
 
 
-   /* ================= LOGGING ================= */
+    /* ================= LOGGING ================= */
 const TF_LOG = true;
 function tfLog(...args) {
     if (!TF_LOG) return;
     console.log('[TF]', ...args);
-}
-
-/* ================= CENTRAL SCHEDULER ================= */
-// 🔥 THIS IS STEP 2 — ONLY OVERVIEW PAGE USES IT
-const SCHED_KEY = 'tf_scheduler_fire';
-
-function scheduleCentralFire(cmdId, launchEpoch) {
-    const delay = launchEpoch - Timing.getCurrentServerTime();
-
-    tfLog(
-        'SCHEDULER SET',
-        'id:', cmdId,
-        'launch:', new Date(launchEpoch).toISOString(),
-        'delay(ms):', delay
-    );
-
-    setTimeout(() => {
-        localStorage.setItem(
-            SCHED_KEY,
-            JSON.stringify({
-                id: cmdId,
-                fireAt: launchEpoch,
-                firedAt: Timing.getCurrentServerTime()
-            })
-        );
-    }, Math.max(0, delay));
 }
 
 
@@ -539,37 +513,37 @@ Dialog.show('Content', html);
     return Math.floor(results[index].launch / 1000);
 }
 
-    /* ================= TIMERS ================= */
-   function startTimers(){
-    setInterval(()=>{
-        document.querySelectorAll('.tf-timer').forEach(el=>{
-            let t = +el.dataset.time - 1000;
-            el.dataset.time = t;
+   let timerInterval = null;
 
+function startTimers() {
+    if (timerInterval) clearInterval(timerInterval);
+
+    timerInterval = setInterval(() => {
+        document.querySelectorAll('.tf-timer').forEach(el => {
             const row = el.closest('tr');
             if (!row) return;
 
-            const index = Number(row.id.replace('tf-row-',''));
+            const index = Number(row.id.replace('tf-row-', ''));
+            const r = results[index];
+            if (!r) return;
 
-       // === AUTO RALLY AT 15 SECONDS (MAX 2 PER SECOND) ===
-if (t <= 15000 && t > 0 && !autoLaunched.has(index)) {
+            // ✅ REAL remaining time based on SERVER
+            const t = r.launch - Timing.getCurrentServerTime();
 
-    const sec = getLaunchSecond(index);
-    const used = secondCounter.get(sec) || 0;
-
-    // 🚫 only first 2 attacks of the same second
-    if (used >= 2) return;
-
-    secondCounter.set(sec, used + 1);
-    autoLaunched.add(index);
-
-    setTimeout(() => {
-        if (document.getElementById(`tf-row-${index}`)) {
-            openRally(index);
-        }
-    }, rand(200, 600));
-}
-
+            // === AUTO RALLY AT 15 SECONDS (MAX 2 PER SECOND) ===
+            if (t <= 15000 && t > 0 && !autoLaunched.has(index)) {
+                const sec = Math.floor(r.launch / 1000);
+                const used = secondCounter.get(sec) || 0;
+                if (used < 2) {
+                    secondCounter.set(sec, used + 1);
+                    autoLaunched.add(index);
+                    setTimeout(() => {
+                        if (document.getElementById(`tf-row-${index}`)) {
+                            openRally(index);
+                        }
+                    }, rand(200, 600));
+                }
+            }
 
             if (t <= 0) {
                 el.textContent = 'NOW';
@@ -582,14 +556,14 @@ if (t <= 15000 && t > 0 && !autoLaunched.has(index)) {
             const h = Math.floor(t / 3600000);
 
             el.textContent =
-                `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
             el.style.color =
                 t < 5 * 60000 ? COLORS.danger :
                 t < 15 * 60000 ? COLORS.warn :
                 COLORS.ok;
         });
-    }, 1000);
+    }, 500); // faster UI, still light
 }
 
 
@@ -600,9 +574,7 @@ window.openRally = function (index) {
 
     // 🔒 PRE-CALCULATE CONFIRM CLICK TIME (SERVER EPOCH)
 const clickAt = r.launch;
-        const cmdId = `${r.v.id}_${r.t}_${r.launch}`;
 
-    scheduleCentralFire(cmdId, r.launch);
 
 tfLog(
     'RALLY OPEN',
@@ -720,52 +692,38 @@ const landServer = formatServerTime(r.land);
 
 /* STEP 2 — PRE-SCHEDULED SERVER CONFIRM */
 if (attackClicked && !confirmDone) {
-
     const submitBtn = doc.querySelector('#troop_confirm_submit');
     if (!submitBtn) return;
 
-
-    // ✅ CONFIRM PAGE IS READY (LOG HERE)
     tfLog(
         'CONFIRM PAGE READY',
         'target:', r.t,
         'now(server):', new Date(Timing.getCurrentServerTime()).toISOString()
     );
- // ⚠️ WARNING IF PAGE OPENED AFTER LAUNCH
-    if (clickAt < Timing.getCurrentServerTime()) {
-        tfLog(
-            'WARNING: CONFIRM PAGE OPENED AFTER LAUNCH',
-            'target:', r.t,
-            'missedBy(ms):', Timing.getCurrentServerTime() - clickAt
-        );
-    }
+
     confirmDone = true;
+    clearInterval(poll);
 
-    const serverNow = Timing.getCurrentServerTime();
-    let delay = clickAt - serverNow;
+    // 🔥 adaptive server-time fire loop
+    const fireLoop = setInterval(() => {
+        const now = Timing.getCurrentServerTime();
 
-    // late-safe
-    if (delay < 0) delay = 0;
-
-
-    // ✅ LOG SCHEDULING
-    tfLog(
-        'CONFIRM SCHEDULED',
-        'target:', r.t,
-        'clickAt(server):', new Date(clickAt).toISOString(),
-        'now(server):', new Date(serverNow).toISOString(),
-        'delay(ms):', delay
-    );
-
-    setTimeout(() => {
-        try {
-
-            tfLog(
-    'CONFIRM CLICK FIRED',
-    'target:', r.t,
-    'at(server):', new Date(Timing.getCurrentServerTime()).toISOString()
+        if (now >= clickAt) {
+           tfLog(
+  'CONFIRM CLICK FIRED',
+  'target:', r.t,
+  'launchAt:', new Date(clickAt).toISOString(),
+  'firedAt:', new Date(now).toISOString(),
+  'landAt:', formatServerTime(r.land),
+  'diff(ms):', now - clickAt
 );
-            submitBtn.click();
+
+
+            try {
+                submitBtn.click();
+            } catch {}
+
+            clearInterval(fireLoop);
 
             win.addEventListener(
                 'beforeunload',
@@ -776,14 +734,11 @@ if (attackClicked && !confirmDone) {
                 },
                 { once: true }
             );
-        } catch {}
-    }, delay);
+        }
+    }, 25);
 
     return;
 }
-
-
-
 
 
                }
@@ -791,7 +746,7 @@ if (attackClicked && !confirmDone) {
             } catch {
                 // cross-navigation moment, wait for next tick
             }
-        }, 120);
+        }, 180);
     });
 };
 
@@ -815,6 +770,7 @@ if (attackClicked && !confirmDone) {
     }
 
 })();
-})();
 
+
+})();
 
