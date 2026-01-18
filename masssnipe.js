@@ -67,6 +67,11 @@ async function checkScriptAccess() {
     console.warn("Mass Snipe already running, skipping re-init");
     return;
 }
+
+    let MAP_COMING = new Map();
+let MAP_TROOPS_HOME = new Map();
+let list_href = [];
+
 window.__MASS_SNIPE_RUNNING__ = true;
 
 var backgroundColor = "#32313f";
@@ -213,7 +218,7 @@ function closeWindow() {
     list_href = []
         // window.location.reload();
 }
-
+window.closeWindow=closeWindow;
 
 
 
@@ -563,9 +568,10 @@ function ajaxTroopsStationed(villageId) {
 //////////////////////////////////////////////////////////main function where all data are extracted//////////////////////////////
 async function getAllInfo() {
 
-    let map_coming = await getSupportsAndAttacks()
-    let map_troops_home = new Map()
-    var keys = Array.from(map_coming.keys())
+  MAP_COMING = await getSupportsAndAttacks();
+MAP_TROOPS_HOME = new Map();
+
+    var keys = Array.from(MAP_COMING.keys())
 
     let start_get_troops = new Date().getTime()
 
@@ -573,7 +579,7 @@ async function getAllInfo() {
     const run = async() => {
         console.log("Starting...");
         for (let i = 0; i < keys.length; i++) { //for each coord
-            let list_coming = map_coming.get(keys[i])
+            let list_coming = MAP_COMING.get(keys[i])
             for (let j = 0; j < list_coming.length; j++) { //for each incoming attack/support
                 let landing_time_current = new Date(list_coming[j].landing_time)
 
@@ -599,7 +605,7 @@ async function getAllInfo() {
                 } else { //type_incoming=="attack"
                     let villageId = list_coming[j].coord_destination_id
                     let coord = list_coming[j].coord_destination
-                    if (!map_troops_home.has(coord)) { // if an incoming has noble and there is no info about troops home
+                    if (!MAP_TROOPS_HOME.has(coord)) { // if an incoming has noble and there is no info about troops home
                         try {
                             let obj = await ajaxTroopsStationed(villageId) //get troops home for this villageID
                             console.log("troops home")
@@ -612,7 +618,7 @@ async function getAllInfo() {
                             date_current.setDate(date_current.getDate() + 7)
 
                             obj.uploadTime = date_current.getTime()
-                            map_troops_home.set(coord, obj)
+                            MAP_TROOPS_HOME.set(coord, obj)
                             UI.SuccessMessage(`${"info coord"}: ${keys.length-i} , ${"get troops home"} ${list_coming.length-j}`)
 
                         } catch (error) {
@@ -624,7 +630,7 @@ async function getAllInfo() {
 
                 }
             }
-            map_coming.set(keys[i], list_coming)
+            MAP_COMING.set(keys[i], list_coming)
 
 
         }
@@ -633,135 +639,214 @@ async function getAllInfo() {
     await run();
     var stop_get_troops = new Date().getTime()
     console.log("time get troops " + (stop_get_troops - start_get_troops))
-    console.log("map_coming", map_coming)
-    console.log("troops home", map_troops_home)
+    console.log("MAP_COMING", MAP_COMING)
+    console.log("troops home", MAP_TROOPS_HOME)
 
-    $(".row_a").remove();
-    $(".row_b").remove();
-    var table_incomings = document.getElementById("incomings_table")
-    let lastRow = table_incomings.children[1].children[1];
-    table_incomings.children[1].children[1].remove();
-    let nr_row = 0;
 
-    $(table_incomings).append("<tr><td colspan='7'>-</td></tr>")
-    Array.from(map_coming.keys()).forEach(key => {
-        let list_coming = map_coming.get(key)
-        for (let i = 0; i < list_coming.length; i++) {
-            $(table_incomings).append(list_coming[i].tr)
+
+
+// === incomings table setup (SINGLE SOURCE OF TRUTH) ===
+const incomingsTable = document.getElementById("incomings_table");
+if (!incomingsTable) {
+    console.warn("incomings_table not found");
+    return;
+}
+
+const incomingsTbody = incomingsTable.tBodies?.[0];
+if (!incomingsTbody) {
+    console.warn("incomings_table tbody missing");
+    return;
+}
+// ✅ NOW it is safe to use incomingsTbody
+while (incomingsTbody.rows.length > 1) {
+    incomingsTbody.deleteRow(1);
+}
+// remove second row ONLY if it exists (original behavior)
+if (incomingsTbody.children.length > 1) {
+    incomingsTbody.children[1].remove();
+}
+
+let nr_row = 0;
+
+// initial separator
+{
+    const sepRow = document.createElement("tr");
+    const sepCell = document.createElement("td");
+    sepCell.colSpan = 7;
+    sepCell.textContent = "-";
+    sepRow.appendChild(sepCell);
+    incomingsTbody.appendChild(sepRow);
+}
+
+// === render incomings ===
+Array.from(MAP_COMING.keys()).forEach(key => {
+    const list_coming = MAP_COMING.get(key);
+
+    for (let i = 0; i < list_coming.length; i++) {
+        if (list_coming[i].tr) {
+            incomingsTbody.appendChild(list_coming[i].tr);
             nr_row++;
-
         }
-        $(table_incomings).append("<tr><td colspan='7'>-</td></tr>")
-    })
-    table_incomings.children[1].children[0].children[0].innerText = "Command (" + nr_row + ")"
-    $(table_incomings).append(lastRow)
-
-
-
-
-    /////////////////////////////////////highlight trains///////////////////////////
-    var table_incomings = document.getElementById("incomings_table").getElementsByTagName("tr")
-
-    let colors = {
-        yellow: '#ffff66',
-        red: '#ff8080',
-        green: '#4dff4d'
-    };
-
-    for (let i = 1; i < table_incomings.length - 1; i++) {
-        let length_tr = table_incomings[i].children.length
-        table_incomings[i].classList.remove("selected")
-
-        // if there isn't a tr separator between coords and it's not ignored
-        if (table_incomings[i].children[0].innerText != "-" && table_incomings[i + 1].children[0].innerText != "-" && !table_incomings[i].children[0].innerText.toLowerCase().includes(`"ignore"`)) {
-            //highlight all possible trains
-            for (let j = i + 1; j < table_incomings.length; j++) {
-
-                if (table_incomings[j].children[0].innerText == "-")
-                    continue;
-
-                let tr1 = table_incomings[i].children[length_tr - 2].innerText.match(/[0-9]{2}\:[0-9]{2}\:[0-9]{2}\:[0-9]{3}/)[0]
-                let tr2 = table_incomings[j].children[length_tr - 2].innerText.match(/[0-9]{2}\:[0-9]{2}\:[0-9]{2}\:[0-9]{3}/)[0]
-                let time1 = parseInt(tr1.split(":")[0]) * 3600 * 1000 + parseInt(tr1.split(":")[1]) * 60 * 1000 + parseInt(tr1.split(":")[2]) * 1000 + parseInt(tr1.split(":")[3])
-                let time2 = parseInt(tr2.split(":")[0]) * 3600 * 1000 + parseInt(tr2.split(":")[1]) * 60 * 1000 + parseInt(tr2.split(":")[2]) * 1000 + parseInt(tr2.split(":")[3])
-
-                if (table_incomings[i].children[2].innerHTML == table_incomings[j].children[2].innerHTML) { //if origin coord is the same
-                    if (Math.abs(time1 - time2) == 50 || Math.abs(time1 - time2) == 100 || Math.abs(time1 - time2) == 150) {
-
-
-                        if (table_incomings[i].children[0].getElementsByTagName("img").length == 2) { // if there are 2 images means it is tagged and then check if it's tagged as noble
-                            let hasNoble = table_incomings[i].children[0].getElementsByTagName("img")[1].src.includes("snob.png")
-                            if (hasNoble == true) {
-                                $(table_incomings[i]).find('td').each(function() {
-                                    $(this).css('background-color', colors.red);
-                                });
-                                $(table_incomings[j]).find('td').each(function() {
-                                    $(this).css('background-color', colors.red);
-                                });
-                                //check all trains and every attack/support between nobles
-                                for (let k = i; k <= j; k++) { // loop from i(first noble) to j(second noble)
-                                    $(table_incomings[k]).find("input[type=checkbox]").attr("checked", true)
-
-                                }
-
-
-
-                            } else { //not noble
-                                $(table_incomings[i]).find('td').each(function() {
-                                    $(this).css('background-color', colors.yellow);
-                                });
-                                $(table_incomings[j]).find('td').each(function() {
-                                    $(this).css('background-color', colors.yellow);
-                                });
-                            }
-                        } else { //not tagged
-                            $(table_incomings[i]).find('td').each(function() {
-                                $(this).css('background-color', colors.yellow);
-                            });
-                            $(table_incomings[j]).find('td').each(function() {
-                                $(this).css('background-color', colors.yellow);
-                            });
-                        }
-
-                        break;
-                    }
-                }
-                if (Math.abs(time1 - time2) > 200)
-                    break;
-
-            }
-        }
-
-
     }
+
+    // separator row after each coord
+    const sepRow = document.createElement("tr");
+    const sepCell = document.createElement("td");
+    sepCell.colSpan = 7;
+    sepCell.textContent = "-";
+    sepRow.appendChild(sepCell);
+    incomingsTbody.appendChild(sepRow);
+});
+
+if (incomingsTbody) {
+    // Update header text safely
+    if (incomingsTbody.rows.length > 0) {
+        const firstCell = incomingsTbody.rows[0].cells?.[0];
+        if (firstCell) {
+            firstCell.innerText = "Command (" + nr_row + ")";
+        }
+    }
+
+    // Add visual separator row at the end (replacement for lastRow)
+    const sepRow = document.createElement("tr");
+    const sepCell = document.createElement("td");
+    sepCell.colSpan = 7;
+    sepCell.textContent = "-";
+    sepRow.appendChild(sepCell);
+
+    incomingsTbody.appendChild(sepRow);
+}
+
+
+
+
+
+  /////////////////////////////////////highlight trains///////////////////////////
+const tableIncomings = document.getElementById("incomings_table");
+if (!tableIncomings) return;
+
+const tbody = tableIncomings.tBodies[0];
+if (!tbody) return;
+
+// ❌ removed: const rows = tbody.rows;
+
+let colors = {
+    yellow: '#ffff66',
+    red: '#ff8080',
+    green: '#4dff4d'
+};
+
+
+    const rows = incomingsTbody.rows;
+
+for (let i = 1; i < rows.length - 1; i++) {
+    const length_tr = rows[i].children.length;
+    rows[i].classList.remove("selected");
+
+    // skip separators + ignored
+    if (
+        rows[i].children[0].innerText !== "-" &&
+        rows[i + 1].children[0].innerText !== "-" &&
+        !rows[i].children[0].innerText.toLowerCase().includes('"ignore"')
+    ) {
+        for (let j = i + 1; j < rows.length; j++) {
+
+            if (rows[j].children[0].innerText === "-") continue;
+
+            const tr1 = rows[i].children[length_tr - 2].innerText
+                .match(/[0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{3}/)[0];
+            const tr2 = rows[j].children[length_tr - 2].innerText
+                .match(/[0-9]{2}:[0-9]{2}:[0-9]{2}:[0-9]{3}/)[0];
+
+            const time1 =
+                parseInt(tr1.split(":")[0]) * 3600000 +
+                parseInt(tr1.split(":")[1]) * 60000 +
+                parseInt(tr1.split(":")[2]) * 1000 +
+                parseInt(tr1.split(":")[3]);
+
+            const time2 =
+                parseInt(tr2.split(":")[0]) * 3600000 +
+                parseInt(tr2.split(":")[1]) * 60000 +
+                parseInt(tr2.split(":")[2]) * 1000 +
+                parseInt(tr2.split(":")[3]);
+
+            if (rows[i].children[2].innerHTML === rows[j].children[2].innerHTML) {
+                if ([50, 100, 150].includes(Math.abs(time1 - time2))) {
+
+                    const imgs = rows[i].children[0].getElementsByTagName("img");
+                    const hasNoble = imgs.length === 2 && imgs[1].src.includes("snob.png");
+
+                    const color = hasNoble ? colors.red : colors.yellow;
+
+                    $(rows[i]).find("td").css("background-color", color);
+                    $(rows[j]).find("td").css("background-color", color);
+
+                    if (hasNoble) {
+                        for (let k = i; k <= j; k++) {
+                            $(rows[k]).find("input[type=checkbox]").prop("checked", true);
+                        }
+                    }
+                    break;
+                }
+            }
+
+            if (Math.abs(time1 - time2) > 200) break;
+        }
+    }
+}
+
 
     //activate renaming label
     //this code is copy paste from TW source code
-    CommandsOverview = {
+// define ONLY if it does not already exist
+if (typeof window.CommandsOverview === "undefined") {
+    window.CommandsOverview = {
         $filters: null,
-        init: function() {
-            this.$filters = $(".overview_filters"),
-                1 == $.cookie("overview_filter_incomings") && this.toggleFilters(),
-                $(".overview_filters_manage").on("click", function() {
-                    return CommandsOverview.toggleFilters(), !1
-                }),
-                $(".overview_filters_delete").on("click", function() {
-                    $(this).parents("td").eq(0).find("input").val("")
-                })
+        init: function () {
+            this.$filters = $(".overview_filters");
+
+            if ($.cookie("overview_filter_incomings") == 1) {
+                this.toggleFilters();
+            }
+
+            $(".overview_filters_manage").on("click", function () {
+                CommandsOverview.toggleFilters();
+                return false;
+            });
+
+            $(".overview_filters_delete").on("click", function () {
+                $(this).parents("td").eq(0).find("input").val("");
+            });
         },
-        toggleFilters: function() {
-            this.$filters.toggle(),
-                $.cookie("overview_filter_incomings", "none" == this.$filters.css("display") ? 0 : 1)
+        toggleFilters: function () {
+            this.$filters.toggle();
+            $.cookie(
+                "overview_filter_incomings",
+                this.$filters.css("display") === "none" ? 0 : 1
+            );
         }
     };
+}
 
-    $('document').ready(function() {
+$(document).ready(function () {
+    // SAFE init (prevents ReferenceError)
+    if (window.CommandsOverview && typeof CommandsOverview.init === "function") {
         CommandsOverview.init();
-        UI.ToolTip('.icon_village_notes');
+    }
 
-        $('.quickedit').QuickEdit({ url: TribalWars.buildURL('POST', 'info_command', { ajaxaction: 'edit_other_comment', id: '__ID__' }) });
-        Command.init();
+    UI.ToolTip('.icon_village_notes');
+
+    $('.quickedit').QuickEdit({
+        url: TribalWars.buildURL(
+            'POST',
+            'info_command',
+            { ajaxaction: 'edit_other_comment', id: '__ID__' }
+        )
     });
+
+    Command.init();
+});
+
     ///////////////////////////////////////////
 
 
@@ -776,33 +861,46 @@ async function getAllInfo() {
     $(".btn_overview_page").on("click", () => {
 
         //get commandID for each checked incoming
-        let map_selected_commandId = new Map()
-        Array.from($(incomings_table).find("input[type=checkbox]:checked")).forEach((elem, index) => {
-            let commandId = elem.getAttribute("name").split("id_")[1]
-            let ignoredNoble = elem.nextSibling.nextSibling.innerText.toLowerCase().includes('"ignore"')
-            let images = elem.nextSibling.nextSibling.getElementsByTagName("img")
+      const checkedInputs = Array.from(
+    $(incomings_table).find("input[type=checkbox]:checked")
+);
 
+// ✅ NEW: if nothing checked → auto-select all
+const inputsToUse = checkedInputs.length
+    ? checkedInputs
+    : Array.from($(incomings_table).find("input[type=checkbox]"));
 
-            let labelName = "none"
-            if (images.length == 2) {
-                labelName = images[1].src.split("tiny/")[1]
-                if (labelName == undefined)
-                    labelName = images[1].src.split("command/")[1]
+let map_selected_commandId = new Map();
 
-            }
+inputsToUse.forEach(elem => {
+    let commandId = elem.getAttribute("name")?.split("id_")[1];
+    if (!commandId) return;
 
+    let ignoredNoble = elem.nextSibling?.nextSibling?.innerText
+        ?.toLowerCase()
+        ?.includes('"ignore"') ?? false;
 
-            map_selected_commandId.set(commandId, {
-                ignoredNoble: ignoredNoble,
-                labelName: labelName
-            })
-        })
+    let images = elem.nextSibling?.nextSibling?.getElementsByTagName("img") ?? [];
+
+    let labelName = "none";
+    if (images.length === 2) {
+        labelName = images[1].src.split("tiny/")[1]
+            || images[1].src.split("command/")[1]
+            || "none";
+    }
+
+    map_selected_commandId.set(commandId, {
+        ignoredNoble,
+        labelName
+    });
+});
+
 
         console.log(map_selected_commandId)
 
         //filter map coming, keep in the map only checked incoming
-        Array.from(map_coming.keys()).forEach(key => {
-            let list_incoming = map_coming.get(key)
+        Array.from(MAP_COMING.keys()).forEach(key => {
+            let list_incoming = MAP_COMING.get(key)
             let list_result = []
             let commandIdExist = false
             let ignoredNoble = false
@@ -828,26 +926,26 @@ async function getAllInfo() {
             if (commandIdExist == true && ignoredNoble == false) { //update map with only checked incoming
                 console.log('nr attacks total', total_nr_attacks)
                 list_result[0].total_nr_attacks = total_nr_attacks
-                map_coming.set(key, list_result)
+                MAP_COMING.set(key, list_result)
             } else
-                map_coming.delete(key) // delete coord from the map because it wasnt checked
+                MAP_COMING.delete(key) // delete coord from the map because it wasnt checked
 
         })
-        console.log("map coming checked", map_coming)
+        console.log("map coming checked", MAP_COMING)
 
         //filter map_troops
-        Array.from(map_troops_home.keys()).forEach(key => {
-            if (!map_coming.has(key))
-                map_troops_home.delete(key)
+        Array.from(MAP_TROOPS_HOME.keys()).forEach(key => {
+            if (!MAP_COMING.has(key))
+                MAP_TROOPS_HOME.delete(key)
         })
-        console.log("map troops checked", map_troops_home)
+        console.log("map troops checked", MAP_TROOPS_HOME)
 
 
 
-        //order map_coming by date when the first noble arrives
+        //order MAP_COMING by date when the first noble arrives
         let list_order = []
-        Array.from(map_coming.keys()).forEach(key => {
-            let list_coming = map_coming.get(key)
+        Array.from(MAP_COMING.keys()).forEach(key => {
+            let list_coming = MAP_COMING.get(key)
             let landing_time = "0"
 
             for (let i = 0; i < list_coming.length; i++) {
@@ -870,10 +968,10 @@ async function getAllInfo() {
         list_order.sort((o1, o2) => {
             return (new Date(o1.landing_time).getTime() > new Date(o2.landing_time).getTime()) ? 1 : (new Date(o1.landing_time).getTime() < new Date(o2.landing_time).getTime()) ? -1 : 0
         })
-        let map_coming_order = new Map()
+        let MAP_COMING_order = new Map()
         for (let i = 0; i < list_order.length; i++) {
-            let obj = map_coming.get(list_order[i].coord)
-            map_coming_order.set(list_order[i].coord, obj)
+            let obj = MAP_COMING.get(list_order[i].coord)
+            MAP_COMING_order.set(list_order[i].coord, obj)
         }
 
 
@@ -892,10 +990,10 @@ async function getAllInfo() {
         createTableSettings()
         let obj_player_data = {
                 playerName: game_data.player.name,
-                numberSnipes: map_coming.size
+                numberSnipes: MAP_COMING.size
             }
             // add json file into  textarea object
-        var data_list = [obj_player_data, Array.from(map_coming_order.entries()), Array.from(map_troops_home.entries())]
+        var data_list = [obj_player_data, Array.from(MAP_COMING_order.entries()), Array.from(MAP_TROOPS_HOME.entries())]
         document.getElementById("own_snipes").value = JSON.stringify(data_list)
         $("#own_snipes").closest("tr").find("font").text(`${obj_player_data.playerName}\n ${"trains"}:(${obj_player_data.numberSnipes})`)
         saveJsonToLocalStorage(false)
@@ -991,10 +1089,32 @@ let table_combined = combinedTable.getElementsByTagName("tr");
         snipe_units.splice(indexOf, 1)
     }
 
-    for (let i = 1; i < table_combined.length; i++) {
-        let vectorTroupes = Array.from(table_combined[i].getElementsByClassName("unit-item")).map(e => { return parseInt(e.innerText) })
-        let currentCoord = table_combined[i].getElementsByClassName("quickedit-label")[0].innerText.match(/[0-9]{3}\|[0-9]{3}/)[0]
-        let linkBase = table_combined[i].getElementsByClassName("quickedit-content")[0].getElementsByTagName("a")[0].href.replace("overview", "place")
+   for (let i = 1; i < table_combined.length; i++) {
+
+    const row = table_combined[i];
+
+    // ⛔ skip non-village / malformed rows
+    const unitItems = row.getElementsByClassName("unit-item");
+    const labelEl = row.getElementsByClassName("quickedit-label")[0];
+    const contentEl = row.getElementsByClassName("quickedit-content")[0];
+
+    if (!unitItems.length || !labelEl || !contentEl) {
+        continue;
+    }
+
+    const vectorTroupes = Array.from(unitItems)
+        .map(e => parseInt(e.innerText) || 0);
+
+    const coordMatch = labelEl.innerText.match(/[0-9]{3}\|[0-9]{3}/);
+    if (!coordMatch) continue;
+
+    const currentCoord = coordMatch[0];
+
+    const linkAnchor = contentEl.getElementsByTagName("a")[0];
+    if (!linkAnchor) continue;
+
+    const linkBase = linkAnchor.href.replace("overview", "place");
+
             // console.log(linkBase)
             // console.log("troupes available",vectorTroupes)
         console.log(vectorTroupes)
@@ -1880,8 +2000,8 @@ function getSpeedConstant() { //Get speed constant (world speed * unit speed) fo
 
 function startSnipes() {
     // get coord and landing time for each train which is not sniped
-    let map_coming = new Map()
-    let map_troops_home = new Map()
+  let map_coming = new Map(MAP_COMING);
+let map_troops_home = new Map(MAP_TROOPS_HOME);
     let map_coming_snipes = new Map()
     let alread_pop_sniped = parseInt(document.getElementById("already_sniped_pop").value)
     let pop_snipe = parseInt(document.getElementById("snipe_pop").value)
@@ -1891,20 +2011,31 @@ function startSnipes() {
     let list_available = getTroopsSnipes(pop_snipe)
 
     document.getElementById("btn_start").setAttribute("get_troops", "true")
-    Array.from($(".textarea_snipes")).forEach(item => {
-        console.log(item)
-        try {
-            let data_list = JSON.parse(item.value)
-            let obj_player_data = data_list[0] // no need here
-            let map_coming_textarea = new Map(data_list[1])
-            let map_troops_home_textarea = new Map(data_list[2])
-            map_coming = new Map([...map_coming, ...map_coming_textarea])
-            map_troops_home = new Map([...map_troops_home, ...map_troops_home_textarea])
+Array.from($(".textarea_snipes")).forEach(item => {
+    const value = item.value.trim();
 
-        } catch (error) {
-            console.log(error)
-        }
-    })
+    // ✅ SKIP EMPTY TEXTAREAS (THIS IS THE FIX)
+    if (!value) {
+        return;
+    }
+
+    let data_list;
+    try {
+        data_list = JSON.parse(value);
+    } catch (e) {
+        console.error("Invalid JSON in textarea_snipes:", value);
+        return;
+    }
+
+    // ⬇️ unchanged logic
+    let obj_player_data = data_list[0]; // not used here
+    let map_coming_textarea = new Map(data_list[1]);
+    let map_troops_home_textarea = new Map(data_list[2]);
+
+    map_coming = new Map([...map_coming, ...map_coming_textarea]);
+    map_troops_home = new Map([...map_troops_home, ...map_troops_home_textarea]);
+});
+
 
 
     //if a snipe was made or it is in the list of coord sniped then delete before creating snipes plan
