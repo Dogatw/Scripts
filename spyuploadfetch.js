@@ -253,7 +253,24 @@ function getInfoCommands(_0x33f628) {
     }
 };
 
-        await _0x34cc59(), _0x498178 = new Map(_0x99e5d5), _0x2e840c(_0x498178);
+await _0x34cc59();
+
+// 🔥 STRIP troop data for small + pop < 100
+for (let i = 0; i < _0x99e5d5.length; i++) {
+    const data = _0x99e5d5[i][1];
+
+    if (
+        data.type === 'small' &&
+        data.population !== undefined &&
+        data.population < 100
+    ) {
+        delete data.troops;
+        delete data.population;
+    }
+}
+
+_0x498178 = new Map(_0x99e5d5);
+_0x2e840c(_0x498178);
     });
 }
 
