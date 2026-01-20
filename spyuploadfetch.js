@@ -214,9 +214,17 @@ function getInfoCommands(_0x33f628) {
         if (
             _0x4778ce[_0x4ef379(0x231)] == 'medium' ||
             _0x4778ce[_0x4ef379(0x231)] == _0x4ef379(0x20d) ||
+            _0x4778ce[_0x4ef379(0x231)] == 'small' ||
             _0x4778ce[_0x4ef379(0x1ce)] == !![]
         ) {
             let _0x29310f = await ajaxGetTroops(_0x76f392);
+            if (
+    _0x4778ce[_0x4ef379(0x231)] == 'small' &&
+    _0x29310f?.total?.population < 100
+) {
+    continue;
+}
+
 
             if (_0x29310f[_0x4ef379(0x205)] != undefined) {
                 _0x4778ce[_0x4ef379(0x1d8)] =
