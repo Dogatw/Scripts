@@ -8626,6 +8626,9 @@ Array.from(map_playerId.keys()).forEach(key => {
 
 
     console.log("list_incomings_merge",list_incomings_merge)
+    window.map_incomings = map_incomings;
+window.list_incomings_merge = list_incomings_merge;
+
 
     //Tribe OP spotter
     let map_nr_incs_hour=new Map()
@@ -11172,6 +11175,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
