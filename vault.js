@@ -6262,10 +6262,7 @@ function getCommandsGoing(){
                                 let coord_destination=table_commands[i].getElementsByClassName("quickedit-label")[0].innerText.match(/\d+\|\d+/)[0]
                                 let coord_origin=table_commands[i].children[1].innerText.match(/\d+\|\d+/)[0]
                                 let coord_origin_id=table_commands[i].children[1].getElementsByTagName("a")[0].href.split("id=")[1]
-let landing_time_str = table_commands[i].children[2].innerText;
-let landing_time_ms = parseTWDate(landing_time_str);
-
-if (!Number.isFinite(landing_time_ms)) return;
+                                let landing_time=getLandTime(table_commands[i].children[2].innerText)
                                 let troops={}
                                 let player_origin_name=game_data.player.name
                                 let player_origin_id=game_data.player.id.toString()
@@ -6280,7 +6277,7 @@ if (!Number.isFinite(landing_time_ms)) return;
                                     map_outgoing_support.set(commandId,{
                                         coord_destination:coord_destination,
                                         coord_origin:coord_origin,
-                                       date_land_ms: landing_time_ms,
+                                        landing_time:landing_time,
                                         troops:troops,
                                         player_origin_name:player_origin_name,
                                         player_origin_id:player_origin_id,
@@ -8623,12 +8620,9 @@ Array.from(map_playerId.keys()).forEach(key => {
     }
 
 
-list_incomings_merge.sort((a, b) => {
-    if (!Number.isFinite(a.date_land_ms)) return 1;
-    if (!Number.isFinite(b.date_land_ms)) return -1;
-    return a.date_land_ms - b.date_land_ms;
-});
-
+    list_incomings_merge.sort((o1,o2)=>{
+        return new Date(o1.date_land).getTime() < new Date(o2.date_land).getTime()?-1:(new Date(o1.date_land).getTime() > new Date(o2.date_land).getTime())?1:0
+    })
 
 
     console.log("list_incomings_merge",list_incomings_merge)
@@ -8722,54 +8716,25 @@ list_incomings_merge.sort((a, b) => {
 function randomIntFromInterval(min, max) { // min and max included
     return Math.floor(Math.random() * (max - min + 1) + min)
   }
-function parseTWDate(str) {
-    if (!str || typeof str !== "string") return null;
 
-    const serverTime = document.getElementById("serverTime")?.innerText;
-    const serverDate = document.getElementById("serverDate")?.innerText;
-
-    if (!serverTime || !serverDate) return null;
-
-    // serverDate = DD/MM/YYYY
-    let [day, month, year] = serverDate.split("/");
-    let baseDate = `${year}-${month}-${day}`;
-
-    if (str.includes("today")) {
-        return Date.parse(`${baseDate} ${str.split("today at ")[1]}`);
-    }
-
-    if (str.includes("tomorrow")) {
-        let d = new Date(baseDate);
-        d.setDate(d.getDate() + 1);
-        return Date.parse(
-            `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${str.split("tomorrow at ")[1]}`
-        );
-    }
-
-    const parsed = Date.parse(str);
-    return Number.isFinite(parsed) ? parsed : null;
-}
-
-function calculateDateLaunch(obj) {
-    if (!Number.isFinite(obj.date_land_ms)) return null;
-
-    let distance = calcDistance(obj.coord_def, obj.coord_off);
-    let time_travel = 0;
-
-    if (obj.labelName.includes("snob"))
-        time_travel = distance * nobleSpeed;
-    else if (obj.labelName.includes("ram"))
-        time_travel = distance * ramSpeed;
-    else if (obj.labelName.includes("sword"))
-        time_travel = distance * swordSpeed;
-    else if (obj.labelName.includes("axe"))
-        time_travel = distance * axeSpeed;
+function calculateDateLaunch(obj){
+    let distance=calcDistance(obj.coord_def,obj.coord_off)
+    let time_travel=0
+    if(obj.labelName.includes("snob"))
+        time_travel=distance*nobleSpeed
+    else if(obj.labelName.includes("ram"))
+        time_travel=distance*ramSpeed
+    else if(obj.labelName.includes("sword"))
+        time_travel=distance*swordSpeed
+    else if(obj.labelName.includes("axe"))
+        time_travel=distance*axeSpeed
     else
-        time_travel = distance * heavySpeed;
+        time_travel=distance*heavySpeed
 
-    return obj.date_land_ms - time_travel;
+    let date_launch=new Date(obj.date_land).getTime()-time_travel
+    // date_launch=parseDate(date_launch)
+    return date_launch
 }
-
 
 
 
@@ -11207,8 +11172,6 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
-
-
 
 
 
