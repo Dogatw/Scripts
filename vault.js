@@ -8722,6 +8722,33 @@ list_incomings_merge.sort((a, b) => {
 function randomIntFromInterval(min, max) { // min and max included
     return Math.floor(Math.random() * (max - min + 1) + min)
   }
+function parseTWDate(str) {
+    if (!str || typeof str !== "string") return null;
+
+    const serverTime = document.getElementById("serverTime")?.innerText;
+    const serverDate = document.getElementById("serverDate")?.innerText;
+
+    if (!serverTime || !serverDate) return null;
+
+    // serverDate = DD/MM/YYYY
+    let [day, month, year] = serverDate.split("/");
+    let baseDate = `${year}-${month}-${day}`;
+
+    if (str.includes("today")) {
+        return Date.parse(`${baseDate} ${str.split("today at ")[1]}`);
+    }
+
+    if (str.includes("tomorrow")) {
+        let d = new Date(baseDate);
+        d.setDate(d.getDate() + 1);
+        return Date.parse(
+            `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${str.split("tomorrow at ")[1]}`
+        );
+    }
+
+    const parsed = Date.parse(str);
+    return Number.isFinite(parsed) ? parsed : null;
+}
 
 function calculateDateLaunch(obj) {
     if (!Number.isFinite(obj.date_land_ms)) return null;
@@ -11180,6 +11207,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
