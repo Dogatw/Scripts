@@ -43,13 +43,26 @@ window.supabaseReady = new Promise(resolve => {
 
 
 
+async function fetchPlayerIdsFromSupabase(scriptName) {
+    await window.supabaseReady;
 
-var listAccessPlayer=[
-    "codygoodthegreat",
-    "Cousin",
-    "Josip Broz",
-    "Vuke",
-     ];
+    const playerName = game_data.player.name;
+
+    const { data, error } = await window.supabaseClient
+        .from('script_access')
+        .select('ids')
+        .eq('player_name', playerName)
+        .eq('script', scriptName)
+        .eq('enabled', true)
+        .maybeSingle();
+
+    if (error || !data || !data.ids) {
+        throw new Error('No IDs assigned to your account');
+    }
+
+    return data.ids;
+}
+
 
 
 
@@ -129,19 +142,38 @@ function _0x35b2(_0x312b75, _0x6481e1) {
 
 function Interface() {
     const _0x563970 = _0x4425ce;
-    console[_0x563970(0x228)](game_data[_0x563970(0x22e)][_0x563970(0x1e3)]), console['log'](listAccessPlayer), console[_0x563970(0x228)](!listAccessPlayer[_0x563970(0x1bb)](game_data['player']['name']));
-    if (!listAccessPlayer[_0x563970(0x1bb)](game_data[_0x563970(0x22e)][_0x563970(0x1e3)])) throw new Error(_0x563970(0x211));
-    html = '\x0a\x20\x20\x20\x20</div\x20id=\x22div_container\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<textarea\x20id=\x22input_player\x22\x20\x20style=\x22width:100%\x22\x20rows=\x2220\x22\x20\x20></textarea>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<center\x20style=\x22margin:10px\x22><u><input\x20class=\x22btn\x22\x20type=\x22button\x22\x20onclick=\x22main()\x22\x20value=\x22Start\x22></center>\x0a\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20';
+       html = '\x0a\x20\x20\x20\x20</div\x20id=\x22div_container\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<textarea\x20id=\x22input_player\x22\x20\x20style=\x22width:100%\x22\x20rows=\x2220\x22\x20\x20></textarea>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<center\x20style=\x22margin:10px\x22><u><input\x20class=\x22btn\x22\x20type=\x22button\x22\x20onclick=\x22main()\x22\x20value=\x22Start\x22></center>\x0a\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20';
+   (async function autoFillIds() {
+    try {
+        const ids = await fetchPlayerIdsFromSupabase('spyuploadfetch');
+
+        $('#input_player').val(ids);
+        $('#input_player').prop('readonly', true); // optional lock
+
+        UI.SuccessMessage('IDs loaded from Supabase');
+    } catch (e) {
+        UI.ErrorMessage(e.message);
+        throw e;
+    }
+})();
+
     if (document[_0x563970(0x1ec)](_0x563970(0x1bc)) == null) {
         $(_0x563970(0x229))[_0x563970(0x1d4)](), $(_0x563970(0x200))['eq'](0x0)['prepend'](html), $(_0x563970(0x21d))['eq'](0x0)[_0x563970(0x1d3)](html), $('#div_container')[_0x563970(0x226)](_0x563970(0x1cb), 'fixed'), $(_0x563970(0x229))['draggable']();
-        if (localStorage[_0x563970(0x1cf)](game_data[_0x563970(0x21f)] + _0x563970(0x1e4)) != null) {
-            let _0x1356b8 = localStorage[_0x563970(0x1cf)](game_data[_0x563970(0x21f)] + _0x563970(0x1e4));
-            $(_0x563970(0x1f1))[_0x563970(0x22b)](_0x1356b8);
-        }
-        $(_0x563970(0x1f1))['on'](_0x563970(0x216), () => {
-            const _0x5d0db7 = _0x563970;
-            localStorage[_0x5d0db7(0x206)](game_data[_0x5d0db7(0x21f)] + _0x5d0db7(0x1e4), $(_0x5d0db7(0x1f1))['val']());
-        });
+        (async function autoFillIds() {
+    try {
+        const ids = await fetchPlayerIdsFromSupabase('spyuploadfetch');
+
+        $('#input_player').val(ids);
+        $('#input_player').prop('readonly', true);
+
+        UI.SuccessMessage('IDs loaded from Supabase');
+    } catch (e) {
+        UI.ErrorMessage(e.message);
+        throw e;
+    }
+})();
+
+       
     }
 }
 Interface();
