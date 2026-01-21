@@ -7150,7 +7150,9 @@ async function uploadSupports(){
                               </center>
 
                                 `,10000)
-
+// ===== DEBUG EXPORTS (TEMP ONLY) =====
+window.__DEBUG_map_attack_dropbox = map_attack_dropbox;
+window.__DEBUG_date_current = date_current;
             resolve({
                 totalTimeUpload:totalTimeUpload,
                 status: "success"
@@ -11175,6 +11177,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
