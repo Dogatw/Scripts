@@ -97,9 +97,15 @@ async function main() {
             let _0x5753a1 = game_data[_0x49b03b(0x1e2)] + ('info_player&id=' + _0x5ee272[_0x2674d4]),
                 _0x1b420b = await ajaxGet(_0x5753a1);
             document['body'][_0x49b03b(0x1de)] = _0x1b420b;
-            try {
-                $(_0x49b03b(0x1f2))[_0x49b03b(0x1ea)]()['eq'](0x1)['children']()['length'] == 0x65 && $(_0x49b03b(0x215))['eq'](-0x1)['find']('a')['click']();
-            } catch (_0x436a3c) {}
+           // ✅ EXPAND leftover villages (robust)
+const leftoverLink = $('a').filter((_, a) =>
+    a.innerText && a.innerText.includes('Display all leftover')
+);
+
+if (leftoverLink.length) {
+    leftoverLink[0].click();
+    await new Promise(r => setTimeout(r, 800));
+}
             console[_0x49b03b(0x228)]($('#villages_list\x20tr'));
             let _0x4d657a = $(_0x49b03b(0x1b9))[_0x49b03b(0x1c2)]()[_0x49b03b(0x1c2)]();
             console['log'](_0x4d657a);
