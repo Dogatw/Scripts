@@ -6251,9 +6251,14 @@ function getCommandsGoing(){
                     const parser = new DOMParser();
                     const htmlDoc = parser.parseFromString(data, 'text/html');
 
-                    if(htmlDoc.getElementById("commands_table")==null){//commands outgoing none
-                        resolve(map_outgoing_support)
-                    }else{
+                  if (htmlDoc.getElementById("commands_table") == null) {
+    // no commands on this page, just continue
+    window.setTimeout(function () {
+        ajaxRequest(list_pages);
+    }, 200);
+    return;
+}
+else{
                         var table_commands=htmlDoc.getElementById("commands_table").getElementsByTagName("tbody")[0].children
                         for(let i=1;i<table_commands.length-1;i++){
                             if(table_commands[i].children[0].innerText.match(/\d+\|\d+/)!=null){//destination must contains coord destination
@@ -6288,7 +6293,7 @@ function getCommandsGoing(){
 
                                     })
                                 }
-                                else if(type_attack=="attack_small.png" || type_attack=="attack_medium.png" || type_attack=="attack_large.png"){
+                                else if(type_attack=="attack_small.webp" || type_attack=="attack_medium.webp" || type_attack=="attack_large.webp"){
                                 // console.log("is an attack")
                                     let serverTime=htmlDoc.getElementById("serverTime").innerText
                                     let serverDate=htmlDoc.getElementById("serverDate").innerText.split("/")
@@ -6327,6 +6332,12 @@ function getCommandsGoing(){
         else//append all rows into table
         {
             UI.SuccessMessage("done")
+            console.log(
+    "getCommandsGoing FINAL:",
+    "support =", map_outgoing_support.size,
+    "attack =", map_outgoing_attack.size
+);
+
             resolve([map_outgoing_support,map_outgoing_attack])
         }
     }
@@ -6632,6 +6643,12 @@ async function uploadSupports(){
     // console.log("result_commands",result_commands)
     var map_going=result_commands[0]
     var map_going_attacks=result_commands[1]
+    console.log(
+    "AFTER getCommandsGoing:",
+    "support =", map_going?.size,
+    "attack =", map_going_attacks?.size
+);
+
 
     let map_support_dropbox,map_troops_home_dropbox
     try {
@@ -6878,6 +6895,11 @@ async function uploadSupports(){
         }
     }
     console.log("map_attack_dropbox", map_attack_dropbox)
+console.log(
+  "ATTACKS BEFORE PURGE:",
+  map_attack_dropbox.size,
+  Array.from(map_attack_dropbox.values()).slice(0, 3)
+);
 
 
     // console.log(data_attack_batch.length)
@@ -6908,20 +6930,30 @@ async function uploadSupports(){
 
     console.log("map_going_attacks",map_going_attacks)
 
-    if(map_going_attacks !=undefined){// no commands going
-        Array.from(map_going_attacks.keys()).forEach(key=>{
-            try {
-                let obj=map_going_attacks.get(key)
-                obj.coord_destination_id=mapVillages.get(obj.coord_destination).villageId
-                obj.player_destination_name=mapVillages.get(obj.coord_destination).playerName
-                obj.player_destination_id=mapVillages.get(obj.coord_destination).playerId
-                map_attack_dropbox.set(key,obj)
-            } catch (error) {
-                console.log("command attack to barb")
-                console.log(error)
-            }
-        })
-    }
+if(map_going_attacks != undefined){// no commands going
+    Array.from(map_going_attacks.keys()).forEach(key=>{
+        try {
+            let obj = map_going_attacks.get(key)
+
+            obj.coord_destination_id = mapVillages.get(obj.coord_destination).villageId
+            obj.player_destination_name = mapVillages.get(obj.coord_destination).playerName
+            obj.player_destination_id = mapVillages.get(obj.coord_destination).playerId
+
+            // ✅ REQUIRED: timestamp for persistence
+            obj.uploadTime = date_current;
+
+            map_attack_dropbox.set(key, obj)
+        } catch (error) {
+            console.log("command attack to barb")
+            console.log(error)
+        }
+    })
+}
+console.log(
+    "map_attack_dropbox AFTER merge:",
+    map_attack_dropbox.size
+);
+
 
 
 
@@ -7016,14 +7048,21 @@ async function uploadSupports(){
 
         })
         // console.log(map_support_dropbox)
-        //delete  map commands attacks if it's older than 1 week
-        Array.from(map_attack_dropbox.keys()).forEach(key=>{
-            let obj=map_attack_dropbox.get(key)
-            let date_upload=new Date(obj.uploadTime).getTime()
+   // delete map commands attacks if it's older than 1 week
+const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
 
-            if(date_current > date_upload)
-                map_attack_dropbox.delete(key)
-        })
+Array.from(map_attack_dropbox.entries()).forEach(([key, obj]) => {
+
+    // 🔒 guard: skip live attacks with no uploadTime
+    if (!Number.isFinite(obj.uploadTime)) return;
+
+    if (date_current - obj.uploadTime > ONE_WEEK) {
+        map_attack_dropbox.delete(key);
+    }
+});
+
+
+console.log("ATTACKS AFTER PURGE:", map_attack_dropbox.size);
 
         //update status map
         let obj_status={
@@ -8721,6 +8760,47 @@ window.list_incomings_merge = list_incomings_merge;
 function randomIntFromInterval(min, max) { // min and max included
     return Math.floor(Math.random() * (max - min + 1) + min)
   }
+function getLandTimeMs(obj) {
+    if (Number.isFinite(obj.date_land_ms)) {
+        return obj.date_land_ms;
+    }
+
+    const parsed = Date.parse(obj.date_land);
+    if (!Number.isFinite(parsed)) {
+        return null;
+    }
+
+    obj.date_land_ms = parsed; // cache once
+    return parsed;
+}
+function parseTWDate(str) {
+    if (!str || typeof str !== "string") return null;
+
+    const serverTime = document.getElementById("serverTime")?.innerText;
+    const serverDate = document.getElementById("serverDate")?.innerText;
+
+    if (!serverTime || !serverDate) return null;
+
+    // serverDate is DD/MM/YYYY
+    let [day, month, year] = serverDate.split("/");
+    let baseDate = `${year}-${month}-${day}`;
+
+    if (str.includes("today")) {
+        return Date.parse(`${baseDate} ${str.split("today at ")[1]}`);
+    }
+
+    if (str.includes("tomorrow")) {
+        let d = new Date(baseDate);
+        d.setDate(d.getDate() + 1);
+        return Date.parse(
+            `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()} ${str.split("tomorrow at ")[1]}`
+        );
+    }
+
+    // fallback for full dates
+    const parsed = Date.parse(str);
+    return Number.isFinite(parsed) ? parsed : null;
+}
 
 function calculateDateLaunch(obj){
     let distance=calcDistance(obj.coord_def,obj.coord_off)
@@ -8736,7 +8816,10 @@ function calculateDateLaunch(obj){
     else
         time_travel=distance*heavySpeed
 
-    let date_launch=new Date(obj.date_land).getTime()-time_travel
+let landTime = parseTWDate(obj.date_land);
+if (!Number.isFinite(landTime)) return null;
+
+let date_launch = landTime - time_travel;
     // date_launch=parseDate(date_launch)
     return date_launch
 }
@@ -11177,6 +11260,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
