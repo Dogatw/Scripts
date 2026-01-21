@@ -6262,7 +6262,10 @@ function getCommandsGoing(){
                                 let coord_destination=table_commands[i].getElementsByClassName("quickedit-label")[0].innerText.match(/\d+\|\d+/)[0]
                                 let coord_origin=table_commands[i].children[1].innerText.match(/\d+\|\d+/)[0]
                                 let coord_origin_id=table_commands[i].children[1].getElementsByTagName("a")[0].href.split("id=")[1]
-                                let landing_time=getLandTime(table_commands[i].children[2].innerText)
+let landing_time_str = table_commands[i].children[2].innerText;
+let landing_time_ms = parseTWDate(landing_time_str);
+
+if (!Number.isFinite(landing_time_ms)) return;
                                 let troops={}
                                 let player_origin_name=game_data.player.name
                                 let player_origin_id=game_data.player.id.toString()
@@ -6277,7 +6280,7 @@ function getCommandsGoing(){
                                     map_outgoing_support.set(commandId,{
                                         coord_destination:coord_destination,
                                         coord_origin:coord_origin,
-                                        landing_time:landing_time,
+                                       date_land_ms: landing_time_ms,
                                         troops:troops,
                                         player_origin_name:player_origin_name,
                                         player_origin_id:player_origin_id,
@@ -8620,9 +8623,12 @@ Array.from(map_playerId.keys()).forEach(key => {
     }
 
 
-    list_incomings_merge.sort((o1,o2)=>{
-        return new Date(o1.date_land).getTime() < new Date(o2.date_land).getTime()?-1:(new Date(o1.date_land).getTime() > new Date(o2.date_land).getTime())?1:0
-    })
+list_incomings_merge.sort((a, b) => {
+    if (!Number.isFinite(a.date_land_ms)) return 1;
+    if (!Number.isFinite(b.date_land_ms)) return -1;
+    return a.date_land_ms - b.date_land_ms;
+});
+
 
 
     console.log("list_incomings_merge",list_incomings_merge)
@@ -8717,24 +8723,26 @@ function randomIntFromInterval(min, max) { // min and max included
     return Math.floor(Math.random() * (max - min + 1) + min)
   }
 
-function calculateDateLaunch(obj){
-    let distance=calcDistance(obj.coord_def,obj.coord_off)
-    let time_travel=0
-    if(obj.labelName.includes("snob"))
-        time_travel=distance*nobleSpeed
-    else if(obj.labelName.includes("ram"))
-        time_travel=distance*ramSpeed
-    else if(obj.labelName.includes("sword"))
-        time_travel=distance*swordSpeed
-    else if(obj.labelName.includes("axe"))
-        time_travel=distance*axeSpeed
-    else
-        time_travel=distance*heavySpeed
+function calculateDateLaunch(obj) {
+    if (!Number.isFinite(obj.date_land_ms)) return null;
 
-    let date_launch=new Date(obj.date_land).getTime()-time_travel
-    // date_launch=parseDate(date_launch)
-    return date_launch
+    let distance = calcDistance(obj.coord_def, obj.coord_off);
+    let time_travel = 0;
+
+    if (obj.labelName.includes("snob"))
+        time_travel = distance * nobleSpeed;
+    else if (obj.labelName.includes("ram"))
+        time_travel = distance * ramSpeed;
+    else if (obj.labelName.includes("sword"))
+        time_travel = distance * swordSpeed;
+    else if (obj.labelName.includes("axe"))
+        time_travel = distance * axeSpeed;
+    else
+        time_travel = distance * heavySpeed;
+
+    return obj.date_land_ms - time_travel;
 }
+
 
 
 
@@ -11172,6 +11180,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
