@@ -9682,7 +9682,7 @@ function createTableSettings(){
                 <font style="margin:5px" color="${titleColor}">fangs has(catapults) </font>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}" >
-                <input type="number" style="text-align:center;" id="settings_fang_cat" min="0" max="20000"  value="10" placeholder="100" disabled>
+                <input type="number" style="text-align:center;" id="settings_fang_cat" min="0" max="20000"  value="10" placeholder="100">
             </td>
         </tr>
 
@@ -11172,6 +11172,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
