@@ -103,8 +103,12 @@ const leftoverLink = $('a').filter((_, a) =>
 );
 
 if (leftoverLink.length) {
-    leftoverLink[0].click();
-    await new Promise(r => setTimeout(r, 800));
+   const href = leftoverLink.attr('href');
+if (href) {
+    const html = await ajaxGet(href);
+    document.body.innerHTML = html;
+}
+
 }
             console[_0x49b03b(0x228)]($('#villages_list\x20tr'));
             let _0x4d657a = $(_0x49b03b(0x1b9))[_0x49b03b(0x1c2)]()[_0x49b03b(0x1c2)]();
