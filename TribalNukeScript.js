@@ -185,11 +185,31 @@ async function isAdminUser() {
 }
 
 
+async function handleConfirmPage() {
+    if (!location.href.includes("screen=place&try=confirm")) return;
+
+    const p = window.__pendingCoord;
+    if (!p) return;
+
+    console.log("✅ Confirm page detected, consuming coord:", p.coord);
+
+    await sb
+        .from("coordfornuke")
+        .update({ remaining_uses: p.remaining_uses - 1 })
+        .eq("id", p.id);
+
+    window.__pendingCoord = null;
+
+    await showRemainingCoordsUI();
+    await showNukeUsageUI();
+}
 
 /* ================= MAIN ================= */
 
 async function main() {
 
+    // ✅ ALWAYS FIRST
+    await handleConfirmPage();
 
     await showRemainingCoordsUI();   // existing
     await showNukeUsageUI();          // ✅ ADD THIS
@@ -241,8 +261,7 @@ async function initVillage() {
     for (let i = 0; i < t.length; i++) {
         document.querySelector(`input[id*="${t[i][0]}"]`).value = t[i][1];
         }
-    // ✅ ADD THIS LINE (exact spot)
-    hookAttackConfirm();
+    
 
 }
 
@@ -291,34 +310,7 @@ window.__pendingCoord = row;
     return c;
 }
 
-    function hookAttackConfirm() {
-    const btn = document.querySelector("#troop_confirm_submit");
-
-    if (!btn || btn.__hooked) return;
-    btn.__hooked = true;
-
-    btn.addEventListener("click", async () => {
-        const p = window.__pendingCoord;
-        if (!p) return;
-
-        // 🔥 consume coord ONLY NOW
-        await sb
-            .from("coordfornuke")
-            .update({ remaining_uses: p.remaining_uses - 1 })
-            .eq("id", p.id);
-
-        // clear pending
-        window.__pendingCoord = null;
-
-        // ✅ UPDATE BOTH UIs
-    await showRemainingCoordsUI();
-    await showNukeUsageUI();
-    });
-}
-
-
-
-/* ================= TROOP LOGIC ================= */
+    /* ================= TROOP LOGIC ================= */
 
 function getEnabledUnits() {
     let t = [];
@@ -423,5 +415,6 @@ function storeVillages() {
 main();
 
 })();
+
 
 
