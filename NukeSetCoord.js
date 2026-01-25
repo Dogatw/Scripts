@@ -77,6 +77,10 @@ async function Interface() {
 }
 
 Interface();
+$("#input_coords").on("paste", function () {
+    setTimeout(() => Save(), 50);
+});
+
 
 /* ================= LOAD EXISTING ================= */
 
@@ -110,33 +114,39 @@ async function Save() {
         await new Promise(r => setTimeout(r, 50));
     }
 
-    const raw = $("#input_coords").val().split(/\n+/);
-    let rows = [];
+    const text = $("#input_coords").val();
 
-    for (let line of raw) {
-        const match = line.match(/(\d{3}\|\d{3})(?:\s+(\d+))?/);
-        if (!match) continue;
+    // extract ALL xxx|yyy coords anywhere
+    const matches = text.match(/\b\d{3}\|\d{3}\b/g) || [];
 
-        rows.push({
-            world: game_data.world,
-            coord: match[1],
-            remaining_uses: Number(match[2] || 1),
-            used_count: 0
-        });
-    }
-
-    if (!rows.length) {
+    if (!matches.length) {
         alert("No valid coords found");
         return;
     }
 
-    // Clear existing coords for this world
+    // unique coords only
+    const unique = [...new Set(matches)];
+
+    // build rows for Supabase
+    const rows = unique.map(coord => ({
+        world: game_data.world,
+        coord: coord,
+        remaining_uses: 1,
+        used_count: 0
+    }));
+
+    // 🔄 auto-format textarea: one per line with " -1"
+    const formatted = unique.map(c => `${c} -1`).join("\n");
+    $("#input_coords").val(formatted);
+    $("#nr_coords").text("nr: " + unique.length);
+
+    // clear existing coords for this world
     await sb
         .from("coordfornuke")
         .delete()
         .eq("world", game_data.world);
 
-    // Insert new coords
+    // insert new coords
     const { error } = await sb
         .from("coordfornuke")
         .insert(rows);
@@ -147,7 +157,8 @@ async function Save() {
         return;
     }
 
-    UI.SuccessMessage("Coords saved to Supabase", 1500);
-    $("#nr_coords").text("nr: " + rows.length);
+    UI.SuccessMessage(`Saved ${unique.length} coords`, 1500);
 }
+
+
 
