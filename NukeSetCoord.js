@@ -132,7 +132,7 @@ async function Save() {
 
     for (const line of lines) {
         // matches: 555|444 2   OR   555|444 0.5   OR   555|444
-        const m = line.match(/(\d{3}\|\d{3})(?:\s+([\d.]+))?/);
+const m = line.match(/(\d{3}\|\d{3})(?:\s*[-:]?\s*([\d.]+))?/);
         if (!m) continue;
 
         const coord = m[1];
@@ -142,6 +142,7 @@ async function Save() {
 const remaining = m[2] !== undefined
     ? Math.round(Number(m[2]) * 100) / 100
     : 1;
+        
 
 if (isNaN(remaining) || remaining <= 0) continue;
 
@@ -182,6 +183,7 @@ if (isNaN(remaining) || remaining <= 0) continue;
 
     UI.SuccessMessage(`Saved ${rows.length} coords`, 1500);
 }
+
 
 
 
