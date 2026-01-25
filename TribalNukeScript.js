@@ -1,3 +1,4 @@
+//11:58
 (async function () {
 'use strict';
 
@@ -188,7 +189,8 @@ async function isAdminUser() {
 async function handleConfirmPage() {
     console.log("🔍 handleConfirmPage fired", location.href);
 
-    if (!location.href.includes("screen=place&try=confirm")) return;
+    // only care about rally point
+    if (!location.href.includes("screen=place")) return;
 
     const raw = sessionStorage.getItem("pending_nuke_coord");
     console.log("🧠 pendingCoord (session):", raw);
@@ -207,12 +209,13 @@ async function handleConfirmPage() {
 
     console.log("📉 update result:", { data, error });
 
-    // 🔥 EXACT LINE YOU ASKED ABOUT — PUT IT RIGHT HERE
     sessionStorage.removeItem("pending_nuke_coord");
 
     await showRemainingCoordsUI();
     await showNukeUsageUI();
 }
+
+
 
 
 /* ================= MAIN ================= */
@@ -436,6 +439,7 @@ setInterval(() => {
 }, 250);
 
 })();
+
 
 
 
