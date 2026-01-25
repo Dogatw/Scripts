@@ -2,11 +2,11 @@
 'use strict';
 
 /* ================= CONFIG ================= */
-
+/*
  const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
     const SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcmdqbnN4YWhmeGxzZWFra25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgxNTc5MDgsImV4cCI6MjA4MzczMzkwOH0.ZmqvQkg1baYpkYXhYCj59Drphdy2iq50tY3JoIR_6c4";
-
+*/
 
 /* ================= TROOP CONFIG ================= */
 /*
@@ -423,3 +423,4 @@ function storeVillages() {
 main();
 
 })();
+
