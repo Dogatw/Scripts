@@ -425,7 +425,19 @@ function storeVillages() {
 
 main();
 
+let __lastUrl = location.href;
+
+setInterval(() => {
+    if (location.href !== __lastUrl) {
+        __lastUrl = location.href;
+        console.log("🔄 URL changed:", __lastUrl);
+        main();
+    }
+}, 250);
+
 })();
+
+
 
 
 
