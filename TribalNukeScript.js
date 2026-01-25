@@ -1,4 +1,4 @@
-//11:58
+//1:21
 (async function () {
 'use strict';
 
@@ -10,6 +10,7 @@
 
 
 /* ================= TROOP CONFIG ================= */
+const __consumedNukes = new Set();
 
 const forceEqualTroopCount = false;
 const distributeByPopulation = false;
@@ -96,6 +97,40 @@ async function isAdminUser() {
     return data[0].permission === "admin";
 }
 
+/* ================= COORD-BASED NUKE SCAN ================= */
+
+// coord (500|500) → village id
+async function coordToVillageId(coord) {
+    const [x, y] = coord.split("|");
+
+    const res = await fetch(
+        `/game.php?screen=map&ajax=map_info&x=${x}&y=${y}`,
+        { credentials: "same-origin" }
+    );
+
+    const data = await res.json();
+    return data?.village?.id || null;
+}
+
+// scan village page for large / medium outgoing
+async function fetchVillageOutgoingNukes(villageId) {
+    const res = await fetch(
+        `/game.php?screen=info_village&id=${villageId}`,
+        { credentials: "same-origin" }
+    );
+
+    const html = await res.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+
+    return [...doc.querySelectorAll("img[src*='attack_']")]
+        .filter(img =>
+            img.src.includes("attack_large") ||
+            img.src.includes("attack_medium")
+        )
+        .map(img => ({
+            type: img.src.includes("large") ? "large" : "medium"
+        }));
+}
 
 
 
@@ -131,6 +166,86 @@ async function isAdminUser() {
         document.getElementById(elId).innerText =
             `🎯 Remaining coords: ${count ?? 0}`;
     }
+}
+
+    async function showVillageUsageUI() {
+    if (!(await isAdminUser())) return;
+
+    const elId = "village_usage_ui";
+
+    if (!document.getElementById(elId)) {
+        const div = document.createElement("div");
+        div.id = elId;
+        div.style.cssText = `
+            position: fixed;
+            top: 430px;
+            right: 20px;
+            background: #1e1e28;
+            color: #ffffdf;
+            padding: 10px 12px;
+            border-radius: 6px;
+            z-index: 9999;
+            font-size: 12px;
+            max-height: 320px;
+            overflow-y: auto;
+            min-width: 260px;
+        `;
+        document.body.appendChild(div);
+    }
+
+    const { data, error } = await sb
+        .from("coordfornuke_log")
+        .select(`
+            from_village_id,
+            from_village_name,
+            attack_type,
+            weight
+        `)
+        .eq("world", game_data.world);
+
+    if (error || !data?.length) {
+        document.getElementById(elId).innerHTML =
+            "<b>📊 Village usage</b><br><i>No data</i>";
+        return;
+    }
+
+    const map = {};
+
+    for (const r of data) {
+        const key = r.from_village_id;
+        if (!map[key]) {
+            map[key] = {
+                name: r.from_village_name || `Village ${key}`,
+                total: 0,
+                large: 0,
+                medium: 0
+            };
+        }
+
+        map[key].total += Number(r.weight);
+        if (r.attack_type === "large") map[key].large++;
+        if (r.attack_type === "medium") map[key].medium++;
+    }
+
+    const rows = Object.values(map)
+        .sort((a, b) => b.total - a.total)
+        .map(v => `
+            <div style="margin-bottom:6px;">
+                <b>${v.name}</b><br>
+                💣 ${v.total.toFixed(1)}
+                <span style="color:#aaa;">
+                    (L:${v.large} M:${v.medium})
+                </span>
+            </div>
+        `)
+        .join("");
+
+    document.getElementById(elId).innerHTML = `
+        <div style="font-weight:bold;margin-bottom:6px;">
+            📊 Village usage
+        </div>
+        ${rows}
+    `;
 }
 
     async function showNukeUsageUI() {
@@ -174,7 +289,7 @@ async function isAdminUser() {
 
     for (const r of data) {
         total += r.remaining_uses;
-        lines.push(`${r.coord} – ${r.remaining_uses}`);
+         lines.push(`${r.coord} – ${Number(r.remaining_uses).toFixed(1)}`);
     }
 
     document.getElementById(elId).innerHTML = `
@@ -186,30 +301,70 @@ async function isAdminUser() {
 }
 
 
-async function handleConfirmPage() {
-    console.log("🔍 handleConfirmPage fired", location.href);
 
-    // only care about rally point
-    if (!location.href.includes("screen=place")) return;
 
-    const raw = sessionStorage.getItem("pending_nuke_coord");
-    console.log("🧠 pendingCoord (session):", raw);
+   async function detectAndConsumeTribeNukes() {
 
-    if (!raw) return;
-
-    const p = JSON.parse(raw);
-
-    console.log("💣 DECREMENTING:", p.id, p.coord, p.remaining_uses);
-
-    const { data, error } = await sb
+    const { data: coords, error } = await sb
         .from("coordfornuke")
-        .update({ remaining_uses: p.remaining_uses - 1 })
-        .eq("id", p.id)
-        .select();
+        .select("id, coord, remaining_uses")
+        .eq("world", game_data.world)
+        .gt("remaining_uses", 0);
 
-    console.log("📉 update result:", { data, error });
+    if (error || !coords?.length) return;
 
-    sessionStorage.removeItem("pending_nuke_coord");
+    for (const c of coords) {
+        const villageId = await coordToVillageId(c.coord);
+        if (!villageId) continue;
+
+        const attacks = await fetchVillageOutgoingNukes(villageId);
+
+   let remaining = c.remaining_uses;
+
+for (const atk of attacks) {
+    if (remaining <= 0) break;
+
+    // GLOBAL idempotent lock
+    const { error: insertErr } = await sb
+        .from("consumed_nukes")
+        .insert({
+            world: game_data.world,
+            coord: c.coord,
+            attack_type: atk.type
+        });
+
+    if (insertErr) continue; // already consumed elsewhere
+
+    await sb
+  .from("coordfornuke_log")
+  .insert({
+    world: game_data.world,
+    coord: c.coord,
+
+    from_village_id: villageId,
+    from_village_name: game_data.village.name, // or fetched name if available
+
+    attack_type: atk.type,
+    weight: atk.type === "large" ? 1 : 0.5
+  });
+
+
+    console.log("💣 NUKE CONFIRMED:", c.coord, atk.type);
+remaining -= atk.type === "large" ? 1 : 0.5;
+}
+
+// apply final value ONCE
+if (remaining !== c.remaining_uses) {
+    await sb
+        .from("coordfornuke")
+        .update({ remaining_uses: remaining })
+        .eq("id", c.id);
+}
+
+// rate-limit (this part you already did right)
+await new Promise(r => setTimeout(r, 300));
+
+    }
 
     await showRemainingCoordsUI();
     await showNukeUsageUI();
@@ -218,15 +373,18 @@ async function handleConfirmPage() {
 
 
 
+
 /* ================= MAIN ================= */
 
 async function main() {
 
-    // ✅ ALWAYS FIRST
-    await handleConfirmPage();
+    // 🔥 MUST HAPPEN FIRST
+    await detectAndConsumeTribeNukes();
 
-    await showRemainingCoordsUI();   // existing
-    await showNukeUsageUI();          // ✅ ADD THIS
+    await showRemainingCoordsUI();
+    await showNukeUsageUI();
+        await showVillageUsageUI(); // 👈 ADD THIS
+
 
     if (location.href.includes("overview_villages")) {
         storeVillages();
@@ -240,6 +398,7 @@ async function main() {
         console.warn("Village skipped:", e);
     }
 }
+
 
 /*function goNextVillage() {
     document.querySelector(".arrowRight")?.click();
@@ -275,7 +434,7 @@ async function initVillage() {
     for (let i = 0; i < t.length; i++) {
         document.querySelector(`input[id*="${t[i][0]}"]`).value = t[i][1];
         }
-    
+
 
 }
 
@@ -308,9 +467,6 @@ async function getCoordFromSupabase() {
 
     const row = data[0];
 
-
- // ✅ store pending coord (NOT consumed yet)
-sessionStorage.setItem("pending_nuke_coord", JSON.stringify(row));
 
 
     let c = row.coord;
@@ -426,24 +582,20 @@ function storeVillages() {
 
 /* ================= RUN ================= */
 
-main();
-
 let __lastUrl = location.href;
 
+// initial run
+main();
+
+// SPA-safe URL watcher
 setInterval(() => {
     if (location.href !== __lastUrl) {
         __lastUrl = location.href;
         console.log("🔄 URL changed:", __lastUrl);
+
         main();
     }
-}, 250);
+}, 500);
+
 
 })();
-
-
-
-
-
-
-
-
