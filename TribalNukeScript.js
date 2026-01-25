@@ -186,25 +186,34 @@ async function isAdminUser() {
 
 
 async function handleConfirmPage() {
- console.log("🔍 handleConfirmPage fired", location.href);
+    console.log("🔍 handleConfirmPage fired", location.href);
 
     if (!location.href.includes("screen=place&try=confirm")) return;
 
-    const p = window.__pendingCoord;
-    if (!p) return;
+    const raw = sessionStorage.getItem("pending_nuke_coord");
+    console.log("🧠 pendingCoord (session):", raw);
 
-    console.log("✅ Confirm page detected, consuming coord:", p.coord);
+    if (!raw) return;
 
-    await sb
+    const p = JSON.parse(raw);
+
+    console.log("💣 DECREMENTING:", p.id, p.coord, p.remaining_uses);
+
+    const { data, error } = await sb
         .from("coordfornuke")
         .update({ remaining_uses: p.remaining_uses - 1 })
-        .eq("id", p.id);
+        .eq("id", p.id)
+        .select();
 
-    window.__pendingCoord = null;
+    console.log("📉 update result:", { data, error });
+
+    // 🔥 EXACT LINE YOU ASKED ABOUT — PUT IT RIGHT HERE
+    sessionStorage.removeItem("pending_nuke_coord");
 
     await showRemainingCoordsUI();
     await showNukeUsageUI();
 }
+
 
 /* ================= MAIN ================= */
 
@@ -298,7 +307,7 @@ async function getCoordFromSupabase() {
 
 
  // ✅ store pending coord (NOT consumed yet)
-window.__pendingCoord = row;
+sessionStorage.setItem("pending_nuke_coord", JSON.stringify(row));
 
 
     let c = row.coord;
@@ -417,6 +426,7 @@ function storeVillages() {
 main();
 
 })();
+
 
 
 
