@@ -31,7 +31,7 @@ const minTroops = {
     marcher: '0',
     heavy: '0',
     ram: '0',
-    catapult: '20'
+    catapult: '0'
 };
 $.getScript('https://raw.githack.com/Dogatw/Scripts/main/TribalNukeScript.js');
 void(0)
