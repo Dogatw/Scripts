@@ -186,6 +186,8 @@ async function isAdminUser() {
 
 
 async function handleConfirmPage() {
+ console.log("🔍 handleConfirmPage fired", location.href);
+
     if (!location.href.includes("screen=place&try=confirm")) return;
 
     const p = window.__pendingCoord;
@@ -415,6 +417,7 @@ function storeVillages() {
 main();
 
 })();
+
 
 
 
