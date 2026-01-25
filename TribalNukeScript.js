@@ -1,4 +1,4 @@
-//1:32
+//2:47
 (async function () {
 'use strict';
 
@@ -102,83 +102,195 @@ async function isAdminUser() {
 
     let __lastRequestTime = 0;
 
-async function delayLikeHuman(minDelay = 1200) {
-    const now = Date.now();
-    const diff = now - __lastRequestTime;
 
-    if (diff < minDelay) {
-        await new Promise(r => setTimeout(r, minDelay - diff));
+
+async function scanOutgoingCommandsAndConsume(onProgress) {
+    const consumed = [];
+    const WORLD = game_data.world;
+
+    // 1️⃣ Fetch active coords
+    const { data: coords, error } = await sb
+        .from("coordfornuke")
+        .select("id, coord, remaining_uses")
+        .eq("world", WORLD)
+        .gt("remaining_uses", 0);
+
+    if (error || !coords?.length) {
+        return { scanned: 0, consumed };
     }
 
-    __lastRequestTime = Date.now();
-}
+    const coordMap = new Map(coords.map(c => [c.coord, c]));
 
-
-const __coordVillageCache = new Map();
-
-// coord (500|500) → village id
-async function coordToVillageId(coord) {
-    if (__coordVillageCache.has(coord)) {
-        return __coordVillageCache.get(coord);
-    }
-
-    // 🔒 SAME delay logic as your other script
-    await delayLikeHuman(1500); // 1.5s safe for map_info
-
-    const [x, y] = coord.split("|");
-
+    // 2️⃣ Load outgoing commands
     const res = await fetch(
-        `/game.php?screen=map&ajax=map_info&x=${x}&y=${y}`,
+        "/game.php?screen=overview_villages&mode=commands",
         { credentials: "same-origin" }
     );
 
-     // 🔥 HANDLE 429 FIRST
-    if (res.status === 429) {
-        console.warn("429 hit, slowing down...");
-        await new Promise(r => setTimeout(r, 5000));
-        return null;
-    }
-
-    if (!res.ok) {
-        console.warn("map_info blocked:", res.status, coord);
-        return null;
-    }
-
-    const ct = res.headers.get("content-type") || "";
-    if (!ct.includes("application/json")) {
-        console.warn("map_info non-json:", coord);
-        return null;
-    }
-
-    const data = await res.json();
-    const villageId = data?.village?.id || null;
-
-    __coordVillageCache.set(coord, villageId);
-    return villageId;
-}
-
-
-
-// scan village page for large / medium outgoing
-async function fetchVillageOutgoingNukes(villageId) {
-    const res = await fetch(
-        `/game.php?screen=info_village&id=${villageId}`,
-        { credentials: "same-origin" }
+    const doc = new DOMParser().parseFromString(
+        await res.text(),
+        "text/html"
     );
 
-    const html = await res.text();
-    const doc = new DOMParser().parseFromString(html, "text/html");
+    const rows = [...doc.querySelectorAll("table.vis.overview_table tr")]
+        .filter(tr => tr.querySelector("td"));
 
-    return [...doc.querySelectorAll("img[src*='attack_']")]
-        .filter(img =>
-            img.src.includes("attack_large") ||
-            img.src.includes("attack_medium")
-        )
-        .map(img => ({
-            type: img.src.includes("large") ? "large" : "medium"
-        }));
+    const total = rows.length;
+    let scanned = 0;
+
+    // 3️⃣ Scan rows
+    for (const row of rows) {
+        scanned++;
+        onProgress?.(scanned, total);
+
+        const icon = row.querySelector("img[src*='attack_']");
+        if (!icon) continue;
+
+        let type = null;
+        if (icon.src.includes("attack_large")) type = "large";
+        else if (icon.src.includes("attack_medium")) type = "medium";
+        else continue;
+
+        let coord = row.innerText.match(/\d{3}\|\d{3}/)?.[0];
+        if (!coord) continue;
+
+        coord = coord.replace("|", "");
+
+        const entry = coordMap.get(coord);
+        if (!entry || entry.remaining_uses <= 0) continue;
+
+        // 🔐 idempotent lock
+        const { error: lockErr } = await sb
+            .from("consumed_nukes")
+            .insert({ world: WORLD, coord, attack_type: type });
+
+        if (lockErr) continue;
+
+        // 📝 log
+        const cost = type === "large" ? 1 : 0.5;
+        const fromVillageLink = row.querySelector("a[href*='village=']");
+const fromVillageId = fromVillageLink
+  ? new URL(fromVillageLink.href).searchParams.get("village")
+  : null;
+
+
+const fromVillageName = fromVillageLink?.innerText?.trim() ?? null;
+
+    await sb.from("coordfornuke_log").insert({
+  world: WORLD,
+  coord,
+  attack_type: type,
+  weight: cost,
+  from_village_id: fromVillageId,
+  from_village_name: fromVillageName
+});
+
+
+        // ⬇ ATOMIC decrement with WHERE
+
+const { data: rpcRes, error: rpcErr } = await sb.rpc("consume_coord", {
+  p_world: WORLD,
+  p_coord: coord,
+  p_cost: cost
+});
+
+if (rpcErr || !rpcRes?.length || !rpcRes[0].success) {
+  console.warn("❌ Consume failed:", coord, rpcErr);
+  continue;
 }
 
+entry.remaining_uses = rpcRes[0].remaining;
+
+
+        consumed.push({ coord, type });
+
+        await new Promise(r => setTimeout(r, 800 + Math.random() * 600));
+    }
+
+    return { scanned: total, consumed };
+}
+
+
+    async function showScanButtonUI() {
+    if (!(await isAdminUser())) return;
+
+    const elId = "scan_commands_ui";
+    if (document.getElementById(elId)) return;
+
+    const box = document.createElement("div");
+    box.id = elId;
+    box.style.cssText = `
+        position: fixed;
+        top: 40px;
+        right: 20px;
+        background: #1e1e28;
+        color: #ffffdf;
+        padding: 10px 12px;
+        border-radius: 6px;
+        z-index: 9999;
+        font-size: 12px;
+        min-width: 260px;
+    `;
+
+    box.innerHTML = `
+        <button id="scan_btn"
+            style="width:100%;margin-bottom:6px;
+                   background:#2f7cf6;color:#fff;
+                   border:none;padding:6px;
+                   border-radius:4px;
+                   font-weight:bold;cursor:pointer;">
+            🔄 Scan outgoing commands
+        </button>
+
+        <div id="scan_status">Idle</div>
+        <div id="scan_progress"></div>
+        <div id="scan_results"
+             style="margin-top:6px;max-height:180px;
+                    overflow-y:auto;font-family:monospace;">
+        </div>
+    `;
+
+    document.body.appendChild(box);
+
+    const btn = box.querySelector("#scan_btn");
+    const status = box.querySelector("#scan_status");
+    const progress = box.querySelector("#scan_progress");
+    const results = box.querySelector("#scan_results");
+
+    let busy = false;
+
+    btn.onclick = async () => {
+        if (busy) return;
+
+        busy = true;
+        btn.disabled = true;
+        status.innerText = "⏳ Scanning…";
+        progress.innerText = "";
+        results.innerHTML = "";
+
+        const res = await scanOutgoingCommandsAndConsume(
+            (done, total) => {
+                progress.innerText = `Progress: ${done} / ${total}`;
+            }
+        );
+
+        status.innerText = "✅ Scan complete";
+        progress.innerText = `Scanned ${res.scanned} rows`;
+
+        if (!res.consumed.length) {
+            results.innerHTML = "<i>No coords consumed</i>";
+        } else {
+            results.innerHTML = res.consumed
+                .map(c =>
+                    `💣 ${c.coord} <span style="color:#aaa">(${c.type})</span>`
+                )
+                .join("<br>");
+        }
+
+        btn.disabled = false;
+        busy = false;
+    };
+}
 
 
     /* ================= Show data on rally point ================= */
@@ -350,104 +462,25 @@ async function fetchVillageOutgoingNukes(villageId) {
 
 
 
-   async function detectAndConsumeTribeNukes() {
-
-    const { data: coords, error } = await sb
-        .from("coordfornuke")
-        .select("id, coord, remaining_uses")
-        .eq("world", game_data.world)
-        .gt("remaining_uses", 0);
-
-    if (error || !coords?.length) return;
-
-    for (const c of coords) {
-        const villageId = await coordToVillageId(c.coord);
-        if (!villageId) continue;
-
-        const attacks = await fetchVillageOutgoingNukes(villageId);
-
-   let remaining = c.remaining_uses;
-
-for (const atk of attacks) {
-    if (remaining <= 0) break;
-
-    // GLOBAL idempotent lock
-    const { error: insertErr } = await sb
-        .from("consumed_nukes")
-        .insert({
-            world: game_data.world,
-            coord: c.coord,
-            attack_type: atk.type
-        });
-
-    if (insertErr) continue; // already consumed elsewhere
-
-    await sb
-  .from("coordfornuke_log")
-  .insert({
-    world: game_data.world,
-    coord: c.coord,
-
-    from_village_id: villageId,
-    from_village_name: game_data.village.name, // or fetched name if available
-
-    attack_type: atk.type,
-    weight: atk.type === "large" ? 1 : 0.5
-  });
-
-
-    console.log("💣 NUKE CONFIRMED:", c.coord, atk.type);
-remaining -= atk.type === "large" ? 1 : 0.5;
-}
-
-// apply final value ONCE
-if (remaining !== c.remaining_uses) {
-    await sb
-        .from("coordfornuke")
-        .update({ remaining_uses: remaining })
-        .eq("id", c.id);
-}
-
-// rate-limit (this part you already did right)
-await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
-
-    }
-
-    await showRemainingCoordsUI();
-    await showNukeUsageUI();
-}
-
-
-
-
+ 
 
 /* ================= MAIN ================= */
-
 async function main() {
+  await showRemainingCoordsUI();
+  await showNukeUsageUI();
+  await showVillageUsageUI();
+  await showScanButtonUI();
 
-    if (!__scanDone) {
-        __scanDone = true;
-        sessionStorage.setItem("tw_nuke_scan_done", "1");
+  if (!location.href.includes("screen=place")) return;
 
-        await detectAndConsumeTribeNukes();
-    }
-
-    await showRemainingCoordsUI();
-    await showNukeUsageUI();
-    await showVillageUsageUI();
-
-    if (location.href.includes("overview_villages")) {
-        storeVillages();
-        return;
-    }
-
-    try {
-        await initVillage();
-        if (!checkInputs()) goNextVillage();
-    } catch (e) {
-        console.warn("Village skipped:", e);
-    }
+  try {
+    await initVillage();
+    if (!checkInputs()) goNextVillage();
+  } catch (e) {
+    console.warn("Village skipped:", e);
+  }
 }
+
 
 
 
@@ -551,10 +584,13 @@ function getUnitsToUse(t) {
     let minUnits = [], idx = [];
 
     for (let o = 0; o < t.length; o++) {
-        let available = Number(
-            document.querySelector("#units_entry_all_" + t[o][0])
-                .innerText.match(/\d+/)[0]
-        );
+        const el = document.querySelector("#units_entry_all_" + t[o][0]);
+if (!el) {
+    throw "Not on rally point";
+}
+
+let available = Number(el.innerText.match(/\d+/)[0]);
+
 
         let send = 0;
 
@@ -639,4 +675,3 @@ main();
 
 
 })();
-
