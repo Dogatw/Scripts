@@ -1,4 +1,4 @@
-//1:21
+//1:32
 (async function () {
 'use strict';
 
@@ -98,9 +98,33 @@ async function isAdminUser() {
 }
 
 /* ================= COORD-BASED NUKE SCAN ================= */
+    let __scanDone = sessionStorage.getItem("tw_nuke_scan_done") === "1";
+
+    let __lastRequestTime = 0;
+
+async function delayLikeHuman(minDelay = 1200) {
+    const now = Date.now();
+    const diff = now - __lastRequestTime;
+
+    if (diff < minDelay) {
+        await new Promise(r => setTimeout(r, minDelay - diff));
+    }
+
+    __lastRequestTime = Date.now();
+}
+
+
+const __coordVillageCache = new Map();
 
 // coord (500|500) → village id
 async function coordToVillageId(coord) {
+    if (__coordVillageCache.has(coord)) {
+        return __coordVillageCache.get(coord);
+    }
+
+    // 🔒 SAME delay logic as your other script
+    await delayLikeHuman(1500); // 1.5s safe for map_info
+
     const [x, y] = coord.split("|");
 
     const res = await fetch(
@@ -108,9 +132,32 @@ async function coordToVillageId(coord) {
         { credentials: "same-origin" }
     );
 
+     // 🔥 HANDLE 429 FIRST
+    if (res.status === 429) {
+        console.warn("429 hit, slowing down...");
+        await new Promise(r => setTimeout(r, 5000));
+        return null;
+    }
+
+    if (!res.ok) {
+        console.warn("map_info blocked:", res.status, coord);
+        return null;
+    }
+
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) {
+        console.warn("map_info non-json:", coord);
+        return null;
+    }
+
     const data = await res.json();
-    return data?.village?.id || null;
+    const villageId = data?.village?.id || null;
+
+    __coordVillageCache.set(coord, villageId);
+    return villageId;
 }
+
+
 
 // scan village page for large / medium outgoing
 async function fetchVillageOutgoingNukes(villageId) {
@@ -362,7 +409,7 @@ if (remaining !== c.remaining_uses) {
 }
 
 // rate-limit (this part you already did right)
-await new Promise(r => setTimeout(r, 300));
+await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
 
     }
 
@@ -378,13 +425,16 @@ await new Promise(r => setTimeout(r, 300));
 
 async function main() {
 
-    // 🔥 MUST HAPPEN FIRST
-    await detectAndConsumeTribeNukes();
+    if (!__scanDone) {
+        __scanDone = true;
+        sessionStorage.setItem("tw_nuke_scan_done", "1");
+
+        await detectAndConsumeTribeNukes();
+    }
 
     await showRemainingCoordsUI();
     await showNukeUsageUI();
-        await showVillageUsageUI(); // 👈 ADD THIS
-
+    await showVillageUsageUI();
 
     if (location.href.includes("overview_villages")) {
         storeVillages();
@@ -398,6 +448,7 @@ async function main() {
         console.warn("Village skipped:", e);
     }
 }
+
 
 
 /*function goNextVillage() {
@@ -582,20 +633,10 @@ function storeVillages() {
 
 /* ================= RUN ================= */
 
-let __lastUrl = location.href;
 
 // initial run
 main();
 
-// SPA-safe URL watcher
-setInterval(() => {
-    if (location.href !== __lastUrl) {
-        __lastUrl = location.href;
-        console.log("🔄 URL changed:", __lastUrl);
-
-        main();
-    }
-}, 500);
-
 
 })();
+
