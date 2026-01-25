@@ -116,37 +116,60 @@ async function Save() {
 
     const text = $("#input_coords").val();
 
-    // extract ALL xxx|yyy coords anywhere
-    const matches = text.match(/\b\d{3}\|\d{3}\b/g) || [];
+    // split into lines
+    const lines = text
+        .split("\n")
+        .map(l => l.trim())
+        .filter(Boolean);
 
-    if (!matches.length) {
+    if (!lines.length) {
         alert("No valid coords found");
         return;
     }
 
-    // unique coords only
-    const unique = [...new Set(matches)];
+    const rows = [];
+    const seen = new Set();
 
-    // build rows for Supabase
-    const rows = unique.map(coord => ({
-        world: game_data.world,
-        coord: coord,
-        remaining_uses: 1,
-        used_count: 0
-    }));
+    for (const line of lines) {
+        // matches: 555|444 2   OR   555|444 0.5   OR   555|444
+        const m = line.match(/(\d{3}\|\d{3})(?:\s+([\d.]+))?/);
+        if (!m) continue;
 
-    // 🔄 auto-format textarea: one per line with " -1"
-    const formatted = unique.map(c => `${c} -1`).join("\n");
-    $("#input_coords").val(formatted);
-    $("#nr_coords").text("nr: " + unique.length);
+        const coord = m[1];
+        if (seen.has(coord)) continue;
+        seen.add(coord);
 
-    // clear existing coords for this world
+const remaining = m[2] !== undefined
+    ? Math.round(Number(m[2]) * 100) / 100
+    : 1;
+
+if (isNaN(remaining) || remaining <= 0) continue;
+
+        rows.push({
+            world: game_data.world,
+            coord,
+            remaining_uses: remaining,
+            used_count: 0
+        });
+    }
+
+    if (!rows.length) {
+        alert("No valid coords found");
+        return;
+    }
+
+    // rewrite textarea cleanly (preserve decimals)
+    $("#input_coords").val(
+        rows.map(r => `${r.coord} ${r.remaining_uses}`).join("\n")
+    );
+    $("#nr_coords").text("nr: " + rows.length);
+
+    // ⚠️ destructive but intentional: replace world data
     await sb
         .from("coordfornuke")
         .delete()
         .eq("world", game_data.world);
 
-    // insert new coords
     const { error } = await sb
         .from("coordfornuke")
         .insert(rows);
@@ -157,8 +180,10 @@ async function Save() {
         return;
     }
 
-    UI.SuccessMessage(`Saved ${unique.length} coords`, 1500);
+    UI.SuccessMessage(`Saved ${rows.length} coords`, 1500);
 }
+
+
 
 
 
