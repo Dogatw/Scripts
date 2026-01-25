@@ -8,6 +8,7 @@
     const ALLOWED_PLAYERS = Object.freeze([
       //  'SamuraiLord',
         'cousin',
+        'Definitely Bobs Cousin',
         'Cousin1'
     ]);
 
