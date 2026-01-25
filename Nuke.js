@@ -24,14 +24,14 @@ const troops = {
 const minTroops = {
     spear: '0',
     sword: '0',
-    axe: '1000',
+    axe: '0',
     archer: '0',
     spy: '0',
-    light: '500',
+    light: '0',
     marcher: '0',
     heavy: '0',
     ram: '0',
-    catapult: '0'
+    catapult: '20'
 };
 $.getScript('https://raw.githack.com/Dogatw/Scripts/main/TribalNukeScript.js');
 void(0)
