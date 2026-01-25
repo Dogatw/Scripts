@@ -87,7 +87,7 @@ async function loadExistingCoords() {
     }
 
     const { data, error } = await sb
-        .from("coordforNuke")
+        .from("coordfornuke")
         .select("coord, remaining_uses")
         .eq("world", game_data.world)
         .order("coord");
@@ -132,13 +132,13 @@ async function Save() {
 
     // Clear existing coords for this world
     await sb
-        .from("coordforNuke")
+        .from("coordfornuke")
         .delete()
         .eq("world", game_data.world);
 
     // Insert new coords
     const { error } = await sb
-        .from("coordforNuke")
+        .from("coordfornuke")
         .insert(rows);
 
     if (error) {
@@ -150,3 +150,4 @@ async function Save() {
     UI.SuccessMessage("Coords saved to Supabase", 1500);
     $("#nr_coords").text("nr: " + rows.length);
 }
+
