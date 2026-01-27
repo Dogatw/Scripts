@@ -1,17 +1,3 @@
-// ==UserScript==
-// @name         MAster vault
-// @namespace    http://tampermonkey.net/
-// @version      2026-01-16
-// @description  try to take over the world!
-// @author       You
-// @match        https://*/game.php*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=github.com
-// @grant        none
-// ==/UserScript==
-// ===============================
-// === SUPABASE INIT (FIXED) ===
-// ===============================
-
 (async function initSupabase() {
     if (window.__supabaseReady) return;
     window.__supabaseReady = false;
@@ -11173,6 +11159,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
