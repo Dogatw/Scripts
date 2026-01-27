@@ -7277,9 +7277,9 @@ async function viewSupport(){
         <div id="div_container_view" class="ui-widget-content div_remove" style="height:auto;background-color:${backgroundColor};cursor:move;z-index:50;width:${widthInterfaceOverview}px">
         <div class="scriptHeader">
             <div style=" margin-top:10px;text-decoration: underline;text-decoration-color: ${titleColor}"><h2 >Overview Data</h2></div>
-            <div style="position:absolute;top:10px;right: 10px;"><a href="#" ><img src="https://img.icons8.com/emoji/24/000000/cross-mark-button-emoji.webp"/></a></div>
-            <div style="position:absolute;top:8px;right: 35px;" id="div_minimize"><a href="#"><img src="https://img.icons8.com/plasticine/28/000000/minimize-window.webp"/></a></div>
-            <div style="position:absolute;top:10px;right: 92%;" id="page_upload" ><a href="#" onclick="$('#div_container_view').remove();getInterface()"><img src="https://img.icons8.com/officel/30/000000/long-arrow-left.webp"/></a></div>
+            <div style="position:absolute;top:10px;right: 10px;"><a href="#" ><img src="https://img.icons8.com/emoji/24/000000/cross-mark-button-emoji.png"/></a></div>
+            <div style="position:absolute;top:8px;right: 35px;" id="div_minimize"><a href="#"><img src="https://img.icons8.com/plasticine/28/000000/minimize-window.png"/></a></div>
+            <div style="position:absolute;top:10px;right: 92%;" id="page_upload" ><a href="#" onclick="$('#div_container_view').remove();getInterface()"><img src="https://img.icons8.com/officel/30/000000/long-arrow-left.png"/></a></div>
         </div>
 
         <div id="div_body">
@@ -7383,7 +7383,7 @@ async function viewSupport(){
                     <center style="margin:1px;font-size:16px">
                         <font color="${titleColor}">
                             <div style="display:flex; flex-direction: row; justify-content: center; align-items: center">
-                                <a href="#" style="margin-right:10px"><img src="https://img.icons8.com/office/20/000000/sniper-rifle.webp" id="sort_by_snipes"></a>
+                                <a href="#" style="margin-right:10px"><img src="https://img.icons8.com/office/20/000000/sniper-rifle.png" id="sort_by_snipes"></a>
                                 <a href="#" onclick="UI.InfoMessage('List of snipes <br> <b>red</b> -> snipe is needed <br> <b>green</b> -> village is already sniped',8000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a>
                             </div>
                             <p id="header_snipes">(0/0)</p>
@@ -7395,7 +7395,7 @@ async function viewSupport(){
                     <center style="margin:1px;font-size:16px">
                         <font color="${titleColor}">
                             <div style="display:flex; flex-direction: row; justify-content: center; align-items: center">
-                                <a href="#" style="margin-right:10px"><img src="https://img.icons8.com/ultraviolet/20/000000/horror.webp" id="sort_by_recaps"></a>
+                                <a href="#" style="margin-right:10px"><img src="https://img.icons8.com/ultraviolet/20/000000/horror.png" id="sort_by_recaps"></a>
                                 <a href="#" onclick="UI.InfoMessage('List of recaps <br> <b>red</b> -> recap is needed  <br> <b>green</b> -> village is already recapped <br><br> recap is needed if nr nobles >=4 and it is not a train',8000)"><img src="https://dsen.innogamescdn.com/asset/dbeaf8db/graphic/questionmark.webp" style="width: 13px; height: 13px"/></a>
                             </div>
                             <p id="header_recaps">(0/0)</p>
@@ -9120,7 +9120,7 @@ function createTablePlayers(map_playerId,mapVillages){
         `<tr>
 
             <td style="text-align:center; width:40px; background-color:${headerColor}">
-                <a href="#"  ><center style="margin:5px"><font color="${titleColor}"><img player-id="${key}" number-tr="${counterPlayer}" class="infoPlayer" src="https://img.icons8.com/clouds/30/000000/more.webp"/></font></center></a>
+                <a href="#"  ><center style="margin:5px"><font color="${titleColor}"><img player-id="${key}" number-tr="${counterPlayer}" class="infoPlayer" src="https://img.icons8.com/clouds/30/000000/more.png"/></font></center></a>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}">
             <a href="${game_data.link_base_pure}info_player&id=${key}"><center style="margin:5px"><font color="${titleColor}">${obj.player_destination_name}</font></center></a>
@@ -9135,10 +9135,10 @@ function createTablePlayers(map_playerId,mapVillages){
                 <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.webp">(${obj.nr_nobles_total})</font></center>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}">
-                <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/office/20/000000/sniper-rifle.webp"/>(${obj.nr_sniped_total}/${obj.nr_snipe_total})</font></center>
+                <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/office/20/000000/sniper-rifle.png"/>(${obj.nr_sniped_total}/${obj.nr_snipe_total})</font></center>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}">
-                <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/ultraviolet/20/000000/horror.webp"/>(${obj.nr_recaped_total}/${obj.nr_recap_total})</font></center>
+                <center style="margin:5px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/ultraviolet/20/000000/horror.png"/>(${obj.nr_recaped_total}/${obj.nr_recap_total})</font></center>
             </td>
 
         </tr>
@@ -9195,7 +9195,7 @@ $(".infoPlayer").on("click", (event) => {
                 html_table_player+=`
                 <tr>
                     <td style="text-align:center; width:40px; background-color:${headerColorPlayers}">
-                        <a href="#" style="margin:0px" ><center ><font color="${titleColor}"><img coord-id="${obj.coord_destination_id}" number-tr-coord="${counterVillage}" class="infoCoord" src="https://img.icons8.com/bubbles/20/000000/more.webp"/></font></center></a>
+                        <a href="#" style="margin:0px" ><center ><font color="${titleColor}"><img coord-id="${obj.coord_destination_id}" number-tr-coord="${counterVillage}" class="infoCoord" src="https://img.icons8.com/bubbles/20/000000/more.png"/></font></center></a>
                     </td>
                     <td style="text-align:center; width:auto; background-color:${headerColorPlayers}">
                         <a href="${game_data.link_base_pure}info_village&id=${obj.coord_destination_id}" style="margin:0px"><center><font color="${titleColor}">${obj.list_coming[0].coord_destination}</font></center></a>
@@ -9210,10 +9210,10 @@ $(".infoPlayer").on("click", (event) => {
                         <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/snob.webp">(${obj.nrNobles})</font></center>
                     </td>
                         <td style="text-align:center; width:auto; background-color:${headColorSnipe}">
-                    <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/office/20/000000/sniper-rifle.webp"/></font></center>
+                    <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/office/20/000000/sniper-rifle.png"/></font></center>
                     </td>
                     <td style="text-align:center; width:auto; background-color:${headColorRecap}">
-                        <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/ultraviolet/20/000000/horror.webp"/></font></center>
+                        <center style="margin:2px;font-size:16px"><font color="${titleColor}"><img src="https://img.icons8.com/ultraviolet/20/000000/horror.png"/></font></center>
                     </td>
                 </tr>
                 `
@@ -9557,7 +9557,7 @@ function createTableCoordIncomings(list,mapVillages){
 
                 //modify type_attack, small,medium,large
                 if(type_attack=="def"){
-                    type_attack=`https://img.icons8.com/fluent/16/000000/d.webp`
+                    type_attack=`https://img.icons8.com/fluent/16/000000/d.png`
                 }
                 else{
                     type_attack=`https://dsen.innogamescdn.com/asset/a9e85669/graphic/command/${type_attack}`
