@@ -2205,6 +2205,12 @@ function getIncomings(){
     })
 }
 ///////////////////////////////////////////////////////upload all incomings//////////////////////////////////////////////////////////////////////////
+function hasValidDateLand(o) {
+    return o &&
+           typeof o === "object" &&
+           o.date_land &&
+           Number.isFinite(Date.parse(o.date_land));
+}
 
 async function uploadIncomings(){
 
@@ -2266,14 +2272,15 @@ async function uploadIncomings(){
             let update=false;
             for(let i=0;i<list.length;i++){
 
-                let date_incomings=new Date(list[i].date_land).getTime();
-                let two_days=50*3600*1000;
+               const t = Date.parse(list[i].date_land);
+const two_days = 50 * 3600 * 1000;
 
-                if(date_incomings + two_days < current_date || list[i].date_land == ""){
-                    list.splice(i,1);
-                    i--;
-                    update=true;
-                }
+if (!Number.isFinite(t) || t + two_days < current_date.getTime()) {
+    list.splice(i, 1);
+    i--;
+    update = true;
+}
+
 
                 if(list[i]==""){
                     list.splice(i,1);
@@ -2295,14 +2302,21 @@ async function uploadIncomings(){
         console.log(stop-start)
 
         let newIncs = 0;
+        Array.from(incomings_data.keys()).forEach(el => {
+    incomings_data.set(
+        el,
+        incomings_data.get(el).filter(hasValidDateLand)
+    );
+});
+
         Array.from(incomings_data.keys()).forEach(el=>{
             let list=incomings_data.get(el)
             if(map_incomings_dropbox.has(el)){//update
                 let list_dropbox=map_incomings_dropbox.get(el)
                 list_dropbox=list_dropbox.concat(list);
-                var list_concat =[...new Map(list_dropbox.map(item => [item["date_land"], item])).values()].sort((o1,o2)=>{
-                    return (new Date(o1.date_land).getTime() > new Date(o2.date_land).getTime()) ? 1 :
-                             (new Date(o1.date_land).getTime() << new Date(o2.date_land).getTime()) ? -1 : 0
+                var list_concat =[...new Map(     list_dropbox         .filter(hasValidDateLand)         .map(item => [item.date_land, item]) ).values()].sort((o1,o2)=>{
+                    return Date.parse(o1.date_land) - Date.parse(o2.date_land);
+
                 })
                 console.log(list_concat)
                 map_incomings_dropbox.set(el,list_concat);
