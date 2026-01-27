@@ -1,4 +1,3 @@
-//2:47
 (async function () {
 'use strict';
 
@@ -26,17 +25,17 @@ const troops = {
     light: 'max',
     marcher: 'max',
     heavy: '0',
-    ram: '250',
+    ram: 'max',
     catapult: 'max'
 };
 
 const minTroops = {
     spear: '0',
     sword: '0',
-    axe: '1000',
+    axe: '3000',
     archer: '0',
     spy: '0',
-    light: '500',
+    light: '1000',
     marcher: '0',
     heavy: '0',
     ram: '0',
@@ -104,334 +103,100 @@ async function isAdminUser() {
 
 
 
-async function scanOutgoingCommandsAndConsume(onProgress) {
-    const consumed = [];
-    const WORLD = game_data.world;
-
-    // 1️⃣ Fetch active coords
-    const { data: coords, error } = await sb
-        .from("coordfornuke")
-        .select("id, coord, remaining_uses")
-        .eq("world", WORLD)
-        .gt("remaining_uses", 0);
-
-    if (error || !coords?.length) {
-        return { scanned: 0, consumed };
-    }
-
-    const coordMap = new Map(coords.map(c => [c.coord, c]));
-
-    // 2️⃣ Load outgoing commands
-    const res = await fetch(
-        "/game.php?screen=overview_villages&mode=commands",
-        { credentials: "same-origin" }
-    );
-
-    const doc = new DOMParser().parseFromString(
-        await res.text(),
-        "text/html"
-    );
-
-    const rows = [...doc.querySelectorAll("table.vis.overview_table tr")]
-        .filter(tr => tr.querySelector("td"));
-
-    const total = rows.length;
-    let scanned = 0;
-
-    // 3️⃣ Scan rows
-    for (const row of rows) {
-        scanned++;
-        onProgress?.(scanned, total);
-
-        const icon = row.querySelector("img[src*='attack_']");
-        if (!icon) continue;
-
-        let type = null;
-        if (icon.src.includes("attack_large")) type = "large";
-        else if (icon.src.includes("attack_medium")) type = "medium";
-        else continue;
-
-        let coord = row.innerText.match(/\d{3}\|\d{3}/)?.[0];
-        if (!coord) continue;
-
-        coord = coord.replace("|", "");
-
-        const entry = coordMap.get(coord);
-        if (!entry || entry.remaining_uses <= 0) continue;
-
-        // 🔐 idempotent lock
-        const { error: lockErr } = await sb
-            .from("consumed_nukes")
-            .insert({ world: WORLD, coord, attack_type: type });
-
-        if (lockErr) continue;
-
-        // 📝 log
-        const cost = type === "large" ? 1 : 0.5;
-        const fromVillageLink = row.querySelector("a[href*='village=']");
-const fromVillageId = fromVillageLink
-  ? new URL(fromVillageLink.href).searchParams.get("village")
-  : null;
-
-
-const fromVillageName = fromVillageLink?.innerText?.trim() ?? null;
-
-    await sb.from("coordfornuke_log").insert({
-  world: WORLD,
-  coord,
-  attack_type: type,
-  weight: cost,
-  from_village_id: fromVillageId,
-  from_village_name: fromVillageName
-});
-
-
-        // ⬇ ATOMIC decrement with WHERE
-
-const { data: rpcRes, error: rpcErr } = await sb.rpc("consume_coord", {
-  p_world: WORLD,
-  p_coord: coord,
-  p_cost: cost
-});
-
-if (rpcErr || !rpcRes?.length || !rpcRes[0].success) {
-  console.warn("❌ Consume failed:", coord, rpcErr);
-  continue;
-}
-
-entry.remaining_uses = rpcRes[0].remaining;
-
-
-        consumed.push({ coord, type });
-
-        await new Promise(r => setTimeout(r, 800 + Math.random() * 600));
-    }
-
-    return { scanned: total, consumed };
+function normalizeCoord(x, y) {
+    return String(x).padStart(3, "0") + String(y).padStart(3, "0");
 }
 
 
-    async function showScanButtonUI() {
-    if (!(await isAdminUser())) return;
 
-    const elId = "scan_commands_ui";
-    if (document.getElementById(elId)) return;
-
-    const box = document.createElement("div");
-    box.id = elId;
-    box.style.cssText = `
-        position: fixed;
-        top: 40px;
-        right: 20px;
-        background: #1e1e28;
-        color: #ffffdf;
-        padding: 10px 12px;
-        border-radius: 6px;
-        z-index: 9999;
-        font-size: 12px;
-        min-width: 260px;
-    `;
-
-    box.innerHTML = `
-        <button id="scan_btn"
-            style="width:100%;margin-bottom:6px;
-                   background:#2f7cf6;color:#fff;
-                   border:none;padding:6px;
-                   border-radius:4px;
-                   font-weight:bold;cursor:pointer;">
-            🔄 Scan outgoing commands
-        </button>
-
-        <div id="scan_status">Idle</div>
-        <div id="scan_progress"></div>
-        <div id="scan_results"
-             style="margin-top:6px;max-height:180px;
-                    overflow-y:auto;font-family:monospace;">
-        </div>
-    `;
-
-    document.body.appendChild(box);
-
-    const btn = box.querySelector("#scan_btn");
-    const status = box.querySelector("#scan_status");
-    const progress = box.querySelector("#scan_progress");
-    const results = box.querySelector("#scan_results");
-
-    let busy = false;
-
-    btn.onclick = async () => {
-        if (busy) return;
-
-        busy = true;
-        btn.disabled = true;
-        status.innerText = "⏳ Scanning…";
-        progress.innerText = "";
-        results.innerHTML = "";
-
-        const res = await scanOutgoingCommandsAndConsume(
-            (done, total) => {
-                progress.innerText = `Progress: ${done} / ${total}`;
-            }
-        );
-
-        status.innerText = "✅ Scan complete";
-        progress.innerText = `Scanned ${res.scanned} rows`;
-
-        if (!res.consumed.length) {
-            results.innerHTML = "<i>No coords consumed</i>";
-        } else {
-            results.innerHTML = res.consumed
-                .map(c =>
-                    `💣 ${c.coord} <span style="color:#aaa">(${c.type})</span>`
-                )
-                .join("<br>");
-        }
-
-        btn.disabled = false;
-        busy = false;
-    };
-}
+  
 
 
     /* ================= Show data on rally point ================= */
 
-    async function showRemainingCoordsUI() {
+ async function showRemainingCoordsUI() {
     const elId = "remaining_coords_ui";
 
-    if (!document.getElementById(elId)) {
-        const div = document.createElement("div");
-        div.id = elId;
-        div.style.cssText = `
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: #32313f;
-            color: #ffffdf;
-            padding: 8px 12px;
-            border-radius: 6px;
-            z-index: 9999;
-            font-weight: bold;
-        `;
-        document.body.appendChild(div);
-    }
+    let container = document.getElementById(elId);
+    if (!container) {
+        container = document.createElement("div");
+        container.id = elId;
+        container.className = "vis"; // 👈 TW native style
+       container.style.cssText = `
+    margin: 12px 0;
+    padding: 12px 14px;
+    font-weight: bold;
+    text-align: center;
+    font-size: 16px;        /* 👈 bigger */
+    line-height: 1.4;
+    letter-spacing: 0.3px;
+`;
 
-    const { count, error } = await sb
-        .from("coordfornuke")
-        .select("*", { count: "exact", head: true })
-        .eq("world", game_data.world)
-        .gt("remaining_uses", 0);
 
-    if (!error) {
-        document.getElementById(elId).innerText =
-            `🎯 Remaining coords: ${count ?? 0}`;
-    }
-}
+        // 🔗 Attach to TW content area
+        const target =
+            document.querySelector("#content_value") ||
+            document.querySelector("#sidebar") ||
+            document.body;
 
-    async function showVillageUsageUI() {
-    if (!(await isAdminUser())) return;
-
-    const elId = "village_usage_ui";
-
-    if (!document.getElementById(elId)) {
-        const div = document.createElement("div");
-        div.id = elId;
-        div.style.cssText = `
-            position: fixed;
-            top: 430px;
-            right: 20px;
-            background: #1e1e28;
-            color: #ffffdf;
-            padding: 10px 12px;
-            border-radius: 6px;
-            z-index: 9999;
-            font-size: 12px;
-            max-height: 320px;
-            overflow-y: auto;
-            min-width: 260px;
-        `;
-        document.body.appendChild(div);
+        target.prepend(container);
     }
 
     const { data, error } = await sb
-        .from("coordfornuke_log")
-        .select(`
-            from_village_id,
-            from_village_name,
-            attack_type,
-            weight
-        `)
-        .eq("world", game_data.world);
+        .from("coordfornuke")
+        .select("remaining_uses")
+        .eq("world", game_data.world)
+        .gt("remaining_uses", 0);
 
-    if (error || !data?.length) {
-        document.getElementById(elId).innerHTML =
-            "<b>📊 Village usage</b><br><i>No data</i>";
-        return;
-    }
+    const total = error || !data
+        ? 0
+        : data.reduce((s, r) => s + Number(r.remaining_uses || 0), 0);
 
-    const map = {};
+   container.innerHTML = `
+    🎯 Remaining nukes:
+    <span style="color:#c33;font-size:22px;margin-left:6px;">
+        ${total}
+    </span>
+    <div style="
+        margin-top:6px;
+        font-size:13px;
+        font-weight:normal;
+        color:#555;
+        font-style:italic;
+    ">
+        Sam says hurry you wankers
+    </div>
+`;
 
-    for (const r of data) {
-        const key = r.from_village_id;
-        if (!map[key]) {
-            map[key] = {
-                name: r.from_village_name || `Village ${key}`,
-                total: 0,
-                large: 0,
-                medium: 0
-            };
-        }
-
-        map[key].total += Number(r.weight);
-        if (r.attack_type === "large") map[key].large++;
-        if (r.attack_type === "medium") map[key].medium++;
-    }
-
-    const rows = Object.values(map)
-        .sort((a, b) => b.total - a.total)
-        .map(v => `
-            <div style="margin-bottom:6px;">
-                <b>${v.name}</b><br>
-                💣 ${v.total.toFixed(1)}
-                <span style="color:#aaa;">
-                    (L:${v.large} M:${v.medium})
-                </span>
-            </div>
-        `)
-        .join("");
-
-    document.getElementById(elId).innerHTML = `
-        <div style="font-weight:bold;margin-bottom:6px;">
-            📊 Village usage
-        </div>
-        ${rows}
-    `;
 }
 
-    async function showNukeUsageUI() {
 
+   async function showNukeUsageUI() {
     // 🔐 admin-only
     if (!(await isAdminUser())) return;
 
     const elId = "nuke_usage_ui";
 
-    if (!document.getElementById(elId)) {
-        const div = document.createElement("div");
-        div.id = elId;
-        div.style.cssText = `
-            position: fixed;
-            top: 130px;
-            right: 20px;
-            background: #202825;
-            color: #ffffdf;
+    let container = document.getElementById(elId);
+    if (!container) {
+        container = document.createElement("div");
+        container.id = elId;
+        container.className = "vis";
+        container.style.cssText = `
+            margin: 12px 0;
             padding: 10px 12px;
-            border-radius: 6px;
-            z-index: 9999;
             font-size: 12px;
-            max-height: 300px;
+            max-height: 320px;
             overflow-y: auto;
-            min-width: 180px;
         `;
-        document.body.appendChild(div);
+
+        // 🔗 Attach inside TW content
+        const target =
+            document.querySelector("#content_value") ||
+            document.querySelector("#sidebar") ||
+            document.body;
+
+        target.appendChild(container);
     }
 
     const { data, error } = await sb
@@ -441,23 +206,93 @@ entry.remaining_uses = rpcRes[0].remaining;
         .gt("remaining_uses", 0)
         .order("coord");
 
-    if (error || !data) return;
-
-    let total = 0;
-    let lines = [];
-
-    for (const r of data) {
-        total += r.remaining_uses;
-         lines.push(`${r.coord} – ${Number(r.remaining_uses).toFixed(1)}`);
+    if (error || !data?.length) {
+        container.innerHTML = `
+            <div style="font-weight:bold;">💣 Nuke pool</div>
+            <i>No active coords</i>
+        `;
+        return;
     }
 
-    document.getElementById(elId).innerHTML = `
-        <div style="font-weight:bold;margin-bottom:6px;">💣 Nuke pool</div>
+    const total = data.reduce(
+        (s, r) => s + Number(r.remaining_uses || 0),
+        0
+    );
+
+    const lines = data.map(r =>
+        `${r.coord} – ${Number(r.remaining_uses).toFixed(1)}`
+    );
+
+    container.innerHTML = `
+        <div style="font-weight:bold;margin-bottom:6px;">
+            💣 Nuke pool(Only Admin can see)
+        </div>
         ${lines.join("<br>")}
-        <hr style="border-color:#3e6147;margin:6px 0;">
+        <hr style="margin:6px 0;">
         <b>Total nukes: ${total}</b>
     `;
 }
+
+function cacheTargetCoord() {
+    const x = document.querySelector("input[name='x']")?.value;
+    const y = document.querySelector("input[name='y']")?.value;
+
+    if (x && y) {
+        sessionStorage.setItem(
+            "tw_cached_coord",
+            String(x).padStart(3, "0") + "|" + String(y).padStart(3, "0")
+        );
+        console.log("📦 Cached coord:", sessionStorage.getItem("tw_cached_coord"));
+    }
+}
+
+
+
+function hookAttackSubmitAttackOnly() {
+    const btn = document.querySelector(
+        "input[type='submit'][value='Attack'], button[value='Attack']"
+    );
+
+    if (!btn) {
+        console.warn("❌ Attack button not found");
+        return;
+    }
+
+    btn.addEventListener("click", () => {
+        const coord = sessionStorage.getItem("tw_cached_coord");
+
+        if (!coord) {
+            console.warn("❌ No cached coord, abort");
+            return;
+        }
+
+        if (sessionStorage.getItem("tw_nuke_consumed") === "1") return;
+        sessionStorage.setItem("tw_nuke_consumed", "1");
+
+        // coord MUST be like "476|601" (matches DB exactly)
+        fetch(
+            "https://xjrgjnsxahfxlseakknl.supabase.co/rest/v1/rpc/consume_coord",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_ANON_KEY,
+                    "Authorization": "Bearer " + SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({
+                    p_world: game_data.world,
+                    p_coord: coord,   // 👈 PIPE INCLUDED
+                    p_cost: 1
+                }),
+                keepalive: true
+            }
+        );
+
+        console.log("💣 Nuke decrement fired on ATTACK:", coord);
+    }, { once: true });
+}
+
+
 
 
 
@@ -468,8 +303,7 @@ entry.remaining_uses = rpcRes[0].remaining;
 async function main() {
   await showRemainingCoordsUI();
   await showNukeUsageUI();
-  await showVillageUsageUI();
-  await showScanButtonUI();
+  
 
   if (!location.href.includes("screen=place")) return;
 
@@ -484,12 +318,11 @@ async function main() {
 
 
 
-/*function goNextVillage() {
+function goNextVillage() {
+    sessionStorage.removeItem("tw_nuke_consumed");
     document.querySelector(".arrowRight")?.click();
-}*/
-    function goNextVillage() {
-    console.warn("NEXT VILLAGE BLOCKED (debug mode)");
 }
+
 
 
 /* ================= INIT VILLAGE ================= */
@@ -514,6 +347,9 @@ async function initVillage() {
 
     document.forms[0].x.value = coord.split("|")[0];
     document.forms[0].y.value = coord.split("|")[1];
+    cacheTargetCoord();
+    hookAttackSubmitAttackOnly();
+
 
     for (let i = 0; i < t.length; i++) {
         document.querySelector(`input[id*="${t[i][0]}"]`).value = t[i][1];
