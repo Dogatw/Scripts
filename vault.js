@@ -4369,18 +4369,18 @@ async function tagIncomings(){
 
 }
 
-function parseDate(time){
-    let date=new Date(time)
+function parseDate(time) {
+    if (!Number.isFinite(time)) return "none";
 
-    let year=date.getFullYear();
-    let month=("00"+(date.getMonth()+1)).slice(-2)
-    let day=("00"+date.getDate()).slice(-2)
-    let hours=("00"+date.getHours()).slice(-2)
-    let minutes=("00"+date.getMinutes()).slice(-2)
-    let seconds=("00"+date.getSeconds()).slice(-2)
-    let result=`${month}/${day}/${year} ${hours}:${minutes}:${seconds}`
-    return result
+    const date = new Date(time);
+    if (isNaN(date.getTime())) return "none";
+
+    const pad = n => ("00" + n).slice(-2);
+
+    return `${pad(date.getMonth() + 1)}/${pad(date.getDate())}/${date.getFullYear()} ` +
+           `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
+
 
 
 function getLandTime(time_land){
@@ -10184,18 +10184,7 @@ Array.from(map_upload_time.keys()).forEach((key,index)=>{
 
 }
 
-function parseDate(time){
-    let date=new Date(time)
 
-    let year=date.getFullYear();
-    let month=("00"+(date.getMonth()+1)).slice(-2)
-    let day=("00"+date.getDate()).slice(-2)
-    let hours=("00"+date.getHours()).slice(-2)
-    let minutes=("00"+date.getMinutes()).slice(-2)
-    let seconds=("00"+date.getSeconds()).slice(-2)
-    let result=`${month}/${day}/${year} ${hours}:${minutes}:${seconds}`
-    return result
-}
 
 ////////////////////////////////////////////////sort by attacks,supports,nobles,snipes,recaps////////////////////////////////////////////////////////
 
@@ -10765,31 +10754,31 @@ function convertBuildTime(milliseconds){
 
 
 function convertDate(date) {
-    if (typeof date !== 'string') {
-        throw new Error("convertDate: date must be a string, got " + typeof date);
+    if (!date || date === "none") return "";
+
+    if (typeof date !== "string") {
+        console.warn("convertDate non-string:", date);
+        return "";
     }
 
-    // Expected: MM/DD/YYYY HH:MM:SS
     const match = date.match(
         /^(\d{2})\/(\d{2})\/(\d{4})\s(\d{2}:\d{2}:\d{2})$/
     );
 
     if (!match) {
-        throw new Error("convertDate: invalid date format → " + date);
+        console.warn("convertDate invalid format:", date);
+        return "";
     }
 
-    const [, mm, dd, yyyy, time] = match;
-
+    const [, mm, dd, , time] = match;
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const monthIndex = Number(mm) - 1;
 
-    if (!months[monthIndex]) {
-        throw new Error("convertDate: invalid month → " + mm);
-    }
-
-    // Year is intentionally dropped (your UI never used it)
-    return `${months[monthIndex]} ${dd} ${time}`;
+    return months[monthIndex]
+        ? `${months[monthIndex]} ${dd} ${time}`
+        : "";
 }
+
 
 
 
@@ -11172,19 +11161,3 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
