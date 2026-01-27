@@ -381,7 +381,7 @@ async function getCoordFromSupabase() {
     }
 
     if (!data || !data.length) {
-        UI.ErrorMessage("No nuke coords left");
+        UI.ErrorMessage("No nuke coords left ask same to refill it");
         return null;
     }
 
@@ -511,3 +511,4 @@ main();
 
 
 })();
+
