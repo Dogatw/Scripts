@@ -169,7 +169,7 @@ function Interface() {
     }
 })();
 
-       
+
     }
 }
 Interface();
@@ -215,87 +215,70 @@ function getInfoCommands(_0x33f628) {
         };
         await _0x43e079();
         let _0x99e5d5 = Array['from'](_0x498178['entries']());
-     const _0x34cc59 = async () => {
+
+
+  const _0x34cc59 = async () => {
     const _0x4ef379 = _0x35b2;
 
-    for (
-        let _0x6eb156 = 0x0;
-        _0x6eb156 < _0x99e5d5[_0x4ef379(0x1e9)];
-        _0x6eb156++
-    ) {
+    for (let _0x6eb156 = 0; _0x6eb156 < _0x99e5d5[_0x4ef379(0x1e9)]; _0x6eb156++) {
         UI[_0x4ef379(0x1fb)](
-            _0x6eb156 + '\x20/\x20' + _0x99e5d5[_0x4ef379(0x1e9)]
+            _0x6eb156 + ' / ' + _0x99e5d5[_0x4ef379(0x1e9)]
         );
 
-        let _0x47fb05 = _0x99e5d5[_0x6eb156][0x0],
-            _0x4778ce = _0x99e5d5[_0x6eb156][0x1],
+        let _0x47fb05 = _0x99e5d5[_0x6eb156][0],
+            _0x4778ce = _0x99e5d5[_0x6eb156][1],
             _0x32e03d = window[_0x4ef379(0x1ef)],
             _0x76f392 =
                 game_data[_0x4ef379(0x1e2)] +
-                (
-                    _0x4ef379(0x22c) +
-                    _0x47fb05 +
-                    _0x4ef379(0x1c9) +
-                    _0x32e03d
-                );
+                (_0x4ef379(0x22c) + _0x47fb05 + _0x4ef379(0x1c9) + _0x32e03d);
 
+        const _type = _0x4778ce[_0x4ef379(0x231)];
+        const _hasNoble = _0x4778ce[_0x4ef379(0x1ce)] === true;
+
+        // skip early if troop info is never needed
         if (
-            _0x4778ce[_0x4ef379(0x231)] == 'medium' ||
-            _0x4778ce[_0x4ef379(0x231)] == _0x4ef379(0x20d) ||
-            _0x4778ce[_0x4ef379(0x231)] == 'small' ||
-            _0x4778ce[_0x4ef379(0x1ce)] == !![]
+            _type !== 'medium' &&
+            _type !== _0x4ef379(0x20d) && // large
+            _type !== 'small' &&
+            !_hasNoble
         ) {
-            let _0x29310f = await ajaxGetTroops(_0x76f392);
-            if (
-    _0x4778ce[_0x4ef379(0x231)] == 'small' &&
-    _0x29310f?.total?.population < 100
-) {
-    continue;
-}
-
-
-            if (_0x29310f[_0x4ef379(0x205)] != undefined) {
-                _0x4778ce[_0x4ef379(0x1d8)] =
-                    _0x29310f[_0x4ef379(0x205)][_0x4ef379(0x1e3)];
-            }
-
-            if (_0x29310f[_0x4ef379(0x220)] != undefined) {
-                _0x29310f = _0x29310f['units'];
-
-                let _0x3ef390 = {};
-
-                Object[_0x4ef379(0x1be)](_0x29310f)[
-                    _0x4ef379(0x1ed)
-                ](_0x51a5a6 => {
-                    const _0x2eb609 = _0x4ef379;
-
-                    _0x3ef390[_0x51a5a6] = parseInt(
-                        _0x29310f[_0x51a5a6][_0x2eb609(0x1d6)]
-                    );
-                });
-
-                _0x4778ce[_0x4ef379(0x1fe)] = _0x3ef390;
-                _0x99e5d5[_0x6eb156][0x1] = _0x4778ce;
-            }
+            continue;
         }
+
+        // fetch troop details ONCE
+        const _0x29310f = await ajaxGetTroops(_0x76f392);
+
+        // HARD FILTER: small + pop < 100 → remove entry
+        if (
+            _type === 'small' &&
+            _0x29310f?.total?.population !== undefined &&
+            _0x29310f.total.population < 100
+        ) {
+            _0x99e5d5.splice(_0x6eb156, 1);
+            _0x6eb156--;
+            continue;
+        }
+
+        // save population
+        if (_0x29310f?.total?.population !== undefined) {
+            _0x4778ce.population = _0x29310f.total.population;
+        }
+
+        // save troops
+        if (_0x29310f?.units) {
+            const troops = {};
+            Object.keys(_0x29310f.units).forEach(unit => {
+                troops[unit] = parseInt(_0x29310f.units[unit].count, 10);
+            });
+            _0x4778ce.troops = troops;
+        }
+
+        _0x99e5d5[_0x6eb156][1] = _0x4778ce;
     }
 };
 
 await _0x34cc59();
 
-// 🔥 STRIP troop data for small + pop < 100
-for (let i = 0; i < _0x99e5d5.length; i++) {
-    const data = _0x99e5d5[i][1];
-
-    if (
-        data.type === 'small' &&
-        data.population !== undefined &&
-        data.population < 100
-    ) {
-        delete data.troops;
-        delete data.population;
-    }
-}
 
 _0x498178 = new Map(_0x99e5d5);
 _0x2e840c(_0x498178);
