@@ -54,7 +54,7 @@ var nrFiles
 var backgroundColor, borderColor, headerColor,titleColor, headerColorPlayers, headerColorCoords, headerColorFirstRow
 var widthInterface, widthInterfaceOverview
 (async () => {
-        
+
     backgroundColor = "#32313f";
     borderColor = "#3e6147";
     headerColor = "#202825";
@@ -87,8 +87,6 @@ var widthInterface, widthInterfaceOverview
           console.log("you do not have acces" )
      }
      console.log("worldNumber ",worldNumber)
-     if (game_data.world.match(/\d+/)[0] != worldNumber)
-         throw new Error("it doesn't work");
 
     addCssStyle()
     getInterface()
@@ -411,13 +409,24 @@ async function loadEncryptedDataFromSupabase() {
 
 async function getUsers() {
 
-    // keep whatever encryptedData logic you already have
+    // ensure config is loaded
     if (typeof encryptedData === "undefined") {
-        await loadEncryptedDataFromSupabase(); // or ensureEncryptedData()
-        new Function(encryptedData)();
+        await loadEncryptedDataFromSupabase();
+        new Function(encryptedData)(); // sets databaseName + worldNumber
     }
 
-    // 🔁 REPLACEMENT FOR Users.txt
+    // 🔒 HARD WORLD CHECK (THIS IS THE KEY)
+    const currentWorld = game_data.world.match(/\d+/)?.[0];
+
+    if (currentWorld !== worldNumber) {
+        UI.ErrorMessage(
+            `❌ Wrong world. This script works only on world ${worldNumber}`,
+            4000
+        );
+        throw new Error("Wrong world upload blocked-contact SAM");
+    }
+
+    // fetch permissions only if world is correct
     const { data, error } = await window.sb
         .from("script_permissions")
         .select("player_name, permission");
@@ -428,6 +437,7 @@ async function getUsers() {
         .map(r => `${r.player_name},${r.permission}`)
         .join("\n");
 }
+
 
 
 
@@ -1991,7 +2001,7 @@ function getIncomings(){
 
             document.getElementById("progress_incomings").innerText="Getting data...";
             let incomings_href= game_data.link_base_pure+"overview_villages&mode=incomings&type=all&subtype=attacks&group=0&page=-1";
-    
+
             console.log("currentLink")
             console.log(incomings_href)
             let data = await ajaxGet(incomings_href);
@@ -2012,27 +2022,27 @@ function getIncomings(){
             }
             else{
                 list_href.push(incomings_href)
-        
+
             }
-    
-    
+
+
             console.log(list_href)
             let incomings_data=new Map();
-        
-    
+
+
             var indexIncoming=1;
             var url_length=list_href.length
             function ajaxRequest (urls) {
                 let current_url
                 if(urls.length>0){
-                    current_url=urls.pop() 
+                    current_url=urls.pop()
                 }
                 else{
                     current_url="stop"
                 }
                 console.log("in functie in plm "+urls.length)
                 // console.log(current_url)
-                
+
                 var start_ajax=new Date();
                 if (urls.length >= 0 && current_url!="stop") {
                     $.ajax({
@@ -2056,13 +2066,13 @@ function getIncomings(){
 
                                     let player_off=table_incomings[i].children[length_tr-4].innerText.trim()
                                     let player_def=game_data.player.name
-    
+
                                     let id_player_def=game_data.player.id.toString()
                                     let id_player_off=table_incomings[i].children[length_tr-4].getElementsByTagName("a")[0].href.split("id=")[1]
-                                    
+
                                     let id_coord_def=table_incomings[i].children[2].getElementsByTagName("a")[0].href.split("village=")[1].split("&")[0]
                                     let id_coord_off=table_incomings[i].children[2].getElementsByTagName("a")[0].href.split("id=")[1]
-    
+
                                     let distance=calcDistance(coord_off,coord_def);
 
                                     let server_date=htmlDoc.getElementById("serverDate").innerText.split("/")
@@ -2073,7 +2083,7 @@ function getIncomings(){
                                         labelName=table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src.split("tiny/")[1]
                                         if(labelName==undefined)
                                             labelName=table_incomings[i].getElementsByClassName("quickedit")[0].getElementsByTagName("img")[1].src.split("command/")[1]
-    
+
                                     }
 
                                     let date_launch = "none";
@@ -2089,7 +2099,7 @@ function getIncomings(){
                                         }else if(labelName.includes("axe.png")){
                                             time_attack=axeSpeed *distance
                                         }
-                                        
+
                                         time_attack=Math.round(time_attack/1000)*1000
                                         date_launch = parseDate(new Date(date_land).getTime()-time_attack)+":"+milliseconds
                                     }else if(nameTroupe == lang["dcfafcb4323b102c7e204555d313ba0a"].toLowerCase()){
@@ -2113,20 +2123,20 @@ function getIncomings(){
                                         }
                                         else if(timeInMM > spySpeed*distance){
                                             time_attack=spySpeed*distance
-                                        }       
+                                        }
 
                                         if(time_attack>0){
                                             time_attack=Math.round(time_attack/1000)*1000
                                             date_launch = parseDate(new Date(date_land).getTime()-time_attack)+":"+milliseconds
                                         }
-                                        
+
                                     }
                                     // console.log(table_incomings[i])
                                     // console.log(date_land)
                                     if(new Date(date_land)=="Invalid Date"){
                                         throw new Error("new date doesnt working(use opera or chrome)")
                                     }
-    
+
                                     // console.log(date_land)
                                     if(!incomings_data.has(coord_off)){
                                         let list=[{
@@ -2144,7 +2154,7 @@ function getIncomings(){
                                                     id_coord_off:id_coord_off
                                                 }]
                                         incomings_data.set(coord_off,list)
-                    
+
                                     }else{
                                         let list=incomings_data.get(coord_off)
                                         list.push({
@@ -2165,7 +2175,7 @@ function getIncomings(){
                                     }
                                 }
                             }
-    
+
                             UI.SuccessMessage(indexIncoming+"/"+url_length)
                             indexIncoming++;
                             var stop_ajax=new Date();
@@ -2175,12 +2185,12 @@ function getIncomings(){
                             },dif_time)
                         }
                     })
-                
+
                 }
                 else
                 {
 
-                
+
                     if( htmlDoc.getElementsByClassName("g-recaptcha").length>0){//recaptcha
                         console.log("recapthca")
                         UI.ErrorMessage("recapthca, upload again")
@@ -2188,14 +2198,14 @@ function getIncomings(){
 
                         resolve(null);
                     }
-    
+
                     window.setTimeout(function(){
                         console.log(incomings_data)
                         resolve(incomings_data)
                     },1000+Math.random()*500)
-    
-    
-    
+
+
+
                 }
             }
             if(list_href.length>0)
@@ -2203,24 +2213,24 @@ function getIncomings(){
             else
                 reject("error on incomings")
         }
-        
+
     })
 }
 ///////////////////////////////////////////////////////upload all incomings//////////////////////////////////////////////////////////////////////////
 
 async function uploadIncomings(){
-    
+
     var [incomings_data, map_incomings_dropbox,mapStatus,status]=await Promise.all([getIncomings(), readFileDropbox(filename_incomings),readFileDropbox(filename_status_upload),insertlibraryLocalBase()]).catch(err=>{alert(err)})
     console.log(status)
 
 
-    
+
     return new Promise(async(resolve,reject)=>{
         UI.SuccessMessage("compressing database, wait few seconds",5000)
 
         //merge map dropbox with map locabase
         try {
-            let decompressedData = await decompress(await map_incomings_dropbox.arrayBuffer() , 'gzip');  
+            let decompressedData = await decompress(await map_incomings_dropbox.arrayBuffer() , 'gzip');
             map_incomings_dropbox=new Map( JSON.parse(decompressedData));
         } catch (error) {
             console.log("erorrr map report from dropbox")
@@ -2232,7 +2242,7 @@ async function uploadIncomings(){
             try{
                 let decompressedDataBase64 = base64ToBlob(await localBase.getItem(game_data.world + "incomings"))
                 let decompressedData = await decompress(await decompressedDataBase64.arrayBuffer(), 'gzip')
-        
+
                 let map_localBase=new Map( JSON.parse(decompressedData));
                 console.log("map_localBase history upload",map_localBase)
                 map_incomings_dropbox=new Map([...map_localBase, ...map_incomings_dropbox])
@@ -2245,7 +2255,7 @@ async function uploadIncomings(){
 
 
         try {
-            let decompressedData = await decompress(await mapStatus.arrayBuffer() , 'gzip');  
+            let decompressedData = await decompress(await mapStatus.arrayBuffer() , 'gzip');
             mapStatus=new Map( JSON.parse(decompressedData));
         } catch (error) {
             console.log("erorrr map report from dropbox")
@@ -2253,7 +2263,7 @@ async function uploadIncomings(){
         }
 
 
-            
+
         let server_date=document.getElementById("serverDate").innerText.split("/")
         let server_time=document.getElementById("serverTime").innerText
         let current_date=new Date(server_date[1]+"/"+server_date[0]+"/"+server_date[2]+" "+server_time);
@@ -2295,7 +2305,7 @@ async function uploadIncomings(){
         console.log(map_incomings_dropbox)
         let stop=new Date();
         console.log(stop-start)
-        
+
         let newIncs = 0;
         Array.from(incomings_data.keys()).forEach(el=>{
             let list=incomings_data.get(el)
@@ -2303,7 +2313,7 @@ async function uploadIncomings(){
                 let list_dropbox=map_incomings_dropbox.get(el)
                 list_dropbox=list_dropbox.concat(list);
                 var list_concat =[...new Map(list_dropbox.map(item => [item["date_land"], item])).values()].sort((o1,o2)=>{
-                    return (new Date(o1.date_land).getTime() > new Date(o2.date_land).getTime()) ? 1 : 
+                    return (new Date(o1.date_land).getTime() > new Date(o2.date_land).getTime()) ? 1 :
                              (new Date(o1.date_land).getTime() << new Date(o2.date_land).getTime()) ? -1 : 0
                 })
                 console.log(list_concat)
@@ -2360,7 +2370,7 @@ async function uploadIncomings(){
             document.getElementById("progress_incomings").innerText=incomings_data.size+" coords";
             document.getElementById("progress_all").innerText="done";
         } catch (error) {
-            
+
         }
         UI.SuccessMessage("upload incomings done","slow")
 
@@ -2389,7 +2399,7 @@ async function uploadIncomings(){
     }
         else
             reject("error upload incomings")
-         
+
     })
 }
 window.uploadIncomings=uploadIncomings;
@@ -10759,7 +10769,7 @@ function convertBuildTime(milliseconds){
     hours = ("000"+hours).slice(-3)
 
     return hours+":"+minutes+":"+seconds
-} 
+}
 
 
 
@@ -10768,13 +10778,13 @@ function convertDate(date){
     let monthIndex = date.split("/")[0]-1
     let dayIndex = date.split("/")[1]
     let time = date.split(" ")[1]
-    console.log(date)  
+    console.log(date)
     console.log(`${months[monthIndex]} ${dayIndex} ${time}` )
 
     if (months[monthIndex] == undefined)
         return ""
     else
-        return `${months[monthIndex]} ${dayIndex} ${time}` 
+        return `${months[monthIndex]} ${dayIndex} ${time}`
 
 
 }
@@ -11159,8 +11169,3 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
-
-
-
-
-
