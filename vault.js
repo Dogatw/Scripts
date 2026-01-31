@@ -1,3 +1,4 @@
+//31 Jan fix
 (async function initSupabase() {
     if (window.__supabaseReady) return;
     window.__supabaseReady = false;
@@ -11169,3 +11170,4 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
