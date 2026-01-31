@@ -88,7 +88,7 @@ var widthInterface, widthInterfaceOverview
      }
      console.log("worldNumber ",worldNumber)
      if (game_data.world.match(/\d+/)[0] != worldNumber)
-        // throw new Error("it doesn't work");
+         throw new Error("it doesn't work");
 
     addCssStyle()
     getInterface()
@@ -11159,6 +11159,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
