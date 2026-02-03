@@ -38,6 +38,35 @@ function getDBRoot() {
     return window.__DB_ROOT;
 }
 
+async function loadBuyMeCoffee(scriptName) {
+    const { data } = await window.sb
+        .from('script_buymecoffee')
+        .select('*')
+        .in('script_name', [scriptName, '*'])
+        .eq('enabled', true)
+        .order('script_name', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    return data;
+}
+// ================= BUY ME A COFFEE (GLOBAL) =================
+window.__BMC_CONFIG__ = null;
+
+function renderBuyMeCoffee() {
+    const cfg = window.__BMC_CONFIG__;
+    if (!cfg || !cfg.enabled || !cfg.support_url) return '';
+
+    return `
+        <a href="${cfg.support_url}"
+           target="_blank"
+           title="Support ☕"
+           style="color:#ffd966; font-weight:bold; text-decoration:none;">
+            ${cfg.label || '☕ Support'}
+        </a>
+    `;
+}
+
 
 var dropboxToken="",databaseName="",worldNumber=""
 // ===== GLOBAL DATA FOR RANK TABLES =====
@@ -55,6 +84,11 @@ var nrFiles
 var backgroundColor, borderColor, headerColor,titleColor, headerColorPlayers, headerColorCoords, headerColorFirstRow
 var widthInterface, widthInterfaceOverview
 (async () => {
+// 🔥 LOAD BUY ME A COFFEE CONFIG
+window.__BMC_CONFIG__ = await loadBuyMeCoffee('*');
+// change 'doga' to your script name if needed
+
+console.log('☕ BMC config:', window.__BMC_CONFIG__);
 
     backgroundColor = "#32313f";
     borderColor = "#3e6147";
@@ -7295,14 +7329,10 @@ async function viewSupport(){
     let html_info=`
         <div id="div_container_view" class="ui-widget-content div_remove" style="height:auto;background-color:${backgroundColor};cursor:move;z-index:50;width:${widthInterfaceOverview}px">
         <div class="scriptHeader">
-         <!-- ☕ Support link -->
-    <div style="position:absolute; top:10px; left:10px;">
-        <a href="https://buymeacoffee.com/cousin"
-           target="_blank"
-           style="color:#ffd966; font-weight:bold; text-decoration:none;">
-            ☕ Support SAM
-        </a>
-    </div>
+<div style="position:absolute; top:10px; left:10px;">
+    ${renderBuyMeCoffee()}
+</div>
+  
             <div style=" margin-top:10px;text-decoration: underline;text-decoration-color: ${titleColor}"><h2 >Overview Data</h2></div>
             <div style="position:absolute;top:10px;right: 10px;"><a href="#" ><img src="https://img.icons8.com/emoji/24/000000/cross-mark-button-emoji.png"/></a></div>
             <div style="position:absolute;top:8px;right: 35px;" id="div_minimize"><a href="#"><img src="https://img.icons8.com/plasticine/28/000000/minimize-window.png"/></a></div>
@@ -11189,5 +11219,6 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
