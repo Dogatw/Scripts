@@ -329,7 +329,18 @@ function getInterface(){
             </table>
             <center style="margin:10px"><div id="report_view" style="background-color:#d2c09e"><div><center>
             <div class="scriptFooter">
-                <div style=" margin-top:5px;"><h5>Made by Costache and fixed by SAM</h5></div>
+<div class="scriptFooter">
+    <div style="margin-top:5px;">
+        <h5>
+            Made by Costache and fixed by SAM |
+            <a href="https://buymeacoffee.com/cousin"
+               target="_blank"
+               style="color:#ffd966; text-decoration:none; font-weight:bold;">
+               ☕ Support SAM
+            </a>
+        </h5>
+    </div>
+</div>
             </div>
         </div>
     </div>
@@ -7284,6 +7295,14 @@ async function viewSupport(){
     let html_info=`
         <div id="div_container_view" class="ui-widget-content div_remove" style="height:auto;background-color:${backgroundColor};cursor:move;z-index:50;width:${widthInterfaceOverview}px">
         <div class="scriptHeader">
+         <!-- ☕ Support link -->
+    <div style="position:absolute; top:10px; left:10px;">
+        <a href="https://buymeacoffee.com/cousin"
+           target="_blank"
+           style="color:#ffd966; font-weight:bold; text-decoration:none;">
+            ☕ Support SAM
+        </a>
+    </div>
             <div style=" margin-top:10px;text-decoration: underline;text-decoration-color: ${titleColor}"><h2 >Overview Data</h2></div>
             <div style="position:absolute;top:10px;right: 10px;"><a href="#" ><img src="https://img.icons8.com/emoji/24/000000/cross-mark-button-emoji.png"/></a></div>
             <div style="position:absolute;top:8px;right: 35px;" id="div_minimize"><a href="#"><img src="https://img.icons8.com/plasticine/28/000000/minimize-window.png"/></a></div>
@@ -11170,4 +11189,5 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
