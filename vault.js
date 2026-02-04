@@ -84,6 +84,9 @@ var nrFiles
 var backgroundColor, borderColor, headerColor,titleColor, headerColorPlayers, headerColorCoords, headerColorFirstRow
 var widthInterface, widthInterfaceOverview
 (async () => {
+    while (!window.__supabaseReady || !window.sb) {
+        await new Promise(r => setTimeout(r, 10));
+    }
 // 🔥 LOAD BUY ME A COFFEE CONFIG
 window.__BMC_CONFIG__ = await loadBuyMeCoffee('*');
 // change 'doga' to your script name if needed
@@ -11219,6 +11222,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
