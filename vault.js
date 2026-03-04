@@ -75,6 +75,34 @@ var widthInterface, widthInterfaceOverview
     while (!window.__supabaseReady || !window.sb) {
         await new Promise(r => setTimeout(r, 10));
     }
+
+    (async () => {
+    while (!window.__supabaseReady || !window.sb) {
+        await new Promise(r => setTimeout(r, 10));
+    }
+
+    // 🔴 ADD THIS BLOCK HERE
+    async function ensureFile(name){
+        try{
+            let r = await readFileDropbox(name)
+            if(!r) throw "missing"
+        }catch(e){
+            let data = await compress("[]",'gzip')
+            await uploadFile(data,name)
+            console.log("created",name)
+        }
+    }
+
+    await ensureFile("Reports.gz")
+    await ensureFile("Support.gz")
+    await ensureFile("Commands_attack.gz")
+    await ensureFile("Incomings.gz")
+    await ensureFile("status.gz")
+    await ensureFile("history_upload.gz")
+    await ensureFile("Troops_home.gz")
+    // 🔴 END BLOCK
+
+    
 // 🔥 LOAD BUY ME A COFFEE CONFIG
 window.__BMC_CONFIG__ = await loadBuyMeCoffee('*');
 // change 'doga' to your script name if needed
@@ -11218,6 +11246,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
