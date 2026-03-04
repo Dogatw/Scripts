@@ -2464,7 +2464,7 @@ function uploadFile(data, filename, dropboxToken){
             await new Promise(r => setTimeout(r, 20));
         }
 
-        try {const DB_ROOT = getDBRoot(); // later you can derive this dynamically
+        try {const DB_ROOT = databaseName; // later you can derive this dynamically
         const fullPath = `${DB_ROOT}/${file.name}`;
 
             const { error } = await window.sb
@@ -2508,7 +2508,7 @@ function readFileDropbox(filename){
             await new Promise(r => setTimeout(r, 20));
         }
 
-        const DB_ROOT = getDBRoot();
+        const DB_ROOT = databaseName;
 
         // prevent double folder
         const fullPath = filename.startsWith(DB_ROOT)
@@ -11215,5 +11215,6 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
