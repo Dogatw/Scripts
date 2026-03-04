@@ -26,18 +26,6 @@
 })();
 
 
-
-function getDBRoot() {
-    if (window.__DB_ROOT) return window.__DB_ROOT;
-
-    const world = (window.game_data && game_data.world)
-        ? game_data.world.match(/\d+/)?.[0]
-        : "unknown";
-
-    window.__DB_ROOT = "myDB_" + world;
-    return window.__DB_ROOT;
-}
-
 async function loadBuyMeCoffee(scriptName) {
     const { data } = await window.sb
         .from('script_buymecoffee')
@@ -435,45 +423,47 @@ function closeWindow(){
 }
 
 async function loadEncryptedDataFromSupabase() {
+
     while (!window.__supabaseReady) {
         await new Promise(r => setTimeout(r, 20));
     }
 
     const { data, error } = await window.sb
         .from("script_config")
-        .select("*")
+        .select("database_name, world_number")
         .eq("enabled", true)
         .single();
 
     if (error) throw error;
 
-  // 🔐 recreate encryptedData payload
-window.encryptedData = `
-    databaseName = "myDB_${game_data.world}";
-    worldNumber = "${data.world_number}";
+    // Supabase is the source of truth
+    databaseName = `${data.database_name}_${data.world_number}`;
+    worldNumber = data.world_number;
     dropboxToken = null;
-`;
+
+    console.log("✅ Config loaded from Supabase");
+    console.log("DB:", databaseName);
+    console.log("World:", worldNumber);
 }
 
 
 async function getUsers() {
 
     // ensure config is loaded
-    if (typeof encryptedData === "undefined") {
-        await loadEncryptedDataFromSupabase();
-        new Function(encryptedData)(); // sets databaseName + worldNumber
-    }
+    if (!databaseName) {
+    await loadEncryptedDataFromSupabase();
+}
 
     // 🔒 HARD WORLD CHECK (THIS IS THE KEY)
     const currentWorld = game_data.world.match(/\d+/)?.[0];
 
-    if (currentWorld !== worldNumber) {
-        UI.ErrorMessage(
-            `❌ Wrong world. This script works only on world ${worldNumber}`,
-            4000
-        );
-        throw new Error("Wrong world upload blocked-contact SAM");
-    }
+if (currentWorld !== worldNumber) {
+    UI.ErrorMessage(
+        `❌ Wrong world. This script works only on world ${worldNumber}`,
+        4000
+    );
+    throw new Error("Wrong world upload blocked-contact SAM");
+}
 
     // fetch permissions only if world is correct
     const { data, error } = await window.sb
@@ -11225,4 +11215,5 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
