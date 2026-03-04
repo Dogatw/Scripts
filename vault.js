@@ -1,4 +1,4 @@
-//31 Jan fix
+//04 Mar 26 fix
 (async function initSupabase() {
     if (window.__supabaseReady) return;
     window.__supabaseReady = false;
@@ -129,15 +129,15 @@ console.log('☕ BMC config:', window.__BMC_CONFIG__);
     addCssStyle()
     getInterface()
     showButtons();
-    filename_reports=`${databaseName}/Reports.gz`;
-    filename_incomings=`${databaseName}/Incomings.gz`;
-    filename_users=`${databaseName}/Users.txt`;
-    filename_support=`${databaseName}/Support.gz`;
-    filename_commands_attack=`${databaseName}/Commands_attack.gz`;
-    filename_troops_home=`${databaseName}/Troops_home.gz`;
+    filename_reports=`Reports.gz`;
+filename_incomings=`Incomings.gz`;
+filename_users=`Users.txt`;
+filename_support=`Support.gz`;
+filename_commands_attack=`Commands_attack.gz`;
+filename_troops_home=`Troops_home.gz`;
 
-    filename_status_upload=`${databaseName}/status.gz`;
-    filename_history_upload=`${databaseName}/history_upload.gz`;
+filename_status_upload=`status.gz`;
+filename_history_upload=`history_upload.gz`;
 
 
 
@@ -150,11 +150,11 @@ console.log('☕ BMC config:', window.__BMC_CONFIG__);
 
     nrFiles = 2
     for(let i=0;i<nrFiles;i++){
-        let fileName = `${databaseName}/Commands_attack${i}.gz`
+        let fileName = `Commands_attack${i}.gz`
         listCommandsAttacks.push(fileName)
         commandsAttacksPromises.push(readFileDropbox(fileName))
 
-        fileName = `${databaseName}/Support${i}.gz`
+        fileName = `Support${i}.gz`
         listSupport.push(fileName)
         supportPromises.push(readFileDropbox(fileName))
     }
@@ -163,16 +163,16 @@ console.log('☕ BMC config:', window.__BMC_CONFIG__);
 
 
     try {
-        console.log(`${databaseName}/Support0.gz`)
-        let response = await readFileDropbox(`${databaseName}/Support0.gz`,dropboxToken)
+        console.log(`Support0.gz`)
+let response = await readFileDropbox(`Support0.gz`)
         console.log(response)
     } catch (error) {
         UI.SuccessMessage("create additional files")
         window.setTimeout(async ()=>{
             for(let i=0;i<nrFiles;i++){
                 let compressedData = await compress("[]", 'gzip')
-                await uploadFile(compressedData, `${databaseName}/Support${i}.gz`, dropboxToken)
-                await uploadFile(compressedData, `${databaseName}/Commands_attack${i}.gz`, dropboxToken)
+                await uploadFile(compressedData, `Support${i}.gz`)
+                await uploadFile(compressedData, `Commands_attack${i}.gz`)
             }
         },500)
         console.log("files created")
@@ -186,12 +186,12 @@ console.log('☕ BMC config:', window.__BMC_CONFIG__);
         UI.SuccessMessage("create additional file")
         window.setTimeout(async ()=>{
             let compressedData = await compress("[]", 'gzip')
-            await uploadFile(compressedData, filename_reports, dropboxToken)
-            await uploadFile(compressedData, filename_support, dropboxToken)
-            await uploadFile(compressedData, filename_incomings, dropboxToken)
-            await uploadFile(compressedData, filename_commands_attack, dropboxToken)
-            await uploadFile(compressedData, filename_status_upload, dropboxToken)
-            await uploadFile(compressedData, filename_history_upload, dropboxToken)
+            await uploadFile(compressedData, filename_reports)
+await uploadFile(compressedData, filename_support)
+await uploadFile(compressedData, filename_incomings)
+await uploadFile(compressedData, filename_commands_attack)
+await uploadFile(compressedData, filename_status_upload)
+await uploadFile(compressedData, filename_history_upload)
         },500)
         console.log("file created")
     }
@@ -447,12 +447,12 @@ async function loadEncryptedDataFromSupabase() {
 
     if (error) throw error;
 
-    // 🔐 recreate encryptedData payload
-    window.encryptedData = `
-        databaseName = "${data.database_name}";
-        worldNumber = "${data.world_number}";
-        dropboxToken = null;
-    `;
+  // 🔐 recreate encryptedData payload
+window.encryptedData = `
+    databaseName = "myDB_${game_data.world}";
+    worldNumber = "${data.world_number}";
+    dropboxToken = null;
+`;
 }
 
 
@@ -2514,12 +2514,16 @@ function uploadFile(data, filename, dropboxToken){
 function readFileDropbox(filename){
     return new Promise(async (resolve, reject) => {
 
-        // wait until Supabase is ready
         while (!window.__supabaseReady) {
             await new Promise(r => setTimeout(r, 20));
         }
-const DB_ROOT = getDBRoot();           // auto: myDB_zz3, myDB_en150, etc
-const fullPath = `${DB_ROOT}/${filename}`;
+
+        const DB_ROOT = getDBRoot();
+
+        // prevent double folder
+        const fullPath = filename.startsWith(DB_ROOT)
+            ? filename
+            : `${DB_ROOT}/${filename}`;
 
         const { data, error } = await window.sb
             .storage
@@ -2527,13 +2531,12 @@ const fullPath = `${DB_ROOT}/${filename}`;
             .download(fullPath);
 
         if (error || !data) {
-            reject("error-> file doesnt exists"); // SAME ERROR STRING
+            reject("error-> file doesnt exists");
         } else {
-            resolve(data); // Blob (same as Dropbox)
+            resolve(data);
         }
     });
 }
-
 
 
 function replaceSpecialCaracters(data) {
@@ -7129,7 +7132,7 @@ async function uploadSupports(){
                 let compressedData = await compress(JSON.stringify(subList), 'gzip')
                 let base64CompressedData = await blobToBase64(compressedData)
 
-                let fileName = `${databaseName}/Commands_attack${i}.gz`
+                let fileName = `Commands_attack${i}.gz`
                 let fileNameLocal = `${databaseName}/Commands_attack${i}.txt`
 
                 await Promise.all([
@@ -7145,7 +7148,7 @@ async function uploadSupports(){
 
                 compressedData =  await compress(JSON.stringify(data_list), 'gzip')
                 base64CompressedData = await blobToBase64(compressedData)
-                fileName = `${databaseName}/Support${i}.gz`
+                fileName = `Support${i}.gz`
                 fileNameLocal = `${databaseName}/Support${i}.txt`
 
                 let base64CompressedDataSupport = await blobToBase64(await compress(JSON.stringify(subListSupport), 'gzip'))
@@ -7335,7 +7338,7 @@ async function viewSupport(){
 <div style="position:absolute; top:10px; left:10px;">
     ${renderBuyMeCoffee()}
 </div>
-  
+
             <div style=" margin-top:10px;text-decoration: underline;text-decoration-color: ${titleColor}"><h2 >Overview Data</h2></div>
             <div style="position:absolute;top:10px;right: 10px;"><a href="#" ><img src="https://img.icons8.com/emoji/24/000000/cross-mark-button-emoji.png"/></a></div>
             <div style="position:absolute;top:8px;right: 35px;" id="div_minimize"><a href="#"><img src="https://img.icons8.com/plasticine/28/000000/minimize-window.png"/></a></div>
@@ -11222,7 +11225,3 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
-
-
-
-
