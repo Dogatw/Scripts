@@ -136,7 +136,28 @@ filename_history_upload=`history_upload.gz`;
     listSupport = []
     supportPromises = []
 
-    nrFiles = 2
+   nrFiles = 2
+    console.log(listCommandsAttacks)
+    console.log(listSupport)
+
+
+    try {
+        console.log(`Support0.gz`)
+let response = await readFileDropbox(`Support0.gz`)
+if (!response || response.error) throw new Error("missing")
+console.log(response)
+    } catch (error) {
+        UI.SuccessMessage("create additional files")
+        await (async ()=>{
+            for(let i=0;i<nrFiles;i++){
+                let compressedData = await compress("[]", 'gzip')
+                await uploadFile(compressedData, `Support${i}.gz`)
+                await uploadFile(compressedData, `Commands_attack${i}.gz`)
+            }
+        })()
+        console.log("files created")
+    }
+ 
     for(let i=0;i<nrFiles;i++){
         let fileName = `Commands_attack${i}.gz`
         listCommandsAttacks.push(fileName)
@@ -146,33 +167,14 @@ filename_history_upload=`history_upload.gz`;
         listSupport.push(fileName)
         supportPromises.push(readFileDropbox(fileName))
     }
-    console.log(listCommandsAttacks)
-    console.log(listSupport)
-
 
     try {
-        console.log(`Support0.gz`)
-let response = await readFileDropbox(`Support0.gz`)
-        console.log(response)
-    } catch (error) {
-        UI.SuccessMessage("create additional files")
-        window.setTimeout(async ()=>{
-            for(let i=0;i<nrFiles;i++){
-                let compressedData = await compress("[]", 'gzip')
-                await uploadFile(compressedData, `Support${i}.gz`)
-                await uploadFile(compressedData, `Commands_attack${i}.gz`)
-            }
-        },500)
-        console.log("files created")
-    }
-
-
-    try {
-        let response = await readFileDropbox(filename_status_upload,dropboxToken)
+        let response = await readFileDropbox(filename_status_upload)
+if (!response || response.error) throw new Error("missing")
         console.log(response)
     } catch (error) {
         UI.SuccessMessage("create additional file")
-        window.setTimeout(async ()=>{
+        await (async ()=>{
             let compressedData = await compress("[]", 'gzip')
             await uploadFile(compressedData, filename_reports)
 await uploadFile(compressedData, filename_support)
@@ -180,20 +182,21 @@ await uploadFile(compressedData, filename_incomings)
 await uploadFile(compressedData, filename_commands_attack)
 await uploadFile(compressedData, filename_status_upload)
 await uploadFile(compressedData, filename_history_upload)
-        },500)
+        })()
         console.log("file created")
     }
 
 
     try {
-        let response = await readFileDropbox(filename_troops_home,dropboxToken)
+        let response = await readFileDropbox(filename_troops_home)
+if (!response || response.error) throw new Error("missing")
         console.log(response)
     } catch (error) {
         UI.SuccessMessage("create additional file")
-        window.setTimeout(async ()=>{
+        await (async ()=>{
             let compressedData = await compress("[]", 'gzip')
             await uploadFile(compressedData, filename_troops_home, dropboxToken)
-        },500)
+        })()
         console.log("file created")
     }
 
@@ -11215,6 +11218,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
