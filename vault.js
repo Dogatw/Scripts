@@ -76,12 +76,7 @@ var widthInterface, widthInterfaceOverview
         await new Promise(r => setTimeout(r, 10));
     }
 
-    (async () => {
-    while (!window.__supabaseReady || !window.sb) {
-        await new Promise(r => setTimeout(r, 10));
-    }
-
-       
+          
 // 🔥 LOAD BUY ME A COFFEE CONFIG
 window.__BMC_CONFIG__ = await loadBuyMeCoffee('*');
 // change 'doga' to your script name if needed
@@ -134,7 +129,36 @@ filename_troops_home=`Troops_home.gz`;
 filename_status_upload=`status.gz`;
 filename_history_upload=`history_upload.gz`;
 
+async function ensureFile(name) {
 
+    const { data, error } = await window.sb.storage
+        .from("vault")
+        .download(`${databaseName}/${name}`);
+
+    if (error) {
+        console.log("creating", name);
+
+        let dataBlob = await compress("[]", "gzip");
+
+        await window.sb.storage
+            .from("vault")
+            .upload(`${databaseName}/${name}`, dataBlob, {
+                contentType: "application/gzip",
+                upsert: true
+            });
+
+        console.log("created", name);
+    }
+
+}
+
+await ensureFile(filename_reports);
+await ensureFile(filename_support);
+await ensureFile(filename_commands_attack);
+await ensureFile(filename_incomings);
+await ensureFile(filename_status_upload);
+await ensureFile(filename_history_upload);
+await ensureFile(filename_troops_home);
 
 
 
@@ -11225,6 +11249,7 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
 
 
 
