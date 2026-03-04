@@ -1,3 +1,5 @@
+(async function () {
+
 await new Promise(r=>{
     const s=document.createElement("script");
     s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js";
@@ -15,11 +17,6 @@ await new Promise(r=>{
 while(typeof window.pako === "undefined"){
     await new Promise(r=>setTimeout(r,50));
 }
-
-
-(async function () {
-
-
     /////////////////////////////
     // SUPABASE INIT
     /////////////////////////////
