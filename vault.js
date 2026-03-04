@@ -31,7 +31,7 @@ function getDBRoot() {
     if (window.__DB_ROOT) return window.__DB_ROOT;
 
     const world = (window.game_data && game_data.world)
-        ? game_data.world
+        ? game_data.world.match(/\d+/)?.[0]
         : "unknown";
 
     window.__DB_ROOT = "myDB_" + world;
@@ -11225,3 +11225,4 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
+
