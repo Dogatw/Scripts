@@ -1,4 +1,4 @@
-//04 Mar 26 fix
+//05 Mar 26 fix
 (async function initSupabase() {
     if (window.__supabaseReady) return;
     window.__supabaseReady = false;
@@ -76,7 +76,7 @@ var widthInterface, widthInterfaceOverview
         await new Promise(r => setTimeout(r, 10));
     }
 
-          
+
 // 🔥 LOAD BUY ME A COFFEE CONFIG
 window.__BMC_CONFIG__ = await loadBuyMeCoffee('*');
 // change 'doga' to your script name if needed
@@ -188,7 +188,7 @@ console.log(response)
         })()
         console.log("files created")
     }
- 
+
     for(let i=0;i<nrFiles;i++){
         let fileName = `Commands_attack${i}.gz`
         listCommandsAttacks.push(fileName)
@@ -11165,13 +11165,13 @@ mapStatus.forEach((obj, key) => {
     mapTroopsHomeDropbox=new Map([...mapTroopsHomeDropbox, ...troopsHome])
 
     //remove old coords
-    Array.from(mapTroopsHomeDropbox.keys()).forEach(coord=>{
+  /*  Array.from(mapTroopsHomeDropbox.keys()).forEach(coord=>{
         if(mapVillages.has(coord)){
             if(mapVillages.get(coord).playerId != mapTroopsHomeDropbox.get(coord).playerId){//old information-> needs to be removed
                 mapTroopsHomeDropbox.delete(coord)
             }
         }
-    })
+    })*/
 
 
 
@@ -11249,10 +11249,3 @@ mapStatus.forEach((obj, key) => {
 
 }
 window.uploadOwnTroops=uploadOwnTroops;
-
-
-
-
-
-
-
