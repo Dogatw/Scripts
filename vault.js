@@ -333,8 +333,8 @@ function getInterface(){
                         <h2><center style="margin:10px"><font color="${titleColor}">Troops</font></center></h2>
                     </td>
                     <td style="text-align:center; background-color:${headerColor}">
-                            <center style="margin:10px"><input class="btn" type="button" onclick="uploadOwnTroops()" value="Upload"></center>
-                    </td>
+    <!-- <center style="margin:10px"><input class="btn" type="button" onclick="uploadOwnTroops()" value="Upload"></center> -->
+</td>
                         <td style="text-align:center; background-color:${headerColor}">
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_troops_home">None</font></center></p>
                         </td>
@@ -574,10 +574,10 @@ async function uploadAll(){
     console.log("status incomings",resultIncomingsResult)
     let uploadSupportsResult= await uploadSupports().catch(err=>alert(err))
     console.log("status uploadSupports",uploadSupportsResult)
-    let uploadTroopsResult= await uploadOwnTroops().catch(err=>alert(err))
-    console.log("status uploadTroops",uploadTroopsResult)
+    //let uploadTroopsResult= await uploadOwnTroops().catch(err=>alert(err))
+   // console.log("status uploadTroops",uploadTroopsResult)
 
-    let totalTime = resultReportsResult.totalTimeUpload + resultIncomingsResult.totalTimeUpload + uploadSupportsResult.totalTimeUpload + uploadTroopsResult.totalTimeUpload
+    let totalTime = resultReportsResult.totalTimeUpload + resultIncomingsResult.totalTimeUpload + uploadSupportsResult.totalTimeUpload //+ uploadTroopsResult.totalTimeUpload
     totalTime =  Math.round((totalTime) * 100) / 100
     document.getElementById("progress_all").innerText = `Finished in ${totalTime} s`;
 
