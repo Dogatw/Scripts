@@ -1,3 +1,8 @@
+(function () {
+if (!location.href.includes('screen=overview')) {
+    console.log('⛔ Not overview → script stopped');
+    return;
+}
 // ===== SUPABASE CONFIG =====
 const SUPABASE_URL = "https://xjrgjnsxahfxlseakknl.supabase.co";
 const SUPABASE_ANON_KEY =
@@ -13,6 +18,7 @@ window.supabaseReady = new Promise(resolve => {
 });
 
 (function initSupabaseOnce() {
+
     function initClient() {
         if (window.supabaseClient) {
             supabaseReadyResolve();
@@ -41,7 +47,41 @@ window.supabaseReady = new Promise(resolve => {
 })();
 
 
+// ===== CAPTCHA CONTROL =====
+let STOP_EXECUTION = false;
 
+function detectCaptcha(html) {
+    if (!html) return false;
+
+    return (
+        html.includes('captcha') ||
+        html.includes('g-recaptcha') ||
+        html.includes('bot protection') ||
+        html.includes('Are you human')
+    );
+}
+
+async function handleCaptchaStop(remote) {
+    if (STOP_EXECUTION) return;
+    STOP_EXECUTION = true;
+
+    console.warn('🛑 CAPTCHA detected → stopping script');
+
+    try {
+        let json = JSON.stringify(Array.from(remote.entries()));
+        json = lzw_encode(json);
+        await uploadFile(json, filename_commands);
+        console.log('💾 Saved before captcha');
+    } catch (e) {
+        console.error('❌ Save failed', e);
+    }
+
+    setTimeout(() => {
+        location.href = game_data.link_base_pure + 'overview';
+    }, 1500);
+
+    throw new Error('STOP_EXECUTION');
+}
 
 async function fetchPlayerIdsFromSupabase(scriptName) {
     await window.supabaseReady;
@@ -103,6 +143,7 @@ remote = remote === '[]'
     const _0x4ea8fc = async () => {
         const _0x49b03b = _0x59dcb9;
         for (let _0x2674d4 = 0x0; _0x2674d4 < _0x5ee272['length']; _0x2674d4++) {
+            if (STOP_EXECUTION) return;
             UI[_0x49b03b(0x1fb)](_0x2674d4 + _0x49b03b(0x227) + _0x5ee272[_0x49b03b(0x1e9)]);
 
             let playerId = _0x5ee272[_0x2674d4];
@@ -113,7 +154,7 @@ let allVillageLinks = [];
 let parser = new DOMParser();
 
 // --- LOAD PLAYER PAGE ---
-let firstHtml = await ajaxGet(baseUrl);
+let firstHtml = await ajaxGet(baseUrl, remote);
 let firstDoc = parser.parseFromString(firstHtml, 'text/html');
 
 // ---- FIRST PAGE FILTER ----
@@ -138,12 +179,17 @@ if (loadMoreLink) {
 
         const ajaxUrl = match[1];
 
-        const res = await ajaxGet(ajaxUrl);
+        const res = await ajaxGet(ajaxUrl, remote);
 
         // ⚠ response is JSON
-        const json = typeof res === 'string'
-            ? JSON.parse(res)
-            : res;
+        let json = null;
+
+try {
+    json = typeof res === 'string' ? JSON.parse(res) : res;
+} catch (e) {
+    if (STOP_EXECUTION) return;
+    throw e;
+}
 
         if (json.villages) {
 
@@ -352,7 +398,8 @@ function getInfoCommands(_0x33f628, remote) {
         const _0x43e079 = async () => {
             const _0x457555 = _0x35b2;
             for (let _0x52bb47 = 0x0; _0x52bb47 < _0x33f628[_0x457555(0x1e9)]; _0x52bb47++) {
-                let html = await ajaxGet(_0x33f628[_0x52bb47]);
+                if (STOP_EXECUTION) return;
+                let html = await ajaxGet(_0x33f628[_0x52bb47], remote);
 
 
 UI[_0x457555(0x1fb)](
@@ -429,7 +476,7 @@ if (
     const _0x4ef379 = _0x35b2;
 const onlyNonSmall = document.getElementById('only-non-small')?.checked || false;
     for (let _0x6eb156 = 0; _0x6eb156 < _0x99e5d5[_0x4ef379(0x1e9)]; _0x6eb156++) {
-
+        if (STOP_EXECUTION) return;
     UI[_0x4ef379(0x1fb)](
         _0x6eb156 + ' / ' + _0x99e5d5[_0x4ef379(0x1e9)]
     );
@@ -470,7 +517,7 @@ if (
 }
 console.log("Fetching troops for:", _0x47fb05);
 
-    const _0x29310f = await ajaxGetTroops(_0x76f392);
+    const _0x29310f = await ajaxGetTroops(_0x76f392, remote);
 
     if (_0x29310f?.total?.population !== undefined) {
         _0x4778ce.population = _0x29310f.total.population;
@@ -539,46 +586,88 @@ _0x2e840c(_0x498178);
     });
 }
 
-function ajaxGet(_0x1b92a9) {
+function ajaxGet(_0x1b92a9, remote) {
     return new Promise((_0x2a8892, _0x108385) => {
+
+        if (typeof STOP_EXECUTION !== 'undefined' && STOP_EXECUTION) {
+    return _0x2a8892(null);
+}
+
         const _0x3696ee = _0x35b2;
-        let _0x2567d6 = new Date()[_0x3696ee(0x234)]();
+
         $[_0x3696ee(0x1d0)]({
             'url': _0x1b92a9,
             'method': _0x3696ee(0x1f8),
-            'success': _0x468f2c => {
-                const _0x5cecb9 = _0x3696ee;
-                let _0x5cd9ed = new Date()[_0x5cecb9(0x234)](),
-                    _0x4582a7 = _0x5cd9ed - _0x2567d6;
-                window[_0x5cecb9(0x1c8)](() => {
-                    _0x2a8892(_0x468f2c);
-                }, 0xc8 - _0x4582a7);
+
+            'success': async (_0x468f2c) => {
+
+                // 🚨 CAPTCHA DETECTION ONLY
+                if (
+                    _0x468f2c &&
+                    typeof _0x468f2c === 'string' &&
+                    (
+                        _0x468f2c.includes('captcha') ||
+                        _0x468f2c.includes('g-recaptcha') ||
+                        _0x468f2c.includes('Are you human') ||
+                        _0x468f2c.includes('bot protection')
+                    )
+                ) {
+                    console.warn('🛑 CAPTCHA detected');
+
+                    if (typeof handleCaptchaStop === 'function') {
+                        await handleCaptchaStop(remote);
+                    }
+                    return _0x2a8892(null);
+                }
+
+                // ✅ ORIGINAL BEHAVIOR (UNCHANGED)
+                _0x2a8892(_0x468f2c);
             },
-            'error': _0x11780a => {
-                _0x108385(_0x11780a);
-            }
+
+            'error': _0x108385
         });
     });
 }
 
-function ajaxGetTroops(_0x435132) {
+function ajaxGetTroops(_0x435132, remote) {
     return new Promise((_0x424705, _0xeb64d2) => {
+
+        if (typeof STOP_EXECUTION !== 'undefined' && STOP_EXECUTION) {
+    return _0x424705(null);
+}
+
         const _0x5b60f2 = _0x35b2;
-        let _0x169e90 = new Date()[_0x5b60f2(0x234)]();
+
         $[_0x5b60f2(0x1d0)]({
             'url': _0x435132,
             'method': _0x5b60f2(0x1f8),
-            'success': _0x392fe4 => {
-                const _0x13ed72 = _0x5b60f2;
-                let _0x17b4d1 = new Date()[_0x13ed72(0x234)](),
-                    _0x576fa4 = _0x17b4d1 - _0x169e90;
-                window[_0x13ed72(0x1c8)](() => {
-                    _0x424705(_0x392fe4);
-                }, 0xc8 - _0x576fa4);
+
+            'success': async (_0x392fe4) => {
+
+                // 🚨 CAPTCHA DETECTION ONLY
+                if (
+                    _0x392fe4 &&
+                    typeof _0x392fe4 === 'string' &&
+                    (
+                        _0x392fe4.includes('captcha') ||
+                        _0x392fe4.includes('g-recaptcha') ||
+                        _0x392fe4.includes('Are you human') ||
+                        _0x392fe4.includes('bot protection')
+                    )
+                ) {
+                    console.warn('🛑 CAPTCHA detected (troops)');
+
+                    if (typeof handleCaptchaStop === 'function') {
+                        await handleCaptchaStop(remote);
+                    }
+                    return _0x424705(null);
+                }
+
+                // ✅ ORIGINAL BEHAVIOR (UNCHANGED)
+                _0x424705(_0x392fe4);
             },
-            'error': _0x19fad9 => {
-                _0xeb64d2(_0x19fad9);
-            }
+
+            'error': _0xeb64d2
         });
     });
 }
@@ -715,3 +804,4 @@ function _0x438d() {
     return _0x438d();
 }
 
+})();
