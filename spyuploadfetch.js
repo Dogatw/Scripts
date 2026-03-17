@@ -212,7 +212,7 @@ Array.from(remote.keys()).forEach(id => {
 
 
     console.log('🔀 Final command count (post-clean):', remote.size);
-    createUploadStatsUI();
+    
 
 let stats = {
     total: remote.size,
@@ -287,16 +287,19 @@ function createUploadStatsUI() {
     `;
 
     box.innerHTML = `
-        <div style="font-weight:bold;margin-bottom:6px;">
-            📤 SpyUpload stats
-        </div>
-        Total: <span id="up-total">0</span><br>
-        Fake: <span id="up-fake">0</span><br>
-        Small: <span id="up-small">0</span><br>
-        Medium: <span id="up-medium">0</span><br>
-        Large: <span id="up-large">0</span><br>
-        Has noble: <span id="up-noble">0</span>
-    `;
+    <div style="font-weight:bold;margin-bottom:6px;">
+        📤 SpyUpload stats
+    </div>
+
+    
+
+    Total: <span id="up-total">0</span><br>
+    Fake: <span id="up-fake">0</span><br>
+    Small: <span id="up-small">0</span><br>
+    Medium: <span id="up-medium">0</span><br>
+    Large: <span id="up-large">0</span><br>
+    Has noble: <span id="up-noble">0</span>
+`;
 
     document.body.appendChild(box);
 }
@@ -318,7 +321,7 @@ function updateUploadStats(stats) {
 
 function Interface() {
     const _0x563970 = _0x4425ce;
-       html = '\x0a\x20\x20\x20\x20</div\x20id=\x22div_container\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<textarea\x20id=\x22input_player\x22\x20\x20style=\x22width:100%\x22\x20rows=\x2220\x22\x20\x20></textarea>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<center\x20style=\x22margin:10px\x22><u><input\x20class=\x22btn\x22\x20type=\x22button\x22\x20onclick=\x22main()\x22\x20value=\x22Start\x22></center>\x0a\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20';
+html = '\x0a\x20\x20\x20\x20</div\x20id=\x22div_container\x22>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<textarea\x20id=\x22input_player\x22\x20style=\x22width:100%\x22\x20rows=\x2220\x22></textarea>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<label\x20style=\x22display:block;margin:8px\x200;\x22><input\x20type=\x22checkbox\x22\x20id=\x22only-non-small\x22>\x20Only\x20fetch\x20troops\x20for\x20non-small</label>\x0a\x20\x20\x20\x20\x20\x20\x20\x20<center\x20style=\x22margin:10px\x22><input\x20class=\x22btn\x22\x20type=\x22button\x22\x20onclick=\x22main()\x22\x20value=\x22Start\x22></center>\x0a\x0a\x20\x20\x20\x20</div>\x0a\x20\x20\x20\x20';
     if (document[_0x563970(0x1ec)](_0x563970(0x1bc)) == null) {
         $(_0x563970(0x229))[_0x563970(0x1d4)](), $(_0x563970(0x200))['eq'](0x0)['prepend'](html), $(_0x563970(0x21d))['eq'](0x0)[_0x563970(0x1d3)](html), $('#div_container')[_0x563970(0x226)](_0x563970(0x1cb), 'fixed'), $(_0x563970(0x229))['draggable']();
         (async function autoFillIds() {
@@ -338,7 +341,10 @@ function Interface() {
 
     }
 }
-Interface();
+
+    Interface();
+
+
 
 function getInfoCommands(_0x33f628, remote) {
     return new Promise(async (_0x2e840c, _0xcb6374) => {
@@ -421,7 +427,7 @@ if (
 
   const _0x34cc59 = async (existingRemote) => {
     const _0x4ef379 = _0x35b2;
-
+const onlyNonSmall = document.getElementById('only-non-small')?.checked || false;
     for (let _0x6eb156 = 0; _0x6eb156 < _0x99e5d5[_0x4ef379(0x1e9)]; _0x6eb156++) {
 
     UI[_0x4ef379(0x1fb)](
@@ -446,14 +452,22 @@ if (
     const _type = _0x4778ce[_0x4ef379(0x231)];
     const _hasNoble = _0x4778ce[_0x4ef379(0x1ce)] === true;
 
-    if (
-        _type !== 'medium' &&
-        _type !== _0x4ef379(0x20d) &&
-        _type !== 'small' &&
-        !_hasNoble
-    ) {
-        continue;
-    }
+// 🚀 Skip troop fetch for small (only when toggle ON)
+if (onlyNonSmall && _type === 'small' && !_hasNoble) {
+    // do NOT set fake — unknown
+    _0x99e5d5[_0x6eb156][1] = _0x4778ce;
+    continue;
+}
+
+// ✅ ORIGINAL FILTER (ALWAYS KEEP THIS SEPARATE)
+if (
+    _type !== 'medium' &&
+    _type !== _0x4ef379(0x20d) &&
+    _type !== 'small' &&
+    !_hasNoble
+) {
+    continue;
+}
 console.log("Fetching troops for:", _0x47fb05);
 
     const _0x29310f = await ajaxGetTroops(_0x76f392);
