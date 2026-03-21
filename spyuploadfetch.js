@@ -1,4 +1,4 @@
-//19 march
+//21 march
 (function () {
 if (!location.href.includes('screen=overview')) {
     console.log('⛔ Not overview → script stopped');
@@ -259,7 +259,7 @@ Array.from(remote.keys()).forEach(id => {
 
 
     console.log('🔀 Final command count (post-clean):', remote.size);
-    
+
 
 let stats = {
     total: remote.size,
@@ -338,7 +338,7 @@ function createUploadStatsUI() {
         📤 SpyUpload stats
     </div>
 
-    
+
 
     Total: <span id="up-total">0</span><br>
     Fake: <span id="up-fake">0</span><br>
@@ -485,10 +485,17 @@ const onlyNonSmall = document.getElementById('only-non-small')?.checked || false
     let _0x47fb05 = _0x99e5d5[_0x6eb156][0],
         _0x4778ce = _0x99e5d5[_0x6eb156][1];
 
-    // 🔥🔥🔥 ADD THIS BLOCK RIGHT HERE
-    if (existingRemote && existingRemote.has(_0x47fb05)) {
-    _0x99e5d5[_0x6eb156][1] = existingRemote.get(_0x47fb05);
-    continue;
+if (existingRemote && existingRemote.has(_0x47fb05)) {
+    const old = existingRemote.get(_0x47fb05);
+
+    // If troops already fetched OR fake OR population known → skip
+    if (old.troops || old.isFake || old.population) {
+        _0x99e5d5[_0x6eb156][1] = old;
+        continue;
+    }
+
+    // Otherwise merge old + new and continue to fetch troops
+    _0x4778ce = { ...old, ..._0x4778ce };
 }
 
 
@@ -806,4 +813,3 @@ function _0x438d() {
 }
 
 })();
-
