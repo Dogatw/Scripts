@@ -1233,128 +1233,260 @@ if (isAdminUser()) {
 
 }
 /////////////////////////////////////////////////events for interface admin/////////////////////////////////////////////
-function adminInterface(){
+
+function adminInterface() {
+
 $(document).ready(async function() {
 
     let infoVillages = await getInfoVIllages();
-    let set = new Set()
-    let map_tribe = new Map()
-    Array.from(infoVillages.keys()).forEach(key=>{
-        let obj = infoVillages.get(key)
-        set.add(obj.playerName.toLowerCase())
-        map_tribe.set(obj.playerName.toLowerCase(), obj.playerId)
-    })
 
+    let set = new Set();
 
-    let admin_tribe=JSON.parse((dropbox_admin=="")?"[]":dropbox_admin )
-    let dataTribes=Array.from(set)
+    Array.from(infoVillages.keys()).forEach(key => {
+        let obj = infoVillages.get(key);
+        set.add(obj.playerName.toLowerCase());
+    });
 
+    // ✅ DATABASE ADMINS
+    let admin_tribe = loginAdmin.map(name => ({
+        name: name
+    }));
 
-    console.log("AICI ba admin")
-    console.log(dataTribes)
-    console.log(map_tribe)
+    let dataTribes = Array.from(set);
 
-if (isAdminUser()) {
-        let page_admin=document.getElementById("page_admin2")
-        let htmlTable= `
+    console.log("DATABASE ADMINS");
+    console.log(admin_tribe);
+
+    if (isAdminUser()) {
+
+        let page_admin = document.getElementById("page_admin2");
+
+        let htmlTable = `
         <div id="table_admin2">
-        <table  class="scriptTable" >
-        <tr>
-            <td colspan="2" >admins</td>
-            <td  colspan="2">remove admin</td>
-        </tr>`
+        <table class="scriptTable">
 
-        for(let i=0;i<admin_tribe.length;i++){
-            htmlTable+=`
+        <tr>
+            <td colspan="2">admins</td>
+            <td colspan="2">remove admin</td>
+        </tr>
+        `;
+
+        for (let i = 0; i < admin_tribe.length; i++) {
+
+            htmlTable += `
             <tr>
-                <td colspan="2"><font class="all_admin"color="${textColor}">${admin_tribe[i].name} </font></td>
+                <td colspan="2">
+                    <font class="all_admin" color="${textColor}">
+                        ${admin_tribe[i].name}
+                    </font>
+                </td>
 
                 <td colspan="2">
-                    <input class="btn evt-confirm-btn btn-confirm-yes" type="button" onclick='$(this).closest("tr").remove()' value="remove">
+                    <input
+                        class="btn evt-confirm-btn btn-confirm-yes"
+                        type="button"
+                        onclick='$(this).closest("tr").remove()'
+                        value="remove"
+                    >
                 </td>
             </tr>
-            `
+            `;
         }
-        htmlTable+=`
+
+        htmlTable += `
             <tr>
-            <td colspan="2" >
-                <input class="scriptInput" id="name_admin" placeholder="name player">
-            </td>
-            <td colspan="2">
-                <input class="btn evt-confirm-btn btn-confirm-yes" type="button" id="btn_add_admin" value="add">
-            </td>
+                <td colspan="2">
+                    <input
+                        class="scriptInput"
+                        id="name_admin"
+                        placeholder="name player"
+                    >
+                </td>
+
+                <td colspan="2">
+                    <input
+                        class="btn evt-confirm-btn btn-confirm-yes"
+                        type="button"
+                        id="btn_add_admin"
+                        value="add"
+                    >
+                </td>
             </tr>
 
+        </table>
 
-            </table>
-            <center style="margin:5px"><input class="btn evt-confirm-btn btn-confirm-yes" id='btn_save_admin' type="button"  value="Save"></center>
-            </div>
-        `
+        <center style="margin:5px">
+            <input
+                class="btn evt-confirm-btn btn-confirm-yes"
+                id="btn_save_admin"
+                type="button"
+                value="Save"
+            >
+        </center>
 
-        $("#div_admin_show").append(htmlTable)
+        </div>
+        `;
+
+        $("#div_admin_show").append(htmlTable);
+
         $("#table_admin2").hide();
-        $("#page_admin2").on("click",()=>{
-            $("#table_admin2").toggle(300)
-        })
 
-        autocomplete(document.getElementById("name_admin"),dataTribes)
+        $("#page_admin2").on("click", () => {
+            $("#table_admin2").toggle(300);
+        });
 
+        autocomplete(
+            document.getElementById("name_admin"),
+            dataTribes
+        );
 
+        // ✅ SAVE TO DATABASE
+        document
+            .getElementById("btn_save_admin")
+            .addEventListener("click", async function () {
 
+                let admin =
+                    document.getElementsByClassName("all_admin");
 
+                let names = [];
 
-        // upload in dropbox
-        document.getElementById("btn_save_admin").addEventListener("click",function(){
-            let admin=document.getElementsByClassName("all_admin")
-            let list_admin=[]
-            for(let i=0;i<admin.length;i++){
-                list_admin.push({
-                    name:admin[i].innerText.toLowerCase(),
-                    adminId:map_tribe.get(admin[i].innerText)
-                })
-            }
-            uploadFile(JSON.stringify(list_admin), filename_admin)
-            console.log(list_admin)
-        })
+                for (let i = 0; i < admin.length; i++) {
+                    names.push(
+                        admin[i].innerText.toLowerCase()
+                    );
+                }
 
-        document.getElementById("btn_add_admin").addEventListener("click",function(){
-            let name_admin=document.getElementById("name_admin").value.toLowerCase()
+                try {
 
-            if(map_tribe.has(name_admin)){
-                let table=document.getElementById("table_admin2").getElementsByTagName("table")[0]
-                let tr=table.getElementsByTagName("tr")
-                let exist=false;
-                for(let i=1;i<tr.length-1;i++){
-                    console.log(tr[i].innerText.includes(name_admin))
-                    if(tr[i].innerText.includes(name_admin)){
-                        exist=true;
-                        break;
+                    // remove old admins
+                    await supabaseClient
+                        .from("script_permissions")
+                        .delete()
+                        .eq("permission", "admin");
+
+                    // insert new admins
+                    const rows = names.map(name => ({
+                        player_name: name,
+                        permission: "admin"
+                    }));
+
+                    const { error } =
+                        await supabaseClient
+                            .from("script_permissions")
+                            .insert(rows);
+
+                    if (error) {
+                        console.error(error);
+                        UI.ErrorMessage(
+                            "save failed",
+                            1000
+                        );
+                        return;
                     }
-                }
-                if(exist==false){
-                    let newTr=document.createElement("tr")
-                    newTr.innerHTML=`
-                    <td colspan="2"><font class="all_admin"color="${textColor}">${name_admin} </font></td>
-                    <td colspan="2"><input class="btn evt-confirm-btn btn-confirm-yes" type="button" onclick='$(this).closest("tr").remove()' value="remove"></td> `
-                    console.log(newTr)
-                    let addTr=table.insertRow(tr.length-1)
-                    addTr.innerHTML=newTr.innerHTML
-                }
-                else{
-                    UI.ErrorMessage("this player already exist",1000)
-                }
-            }else{
-                UI.ErrorMessage("this player doesn't exist",1000)
-            }
-        })
 
+                    loginAdmin = names;
 
+                    UI.SuccessMessage(
+                        "admins updated",
+                        1000
+                    );
 
+                    console.log(
+                        "Saved admins:",
+                        names
+                    );
+
+                } catch (e) {
+                    console.error(e);
+                }
+            });
+
+        // ✅ ADD ADMIN TO TABLE
+        document
+            .getElementById("btn_add_admin")
+            .addEventListener("click", function () {
+
+                let name_admin =
+                    document
+                        .getElementById("name_admin")
+                        .value
+                        .toLowerCase();
+
+                if (dataTribes.includes(name_admin)) {
+
+                    let table =
+                        document
+                            .getElementById("table_admin2")
+                            .getElementsByTagName("table")[0];
+
+                    let tr =
+                        table.getElementsByTagName("tr");
+
+                    let exist = false;
+
+                    for (let i = 1; i < tr.length - 1; i++) {
+
+                        if (
+                            tr[i]
+                                .innerText
+                                .includes(name_admin)
+                        ) {
+                            exist = true;
+                            break;
+                        }
+                    }
+
+                    if (!exist) {
+
+                        let newTr =
+                            document.createElement("tr");
+
+                        newTr.innerHTML = `
+                        <td colspan="2">
+                            <font
+                                class="all_admin"
+                                color="${textColor}"
+                            >
+                                ${name_admin}
+                            </font>
+                        </td>
+
+                        <td colspan="2">
+                            <input
+                                class="btn evt-confirm-btn btn-confirm-yes"
+                                type="button"
+                                onclick='$(this).closest("tr").remove()'
+                                value="remove"
+                            >
+                        </td>
+                        `;
+
+                        let addTr =
+                            table.insertRow(tr.length - 1);
+
+                        addTr.innerHTML = newTr.innerHTML;
+
+                    } else {
+
+                        UI.ErrorMessage(
+                            "this player already exists",
+                            1000
+                        );
+                    }
+
+                } else {
+
+                    UI.ErrorMessage(
+                        "this player doesn't exist",
+                        1000
+                    );
+                }
+            });
     }
-
 });
 
 }
+
 
 
 
