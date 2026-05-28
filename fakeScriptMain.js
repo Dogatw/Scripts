@@ -111,9 +111,10 @@ var databaseName = game_data.world;
 var worldNumber = "enc2";
 
 
+
 let loginAdmin = [];
 let loginAlly = [];
-
+let dropbox_ally = "[]";
 
 
 var filename_admin,
@@ -355,7 +356,7 @@ console.log("Database admins:", loginAdmin);
 
 // ===== LOAD ALLY FILE =====
 
-let dropbox_ally = await getAlly();
+ dropbox_ally = await getAlly();
 
 console.log("RAW ally file:", dropbox_ally);
 
@@ -373,7 +374,7 @@ console.log("Parsed ally IDs:", loginAlly);
 console.log("My player ID:", game_data.player.id);
 
 
-    
+
 
 // ===== ADMIN CHECK (DATABASE VERSION) =====
 
@@ -468,7 +469,7 @@ async function main(){
 
    // hitCountApi()
     createMainInterface()
-    
+
     // 🔐 HIDE ADMIN UI FOR NON-ADMINS (RIGHT HERE)
     if (!isAdminUser()) {
         $("#div_admin").hide();
@@ -1363,7 +1364,7 @@ $(document).ready(async function() {
                     );
                 }
 
-              
+
 try {
 
     // prepare rows first
@@ -3594,7 +3595,7 @@ function showLaunches(list_info_launch){
 
     })
 }
-       
+
 
 
 
