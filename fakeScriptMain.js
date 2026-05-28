@@ -1,3 +1,4 @@
+//new update for admin and auto create txt files
 const SAFE_MODE_NO_UPLOAD = false;
 
 // == Supabase config ==
