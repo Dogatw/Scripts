@@ -108,7 +108,12 @@ window.initSupabase = initSupabase;
 
 // ===== CONFIG =====
 var databaseName = game_data.world;
-var worldNumber = "en150";
+var worldNumber = "enc2";
+
+
+let loginAdmin = [];
+let loginAlly = [];
+
 
 
 var filename_admin,
@@ -350,7 +355,7 @@ console.log("Database admins:", loginAdmin);
 
 // ===== LOAD ALLY FILE =====
 
-dropbox_ally = await getAlly();
+let dropbox_ally = await getAlly();
 
 console.log("RAW ally file:", dropbox_ally);
 
@@ -423,7 +428,7 @@ console.log("Supabase ally path:", filename_ally);
     filename_fakes8=`${databaseName}/fakes8.txt`
     filename_fakes9=`${databaseName}/fakes9.txt`
     filename_fakes10=`${databaseName}/fakes10.txt`
-    list_filename_fakes=[filename_fakes1, filename_fakes2, filename_fakes3, filename_fakes4, filename_fakes5, filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10]
+    let list_filename_fakes=[filename_fakes1, filename_fakes2, filename_fakes3, filename_fakes4, filename_fakes5, filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10]
     // console.log("adminBOss: "+adminBoss + " == "+game_data.player.id.toString())
     // console.log("runWorld: "+runWorld)
 
@@ -748,8 +753,10 @@ for (let i = 0; i < nrTabs; i++) {
     `;
 
     const isAdminHere =
-        loginAdmin.includes(MY_PLAYER_ID) &&
-        CURRENT_WORLD === TARGET_WORLD;
+    loginAdmin.includes(
+        game_data.player.name.toLowerCase()
+    ) &&
+    CURRENT_WORLD === TARGET_WORLD;
 
     if (isAdminHere) {
         html += `
@@ -757,7 +764,7 @@ for (let i = 0; i < nrTabs; i++) {
             <input class="btn evt-confirm-btn btn-confirm-yes" type="button" value="Save">
             <input class="btn evt-confirm-btn btn-confirm-yes coord_grabber" type="button" value="Coord grabber">
             <select class="select_get_coord">
-                <option value="dropbox">dropbox</option>
+                <option value="supabase">supabase</option>
                 <option value="coordGrabber">coordGrabber</option>
             </select>
         </center>
@@ -768,7 +775,7 @@ for (let i = 0; i < nrTabs; i++) {
             <input class="btn evt-confirm-btn btn-confirm-yes" type="button" value="Save">
             <input class="btn evt-confirm-btn btn-confirm-yes coord_grabber" type="button" value="Coord grabber">
             <select class="select_get_coord">
-                <option value="dropbox">dropbox</option>
+                <option value="supabase">supabase</option>
                 <option value="coordGrabber">coordGrabber</option>
             </select>
         </center>
@@ -1356,49 +1363,78 @@ $(document).ready(async function() {
                     );
                 }
 
-                try {
+              
+try {
 
-                    // remove old admins
-                    await supabaseClient
-                        .from("script_permissions")
-                        .delete()
-                        .eq("permission", "admin");
+    // prepare rows first
+    const rows = names.map(name => ({
+        player_name: name,
+        permission: "admin"
+    }));
 
-                    // insert new admins
-                    const rows = names.map(name => ({
-                        player_name: name,
-                        permission: "admin"
-                    }));
+    // insert/update admins FIRST
+    const { error: upsertError } =
+        await supabaseClient
+            .from("script_permissions")
+            .upsert(rows);
 
-                    const { error } =
-                        await supabaseClient
-                            .from("script_permissions")
-                            .insert(rows);
+    if (upsertError) {
 
-                    if (error) {
-                        console.error(error);
-                        UI.ErrorMessage(
-                            "save failed",
-                            1000
-                        );
-                        return;
-                    }
+        console.error(upsertError);
 
-                    loginAdmin = names;
+        UI.ErrorMessage(
+            "save failed",
+            1000
+        );
 
-                    UI.SuccessMessage(
-                        "admins updated",
-                        1000
-                    );
+        return;
+    }
 
-                    console.log(
-                        "Saved admins:",
-                        names
-                    );
+    // remove old admins NOT in list
+    const keepNames =
+        rows.map(r => r.player_name);
 
-                } catch (e) {
-                    console.error(e);
-                }
+    const formattedNames =
+        keepNames.map(n => `"${n}"`).join(",");
+
+    const { error: deleteError } =
+        await supabaseClient
+            .from("script_permissions")
+            .delete()
+            .eq("permission", "admin")
+            .not(
+                "player_name",
+                "in",
+                `(${formattedNames})`
+            );
+
+    if (deleteError) {
+        console.error(deleteError);
+    }
+
+    // update memory
+    loginAdmin = names;
+
+    UI.SuccessMessage(
+        "admins updated",
+        1000
+    );
+
+    console.log(
+        "Saved admins:",
+        names
+    );
+
+} catch (e) {
+
+    console.error(e);
+
+    UI.ErrorMessage(
+        "unexpected error",
+        1000
+    );
+}
+
             });
 
         // ✅ ADD ADMIN TO TABLE
