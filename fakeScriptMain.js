@@ -24,15 +24,52 @@ async function initSupabase() {
     window.supabaseClient = supabaseClient; // ✅ expose client
 }
 
+
 async function readFileSupabase(filename) {
+
     const { data, error } = await supabaseClient
         .storage
         .from(SUPABASE_BUCKET)
         .download(filename);
 
-    if (error) throw error;
-    return await data.text();
+    // file exists
+    if (!error) {
+        return await data.text();
+    }
+
+    // missing file -> auto create
+    if (error.message.includes("Object not found")) {
+
+        console.log("Creating missing file:", filename);
+
+        const emptyData = {
+            coords: "",
+            playerId: "",
+            playerName: "",
+            data: "",
+            nameTab: "panel",
+            sourceCoord: "manual",
+            list_input: []
+        };
+
+        const blob = new Blob(
+            [JSON.stringify(emptyData)],
+            { type: "application/json" }
+        );
+
+        await supabaseClient
+            .storage
+            .from(SUPABASE_BUCKET)
+            .upload(filename, blob, {
+                upsert: true
+            });
+
+        return JSON.stringify(emptyData);
+    }
+
+    throw error;
 }
+
 
 async function getAdmin() {
     try {
