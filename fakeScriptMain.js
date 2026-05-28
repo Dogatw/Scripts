@@ -73,14 +73,22 @@ async function readFileSupabase(filename) {
 }
 
 
+
 async function getAdmin() {
-    try {
-        return await readFileSupabase(filename_admin);
-    } catch (e) {
-        console.warn("admin.txt missing or unreadable", e);
-        return "[]";
+
+    const { data, error } = await supabaseClient
+        .from("script_permissions")
+        .select("player_name, permission");
+
+    if (error) {
+        console.error("Failed loading permissions:", error);
+        return [];
     }
+
+    return data.filter(row => row.permission === "admin");
 }
+
+
 
 async function getAlly() {
     try {
@@ -317,29 +325,35 @@ if(localStorage.getItem(localStorageThemeName)!=undefined){
 
 
 // 🔴 databaseName MUST already be set here
-filename_ally  = `${databaseName}/ally.txt`;
-filename_admin = `${databaseName}/admin.txt`;
+filename_ally = `${databaseName}/ally.txt`;
 
-dropbox_admin = await getAdmin();
-dropbox_ally  = await getAlly();
 
-console.log("RAW admin file:", dropbox_admin);
+
+// ===== LOAD ADMINS FROM DATABASE =====
+
+const { data: adminRows, error: adminError } =
+    await supabaseClient
+        .from("script_permissions")
+        .select("player_name, permission");
+
+if (adminError) {
+    console.error("Failed loading admins:", adminError);
+}
+
+loginAdmin = (adminRows || [])
+    .filter(row => row.permission === "admin")
+    .map(row => row.player_name.toLowerCase());
+
+console.log("Database admins:", loginAdmin);
+
+
+
+// ===== LOAD ALLY FILE =====
+
+dropbox_ally = await getAlly();
+
 console.log("RAW ally file:", dropbox_ally);
 
-
-
-//  get admin and ally parsing
-
-
-loginAdmin = [];
-
-try {
-    loginAdmin = JSON.parse(dropbox_admin || "[]")
-        .map(e => Number(e.adminId))
-        .filter(id => Number.isFinite(id));
-} catch (e) {
-    console.warn("Invalid admin file", e);
-}
 loginAlly = [];
 
 try {
@@ -350,38 +364,52 @@ try {
     console.warn("Invalid ally file", e);
 }
 
-
-
-console.log("Parsed admin IDs:", loginAdmin);
 console.log("Parsed ally IDs:", loginAlly);
 console.log("My player ID:", game_data.player.id);
+
+
     
-// ===== ADMIN CHECK (SINGLE SOURCE OF TRUTH) =====
-    
+
+// ===== ADMIN CHECK (DATABASE VERSION) =====
+
 function isAdminUser() {
-    return loginAdmin.includes(Number(game_data.player.id));
+
+    return loginAdmin.includes(
+        game_data.player.name.toLowerCase()
+    );
 }
 
-    function canUseScript() {
-    const pid = Number(game_data.player.id);
+function canUseScript() {
+
     const aid =
         Number(game_data.player.ally_id) ||
         Number(game_data.player.ally) ||
         null;
 
-    if (loginAdmin.includes(pid)) return true;
-    if (aid && loginAlly.includes(aid)) return true;
+    // ✅ ADMIN FROM DATABASE
+    if (
+        loginAdmin.includes(
+            game_data.player.name.toLowerCase()
+        )
+    ) {
+        return true;
+    }
+
+    // ✅ ALLY ACCESS
+    if (aid && loginAlly.includes(aid)) {
+        return true;
+    }
 
     return false;
 }
 
-
 window.isAdminUser = isAdminUser;
 window.canUseScript = canUseScript;
 
-
-console.log("Supabase admin path:", filename_admin);
+console.log("Database admins:", loginAdmin);
 console.log("Supabase ally path:", filename_ally);
+
+
 
 
 
