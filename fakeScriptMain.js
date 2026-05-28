@@ -38,7 +38,9 @@ async function readFileSupabase(filename) {
     }
 
     // missing file -> auto create
-    if (error.message.includes("Object not found")) {
+ if (error?.message?.includes("Object not found")) {
+
+
 
         console.log("Creating missing file:", filename);
 
