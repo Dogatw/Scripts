@@ -574,10 +574,10 @@ async function uploadAll(){
     console.log("status incomings",resultIncomingsResult)
     let uploadSupportsResult= await uploadSupports().catch(err=>alert(err))
     console.log("status uploadSupports",uploadSupportsResult)
-    //let uploadTroopsResult= await uploadOwnTroops().catch(err=>alert(err))
-   // console.log("status uploadTroops",uploadTroopsResult)
+    let uploadTroopsResult= await uploadOwnTroops().catch(err=>alert(err))
+    console.log("status uploadTroops",uploadTroopsResult)
 
-    let totalTime = resultReportsResult.totalTimeUpload + resultIncomingsResult.totalTimeUpload + uploadSupportsResult.totalTimeUpload //+ uploadTroopsResult.totalTimeUpload
+    let totalTime = resultReportsResult.totalTimeUpload + resultIncomingsResult.totalTimeUpload + uploadSupportsResult.totalTimeUpload + uploadTroopsResult.totalTimeUpload
     totalTime =  Math.round((totalTime) * 100) / 100
     document.getElementById("progress_all").innerText = `Finished in ${totalTime} s`;
 
