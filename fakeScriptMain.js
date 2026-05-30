@@ -112,11 +112,11 @@ var databaseName = game_data.world;
 var worldNumber = "enc2";
 
 
+var list_filename_fakes = [];
 
 let loginAdmin = [];
 let loginAlly = [];
 let dropbox_ally = "[]";
-
 
 var filename_admin,
     filename_ally,
@@ -430,7 +430,7 @@ console.log("Supabase ally path:", filename_ally);
     filename_fakes8=`${databaseName}/fakes8.txt`
     filename_fakes9=`${databaseName}/fakes9.txt`
     filename_fakes10=`${databaseName}/fakes10.txt`
-    let list_filename_fakes=[filename_fakes1, filename_fakes2, filename_fakes3, filename_fakes4, filename_fakes5, filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10]
+     list_filename_fakes=[filename_fakes1, filename_fakes2, filename_fakes3, filename_fakes4, filename_fakes5, filename_fakes6,filename_fakes7,filename_fakes8,filename_fakes9,filename_fakes10]
     // console.log("adminBOss: "+adminBoss + " == "+game_data.player.id.toString())
     // console.log("runWorld: "+runWorld)
 
