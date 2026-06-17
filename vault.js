@@ -8080,7 +8080,7 @@ $("#input_search").on("input", event => {
     let pop_medium_attack=parseInt(document.getElementById("settings_medium_attack").value)
     pop_small_attack=(!Number.isNaN(pop_medium_attack))?pop_medium_attack:5000
     pop_medium_attack=(!Number.isNaN(pop_medium_attack))?pop_medium_attack:10000
-    fangs_cat=(!Number.isNaN(fangs_cat))?fangs_cat:50
+    fangs_cat=(!Number.isNaN(fangs_cat))?fangs_cat:20
 
     //create a map with commands attacks, every coord has number of fangs,nukes,nobles
     //this part is for Enemy Info
@@ -9773,7 +9773,7 @@ function createTableSettings(){
                 <font style="margin:5px" color="${titleColor}">fangs has(catapults) </font>
             </td>
             <td style="text-align:center; width:auto; background-color:${headerColor}" >
-                <input type="number" style="text-align:center;" id="settings_fang_cat" min="0" max="20000"  value="50" placeholder="100" disabled>
+                <input type="number" style="text-align:center;" id="settings_fang_cat" min="0" max="20000"  value="20" placeholder="100" disabled>
             </td>
         </tr>
 
