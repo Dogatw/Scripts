@@ -339,6 +339,7 @@ function getInterface(){
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_troops_home">None</font></center></p>
                         </td>
                 </tr>
+                <!--
                 <tr>
                     <td style="text-align:center; background-color:${headerColor}">
                         <h2><center style="margin:10px"><font color="${titleColor}">All Info</font></center></h2>
@@ -350,6 +351,7 @@ function getInterface(){
                         <p><center style="margin:10px" ><font color="${titleColor}" id="progress_all">None</font></center></p>
                     </td>
                 </tr>
+                -->
             </table>
             <h2><center style="margin:10px"><font color="${titleColor}" style="text-decoration: underline;text-decoration-color: ${titleColor}">Search Reports</font></center></h2>
             <table id="table_upload" class="" border="1" style="width: 100%;background-color:${backgroundColor};border-color:${borderColor}">
