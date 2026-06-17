@@ -7197,7 +7197,7 @@ async function uploadSupports(){
         if(result_Status=="succes"){
             console.log("here save status")
             document.getElementById("progress_support").innerText=map_coming.size+" coords"
-            document.getElementById("progress_all").innerText="done";
+            // document.getElementById("progress_all").innerText="done";
             var data=JSON.stringify(Array.from(resultSupport.map_exist_support.entries()))
             localStorage.setItem(game_data.world+"map_exist_support",data)
 
